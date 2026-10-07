@@ -1,0 +1,52 @@
+{
+  "recetas": [
+    {
+      "id": 1,
+      "nombre": "Bowl de pollo y quinoa",
+      "categoria": "Comida",
+      "tiempo": 25,
+      "kcal": 520,
+      "proteina": 42,
+      "carbohidratos": 48,
+      "grasas": 16,
+      "ingredientes": ["Pechuga de pollo", "Quinoa", "Aguacate", "Espinacas"],
+      "preparacion": "Cuece la quinoa, dora el pollo en tiras y monta el bowl con el aguacate y las espinacas."
+    },
+    {
+      "id": 2,
+      "nombre": "Tortitas de avena y plátano",
+      "categoria": "Desayuno",
+      "tiempo": 15,
+      "kcal": 340,
+      "proteina": 16,
+      "carbohidratos": 48,
+      "grasas": 9,
+      "ingredientes": ["Avena", "Plátano", "Huevo", "Canela"],
+      "preparacion": "Tritura todo, cocina en sartén antiadherente y sirve con fruta."
+    },
+    {
+      "id": 3,
+      "nombre": "Salmón al horno con verduras",
+      "categoria": "Cena",
+      "tiempo": 30,
+      "kcal": 450,
+      "proteina": 36,
+      "carbohidratos": 18,
+      "grasas": 26,
+      "ingredientes": ["Salmón", "Calabacín", "Zanahoria", "Aceite de oliva"],
+      "preparacion": "Hornea el salmón con las verduras troceadas a 200 °C durante 18 minutos."
+    },
+    {
+      "id": 4,
+      "nombre": "Yogur griego con frutos rojos",
+      "categoria": "Snack",
+      "tiempo": 5,
+      "kcal": 180,
+      "proteina": 17,
+      "carbohidratos": 15,
+      "grasas": 5,
+      "ingredientes": ["Yogur griego", "Frutos rojos", "Nueces"],
+      "preparacion": "Mezcla el yogur con los frutos rojos y las nueces troceadas."
+    }
+  ]
+}
