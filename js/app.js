@@ -2,6 +2,10 @@
 
 const URL_RECETAS = 'http://localhost:3001/recetas/';
 
+let recetas = [];
+let ingredientesForm = [];     // ingredientes del formulario, mientras se escribe
+let kcalManual = false;        // true si la persona ha escrito las kcal a mano
+
 /* ---------- DATOS ---------- */
 
 async function cargarRecetas() {
@@ -9,6 +13,20 @@ async function cargarRecetas() {
 
     if (!respuesta.ok) {
         throw new Error('El servidor respondió ' + respuesta.status);
+    }
+
+    return await respuesta.json();
+}
+
+async function guardarReceta(receta) {
+    const respuesta = await fetch(URL_RECETAS, {
+        method: 'POST',
+        body: JSON.stringify(receta),
+        headers: { 'Content-type': 'application/json' }
+    });
+
+    if (!respuesta.ok) {
+        throw new Error('No se pudo guardar (' + respuesta.status + ')');
     }
 
     return await respuesta.json();
@@ -43,19 +61,26 @@ function porcentajesMacros(receta) {
     };
 }
 
-/* ---------- PINTAR ---------- */
+function mostrarAviso(texto) {
+    const toast = document.querySelector('#toastAviso');
+    toast.querySelector('.toast-body').textContent = texto;
+    bootstrap.Toast.getOrCreateInstance(toast).show();
+}
 
-function pintarRecetas(recetas) {
-    const lista = document.querySelector('#listaRecetas');
-    lista.innerHTML = '';
+/* ---------- PINTAR LA LISTA ---------- */
 
-    if (recetas.length === 0) {
-        lista.innerHTML = '<p class="text-body-secondary">Aún no hay recetas. ¡Añade la primera!</p>';
+function pintarRecetas(lista) {
+    const contenedor = document.querySelector('#listaRecetas');
+    contenedor.innerHTML = '';
+
+    if (lista.length === 0) {
+        contenedor.innerHTML = '<p class="text-body-secondary">Aún no hay recetas. ¡Añade la primera!</p>';
         return;
     }
 
-    for (const receta of recetas) {
+    for (const receta of lista) {
         const pct = porcentajesMacros(receta);
+        const numIngredientes = (receta.ingredientes ?? []).length;
 
         const col = document.createElement('div');
         col.className = 'col';
@@ -83,15 +108,139 @@ function pintarRecetas(recetas) {
             <div class="progress" role="progressbar" style="width: ${pct.g}%"><div class="progress-bar macro-g"></div></div>
           </div>
 
-          <div class="d-flex justify-content-between small">
+          <div class="d-flex justify-content-between small mb-3">
             <span><i class="punto macro-p"></i> P ${receta.proteina} g</span>
             <span><i class="punto macro-c"></i> C ${receta.carbohidratos} g</span>
             <span><i class="punto macro-g"></i> G ${receta.grasas} g</span>
           </div>
+
+          <small class="text-body-secondary"><i class="bi bi-basket"></i> ${numIngredientes} ingredientes · Ver receta</small>
         </div>
       </article>`;
 
-        lista.appendChild(col);
+        contenedor.appendChild(col);
+    }
+}
+
+/* ---------- DETALLE DE LA RECETA ---------- */
+
+function abrirDetalle(id) {
+    const receta = recetas.find(r => String(r.id) === String(id));
+    if (!receta) return;
+
+    document.querySelector('#detalleTitulo').textContent = receta.nombre;
+    document.querySelector('#detalleMeta').textContent =
+        `${receta.categoria} · ${receta.tiempo} min · ${receta.kcal} kcal`;
+    document.querySelector('#detalleMacros').textContent =
+        `P ${receta.proteina} g · C ${receta.carbohidratos} g · G ${receta.grasas} g`;
+    document.querySelector('#detallePreparacion').textContent = receta.preparacion || 'Sin preparación.';
+
+    const lista = document.querySelector('#detalleIngredientes');
+    lista.innerHTML = '';
+
+    for (const ingrediente of receta.ingredientes ?? []) {
+        const li = document.createElement('li');
+        li.textContent = ingrediente;
+        lista.appendChild(li);
+    }
+
+    bootstrap.Modal.getOrCreateInstance(document.querySelector('#modalDetalle')).show();
+}
+
+/* ---------- FORMULARIO: INGREDIENTES ---------- */
+
+function pintarIngredientes() {
+    const lista = document.querySelector('#listaIngredientes');
+    lista.innerHTML = '';
+
+    ingredientesForm.forEach((ingrediente, indice) => {
+        const li = document.createElement('li');
+        li.className = 'chip-ingrediente';
+        li.innerHTML = `
+      <span>${escaparHtml(ingrediente)}</span>
+      <button type="button" data-indice="${indice}" aria-label="Quitar ${escaparHtml(ingrediente)}">×</button>`;
+        lista.appendChild(li);
+    });
+
+    if (ingredientesForm.length > 0) {
+        document.querySelector('#errorIngredientes').classList.add('d-none');
+    }
+}
+
+function anadirIngrediente() {
+    const campo = document.querySelector('#campoIngrediente');
+    const texto = campo.value.trim();
+
+    if (texto === '') return;
+
+    ingredientesForm.push(texto);
+    campo.value = '';
+    campo.focus();
+
+    pintarIngredientes();
+}
+
+/* ---------- FORMULARIO: NUEVA RECETA ---------- */
+
+function calcularKcalAuto() {
+    if (kcalManual) return;
+
+    const f = document.querySelector('#formReceta');
+    const proteina = Number(f.proteina.value) || 0;
+    const carbohidratos = Number(f.carbohidratos.value) || 0;
+    const grasas = Number(f.grasas.value) || 0;
+
+    f.kcal.value = Math.round(proteina * 4 + carbohidratos * 4 + grasas * 9);
+}
+
+function abrirFormulario() {
+    const f = document.querySelector('#formReceta');
+    f.reset();
+    f.classList.remove('was-validated');
+
+    ingredientesForm = [];
+    kcalManual = false;
+    pintarIngredientes();
+    document.querySelector('#errorIngredientes').classList.add('d-none');
+
+    bootstrap.Modal.getOrCreateInstance(document.querySelector('#modalReceta')).show();
+}
+
+async function enviarFormulario(e) {
+    e.preventDefault();
+
+    const f = e.target;
+    const faltanIngredientes = ingredientesForm.length === 0;
+
+    if (!f.checkValidity() || faltanIngredientes) {
+        f.classList.add('was-validated');
+        document.querySelector('#errorIngredientes').classList.toggle('d-none', !faltanIngredientes);
+        return;
+    }
+
+    const nueva = {
+        nombre: f.nombre.value.trim(),
+        categoria: f.categoria.value,
+        tiempo: Number(f.tiempo.value),
+        kcal: Number(f.kcal.value),
+        proteina: Number(f.proteina.value),
+        carbohidratos: Number(f.carbohidratos.value),
+        grasas: Number(f.grasas.value),
+        ingredientes: ingredientesForm,
+        preparacion: f.preparacion.value.trim()
+    };
+
+    try {
+        await guardarReceta(nueva);
+
+        recetas = await cargarRecetas();
+        pintarRecetas(recetas);
+
+        bootstrap.Modal.getInstance(document.querySelector('#modalReceta')).hide();
+        mostrarAviso('Receta guardada ✓');
+    } catch (error) {
+        console.error('Error al guardar la receta:', error);
+        mostrarAviso('No se pudo guardar. ¿Está encendido json-server?');
     }
 }
 
@@ -99,7 +248,7 @@ function pintarRecetas(recetas) {
 
 async function iniciar() {
     try {
-        const recetas = await cargarRecetas();
+        recetas = await cargarRecetas();
         pintarRecetas(recetas);
     } catch (error) {
         console.error('No se pudieron cargar las recetas:', error);
@@ -112,6 +261,45 @@ async function iniciar() {
         </div>
       </div>`;
     }
+
+    // abrir el formulario
+    document.querySelector('#btnNueva').addEventListener('click', abrirFormulario);
+
+    // abrir el detalle al pulsar una tarjeta
+    document.querySelector('#listaRecetas').addEventListener('click', (e) => {
+        const tarjeta = e.target.closest('.receta');
+        if (tarjeta) abrirDetalle(tarjeta.dataset.id);
+    });
+
+    // ingredientes: botón, tecla Enter y quitar
+    document.querySelector('#btnAnadirIngrediente').addEventListener('click', anadirIngrediente);
+
+    document.querySelector('#campoIngrediente').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();          // Enter no debe enviar el formulario
+            anadirIngrediente();
+        }
+    });
+
+    document.querySelector('#listaIngredientes').addEventListener('click', (e) => {
+        const boton = e.target.closest('button');
+        if (!boton) return;
+
+        ingredientesForm.splice(Number(boton.dataset.indice), 1);
+        pintarIngredientes();
+    });
+
+    // kcal automáticas a partir de los macros (hasta que se escriban a mano)
+    for (const nombre of ['proteina', 'carbohidratos', 'grasas']) {
+        document.querySelector(`#formReceta [name="${nombre}"]`).addEventListener('input', calcularKcalAuto);
+    }
+
+    document.querySelector('#formReceta [name="kcal"]').addEventListener('input', () => {
+        kcalManual = true;
+    });
+
+    // enviar
+    document.querySelector('#formReceta').addEventListener('submit', enviarFormulario);
 }
 
 window.addEventListener('DOMContentLoaded', iniciar);
