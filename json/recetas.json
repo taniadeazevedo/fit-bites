@@ -1,39 +1,7 @@
 {
   "recetas": [
-    {
-      "id": 1,
-      "nombre": "Bowl de pollo y quinoa",
-      "categoria": "Comida",
-      "tiempo": 25,
-      "kcal": 520,
-      "proteina": 42,
-      "carbohidratos": 48,
-      "grasas": 16,
-      "ingredientes": [
-        "Pechuga de pollo",
-        "Quinoa",
-        "Aguacate",
-        "Espinacas"
-      ],
-      "preparacion": "Cuece la quinoa, dora el pollo en tiras y monta el bowl con el aguacate y las espinacas."
-    },
-    {
-      "id": 2,
-      "nombre": "Tortitas de avena y plátano",
-      "categoria": "Desayuno",
-      "tiempo": 15,
-      "kcal": 340,
-      "proteina": 16,
-      "carbohidratos": 48,
-      "grasas": 9,
-      "ingredientes": [
-        "Avena",
-        "Plátano",
-        "Huevo",
-        "Canela"
-      ],
-      "preparacion": "Tritura todo, cocina en sartén antiadherente y sirve con fruta."
-    },
+    
+  
     {
       "nombre": "Bowl de salmón",
       "categoria": "Comida",
