@@ -5,6 +5,8 @@ const URL_RECETAS = 'http://localhost:3001/recetas/';
 let recetas = [];
 let ingredientesForm = [];     // ingredientes del formulario, mientras se escribe
 let kcalManual = false;        // true si la persona ha escrito las kcal a mano
+let recetaEditando = null;     // la receta que se está editando (null = receta nueva)
+let idParaBorrar = null;       // el id de la receta que se va a borrar
 
 /* ---------- DATOS ---------- */
 
@@ -30,6 +32,28 @@ async function guardarReceta(receta) {
     }
 
     return await respuesta.json();
+}
+
+async function actualizarReceta(receta) {
+    const respuesta = await fetch(URL_RECETAS + receta.id, {
+        method: 'PUT',
+        body: JSON.stringify(receta),
+        headers: { 'Content-type': 'application/json' }
+    });
+
+    if (!respuesta.ok) {
+        throw new Error('No se pudo actualizar (' + respuesta.status + ')');
+    }
+
+    return await respuesta.json();
+}
+
+async function borrarReceta(id) {
+    const respuesta = await fetch(URL_RECETAS + id, { method: 'DELETE' });
+
+    if (!respuesta.ok) {
+        throw new Error('No se pudo borrar (' + respuesta.status + ')');
+    }
 }
 
 /* ---------- UTILIDADES ---------- */
@@ -114,7 +138,18 @@ function pintarRecetas(lista) {
             <span><i class="punto macro-g"></i> G ${receta.grasas} g</span>
           </div>
 
-          <small class="text-body-secondary"><i class="bi bi-basket"></i> ${numIngredientes} ingredientes · Ver receta</small>
+          <small class="text-body-secondary d-block mb-3"><i class="bi bi-basket"></i> ${numIngredientes} ingredientes · Ver receta</small>
+
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-outline-dark btn-sm btn-editar" data-id="${receta.id}">
+              <i class="bi bi-pencil-fill"></i> Editar
+            </button>
+            <button type="button" class="btn btn-outline-danger btn-sm btn-borrar"
+              data-bs-toggle="modal" data-bs-target="#modalBorrar"
+              data-id="${receta.id}" data-nombre="${escaparHtml(receta.nombre)}">
+              <i class="bi bi-trash-fill"></i> Borrar
+            </button>
+          </div>
         </div>
       </article>`;
 
@@ -193,13 +228,33 @@ function calcularKcalAuto() {
     f.kcal.value = Math.round(proteina * 4 + carbohidratos * 4 + grasas * 9);
 }
 
-function abrirFormulario() {
+function abrirFormulario(receta = null) {
     const f = document.querySelector('#formReceta');
     f.reset();
     f.classList.remove('was-validated');
 
-    ingredientesForm = [];
-    kcalManual = false;
+    recetaEditando = receta;
+
+    document.querySelector('#tituloReceta').textContent = receta ? 'Editar receta' : 'Nueva receta';
+    document.querySelector('#btnGuardarReceta').textContent = receta ? 'Guardar cambios' : 'Guardar receta';
+
+    if (receta) {
+        f.nombre.value = receta.nombre;
+        f.categoria.value = receta.categoria;
+        f.tiempo.value = receta.tiempo;
+        f.kcal.value = receta.kcal;
+        f.proteina.value = receta.proteina;
+        f.carbohidratos.value = receta.carbohidratos;
+        f.grasas.value = receta.grasas;
+        f.preparacion.value = receta.preparacion ?? '';
+
+        ingredientesForm = [...(receta.ingredientes ?? [])];   // una COPIA, para no tocar la original
+        kcalManual = true;                                      // respeta las kcal guardadas
+    } else {
+        ingredientesForm = [];
+        kcalManual = false;
+    }
+
     pintarIngredientes();
     document.querySelector('#errorIngredientes').classList.add('d-none');
 
@@ -218,7 +273,7 @@ async function enviarFormulario(e) {
         return;
     }
 
-    const nueva = {
+    const datos = {
         nombre: f.nombre.value.trim(),
         categoria: f.categoria.value,
         tiempo: Number(f.tiempo.value),
@@ -231,13 +286,19 @@ async function enviarFormulario(e) {
     };
 
     try {
-        await guardarReceta(nueva);
+        if (recetaEditando) {
+            await actualizarReceta({ ...datos, id: recetaEditando.id });   // PUT: editar
+        } else {
+            await guardarReceta(datos);                                     // POST: crear
+        }
+
+        const mensaje = recetaEditando ? 'Cambios guardados ✓' : 'Receta guardada ✓';
 
         recetas = await cargarRecetas();
         pintarRecetas(recetas);
 
         bootstrap.Modal.getInstance(document.querySelector('#modalReceta')).hide();
-        mostrarAviso('Receta guardada ✓');
+        mostrarAviso(mensaje);
     } catch (error) {
         console.error('Error al guardar la receta:', error);
         mostrarAviso('No se pudo guardar. ¿Está encendido json-server?');
@@ -262,13 +323,46 @@ async function iniciar() {
       </div>`;
     }
 
-    // abrir el formulario
-    document.querySelector('#btnNueva').addEventListener('click', abrirFormulario);
+    // abrir el formulario para una receta nueva
+    document.querySelector('#btnNueva').addEventListener('click', () => abrirFormulario());
 
-    // abrir el detalle al pulsar una tarjeta
+    // clics en las tarjetas: editar, borrar (lo gestiona Bootstrap) o abrir el detalle
     document.querySelector('#listaRecetas').addEventListener('click', (e) => {
+        const botonEditar = e.target.closest('.btn-editar');
+
+        if (botonEditar) {
+            const receta = recetas.find(r => String(r.id) === botonEditar.dataset.id);
+            if (receta) abrirFormulario(receta);
+            return;
+        }
+
+        if (e.target.closest('.btn-borrar')) return;   // el modal de borrado se abre solo (data-bs-toggle)
+
         const tarjeta = e.target.closest('.receta');
         if (tarjeta) abrirDetalle(tarjeta.dataset.id);
+    });
+
+    // modal de confirmación: se prepara justo antes de abrirse
+    const modalBorrar = document.querySelector('#modalBorrar');
+
+    modalBorrar.addEventListener('show.bs.modal', (e) => {
+        const boton = e.relatedTarget;                 // el botón "Borrar" que lo ha abierto
+        idParaBorrar = boton.dataset.id;
+        document.querySelector('#textoBorrar').textContent =
+            `¿Seguro que quieres borrar «${boton.dataset.nombre}»?`;
+    });
+
+    document.querySelector('#btnConfirmarBorrado').addEventListener('click', async () => {
+        try {
+            await borrarReceta(idParaBorrar);
+
+            recetas = await cargarRecetas();
+            pintarRecetas(recetas);
+            mostrarAviso('Receta borrada');
+        } catch (error) {
+            console.error('Error al borrar la receta:', error);
+            mostrarAviso('No se pudo borrar. ¿Está encendido json-server?');
+        }
     });
 
     // ingredientes: botón, tecla Enter y quitar
