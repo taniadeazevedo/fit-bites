@@ -280,3 +280,28 @@ a:hover {
   padding: 0 .35rem;
   cursor: pointer;
 }
+
+/* ---------- Fotos de las recetas ---------- */
+.receta-img { overflow: hidden; }
+
+.receta-foto {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;   /* recorta para llenar el hueco sin deformar */
+}
+
+.foto-vista {
+  max-width: 100%;
+  max-height: 220px;
+  display: block;
+}
+
+/* ---------- Arreglo: el formulario del modal debe poder desplazarse ---------- */
+/* El <form> está entre .modal-content y .modal-body: hay que hacerlo flexible
+   para que el cuerpo se desplace y el botón Guardar quede siempre a la vista. */
+#formReceta {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}

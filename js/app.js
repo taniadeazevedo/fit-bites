@@ -7,6 +7,8 @@ let ingredientesForm = [];     // ingredientes del formulario, mientras se escri
 let kcalManual = false;        // true si la persona ha escrito las kcal a mano
 let recetaEditando = null;     // la receta que se está editando (null = receta nueva)
 let idParaBorrar = null;       // el id de la receta que se va a borrar
+let fotoForm = '';             // la foto del formulario (texto Base64), o '' si no hay
+const MAX_CARACTERES_FOTO = 80000;   // límite de la foto en texto (json-server admite ~100 KB por petición)
 
 /* ---------- DATOS ---------- */
 
@@ -85,6 +87,82 @@ function porcentajesMacros(receta) {
     };
 }
 
+/* ---------- FOTOS ---------- */
+
+// Lee un archivo del ordenador y lo devuelve como texto (data URL)
+function leerArchivo(archivo) {
+    return new Promise((resolve, reject) => {
+        const lector = new FileReader();
+        lector.onload = () => resolve(lector.result);
+        lector.onerror = () => reject(new Error('No se pudo leer el archivo'));
+        lector.readAsDataURL(archivo);
+    });
+}
+
+// Convierte ese texto en una imagen que el navegador puede dibujar
+function cargarImagen(url) {
+    return new Promise((resolve, reject) => {
+        const imagen = new Image();
+        imagen.onload = () => resolve(imagen);
+        imagen.onerror = () => reject(new Error('El archivo no es una imagen válida'));
+        imagen.src = url;
+    });
+}
+
+// Dibuja la imagen en un lienzo (canvas) con un ancho máximo y la devuelve como JPEG en texto
+function dibujarImagen(imagen, anchoMax, calidad) {
+    const escala = Math.min(1, anchoMax / imagen.width);   // nunca se agranda
+    const lienzo = document.createElement('canvas');
+    lienzo.width = Math.round(imagen.width * escala);
+    lienzo.height = Math.round(imagen.height * escala);
+
+    lienzo.getContext('2d').drawImage(imagen, 0, 0, lienzo.width, lienzo.height);
+
+    return lienzo.toDataURL('image/jpeg', calidad);
+}
+
+// Reduce la foto hasta que quepa: una foto de móvil pesa varios MB y
+// json-server rechaza las peticiones de más de 100 KB
+async function reducirImagen(archivo) {
+    const imagen = await cargarImagen(await leerArchivo(archivo));
+
+    let ancho = 800;
+    let calidad = 0.75;
+    let resultado = dibujarImagen(imagen, ancho, calidad);
+
+    while (resultado.length > MAX_CARACTERES_FOTO && ancho > 200) {
+        if (calidad > 0.5) {
+            calidad -= 0.1;                  // primero baja la calidad
+        } else {
+            ancho = Math.round(ancho * 0.8); // y luego el tamaño
+        }
+        resultado = dibujarImagen(imagen, ancho, calidad);
+    }
+
+    if (resultado.length > MAX_CARACTERES_FOTO) {
+        throw new Error('La foto es demasiado grande');
+    }
+
+    return resultado;
+}
+
+// Solo se pintan fotos que de verdad sean una imagen (data:image/...)
+function fotoValida(foto) {
+    return typeof foto === 'string' && foto.startsWith('data:image/');
+}
+
+function mostrarVistaFoto() {
+    const caja = document.querySelector('#vistaFotoCaja');
+
+    if (fotoForm) {
+        document.querySelector('#vistaFoto').src = fotoForm;
+        caja.classList.remove('d-none');
+    } else {
+        document.querySelector('#vistaFoto').removeAttribute('src');
+        caja.classList.add('d-none');
+    }
+}
+
 function mostrarAviso(texto) {
     const toast = document.querySelector('#toastAviso');
     toast.querySelector('.toast-body').textContent = texto;
@@ -112,9 +190,9 @@ function pintarRecetas(lista) {
         col.innerHTML = `
       <article class="card h-100 border-0 shadow-sm receta" data-id="${receta.id}">
         <div class="receta-img ratio ratio-4x3 rounded-top">
-          <div class="d-flex align-items-center justify-content-center">
-            <i class="bi bi-egg-fried fs-1"></i>
-          </div>
+          ${fotoValida(receta.foto)
+            ? `<img src="${escaparHtml(receta.foto)}" class="receta-foto" alt="Foto de ${escaparHtml(receta.nombre)}">`
+            : `<div class="d-flex align-items-center justify-content-center"><i class="bi bi-egg-fried fs-1"></i></div>`}
         </div>
 
         <div class="card-body">
@@ -164,6 +242,16 @@ function abrirDetalle(id) {
     if (!receta) return;
 
     document.querySelector('#detalleTitulo').textContent = receta.nombre;
+
+    const foto = document.querySelector('#detalleFoto');
+    if (fotoValida(receta.foto)) {
+        foto.src = receta.foto;
+        foto.alt = 'Foto de ' + receta.nombre;
+        foto.classList.remove('d-none');
+    } else {
+        foto.removeAttribute('src');
+        foto.classList.add('d-none');
+    }
     document.querySelector('#detalleMeta').textContent =
         `${receta.categoria} · ${receta.tiempo} min · ${receta.kcal} kcal`;
     document.querySelector('#detalleMacros').textContent =
@@ -250,12 +338,16 @@ function abrirFormulario(receta = null) {
 
         ingredientesForm = [...(receta.ingredientes ?? [])];   // una COPIA, para no tocar la original
         kcalManual = true;                                      // respeta las kcal guardadas
+        fotoForm = fotoValida(receta.foto) ? receta.foto : '';
     } else {
         ingredientesForm = [];
         kcalManual = false;
+        fotoForm = '';
     }
 
     pintarIngredientes();
+    mostrarVistaFoto();
+    document.querySelector('#errorFoto').classList.add('d-none');
     document.querySelector('#errorIngredientes').classList.add('d-none');
 
     bootstrap.Modal.getOrCreateInstance(document.querySelector('#modalReceta')).show();
@@ -282,7 +374,8 @@ async function enviarFormulario(e) {
         carbohidratos: Number(f.carbohidratos.value),
         grasas: Number(f.grasas.value),
         ingredientes: ingredientesForm,
-        preparacion: f.preparacion.value.trim()
+        preparacion: f.preparacion.value.trim(),
+        foto: fotoForm
     };
 
     try {
@@ -390,6 +483,37 @@ async function iniciar() {
 
     document.querySelector('#formReceta [name="kcal"]').addEventListener('input', () => {
         kcalManual = true;
+    });
+
+    // foto: elegir o hacer una foto, reducirla y mostrar la vista previa
+    document.querySelector('#recFoto').addEventListener('change', async (e) => {
+        const archivo = e.target.files[0];
+        const error = document.querySelector('#errorFoto');
+        error.classList.add('d-none');
+
+        if (!archivo) return;
+
+        if (!archivo.type.startsWith('image/')) {
+            error.textContent = 'Elige un archivo de imagen.';
+            error.classList.remove('d-none');
+            e.target.value = '';
+            return;
+        }
+
+        try {
+            fotoForm = await reducirImagen(archivo);
+            mostrarVistaFoto();
+        } catch (err) {
+            console.error('Error con la foto:', err);
+            error.textContent = 'No se pudo usar esa imagen. Prueba con otra.';
+            error.classList.remove('d-none');
+        }
+    });
+
+    document.querySelector('#btnQuitarFoto').addEventListener('click', () => {
+        fotoForm = '';
+        document.querySelector('#recFoto').value = '';
+        mostrarVistaFoto();
     });
 
     // enviar
