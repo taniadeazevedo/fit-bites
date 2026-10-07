@@ -1,6 +1,12 @@
 'use strict';
 
-const URL_RECETAS = 'http://localhost:3001/recetas/';
+const URL_RECETAS = 'http://localhost:3001/recetas/';      // json-server (solo en tu ordenador)
+const ARCHIVO_RECETAS = 'json/recetas.json';               // el archivo, para la versión publicada
+
+// ¿Se está abriendo la web desde tu ordenador (y no desde GitHub Pages)?
+const EN_LOCAL = ['localhost', '127.0.0.1'].includes(location.hostname);
+
+let modoLectura = true;        // true = solo se pueden ver las recetas (no crear, editar ni borrar)
 
 let recetas = [];
 let ingredientesForm = [];     // ingredientes del formulario, mientras se escribe
@@ -13,13 +19,31 @@ const MAX_CARACTERES_FOTO = 80000;   // límite de la foto en texto (json-server
 /* ---------- DATOS ---------- */
 
 async function cargarRecetas() {
-    const respuesta = await fetch(URL_RECETAS);
+    // En tu ordenador intenta usar json-server: así se puede crear, editar y borrar
+    if (EN_LOCAL) {
+        try {
+            const respuesta = await fetch(URL_RECETAS);
 
-    if (!respuesta.ok) {
-        throw new Error('El servidor respondió ' + respuesta.status);
+            if (respuesta.ok) {
+                modoLectura = false;
+                return await respuesta.json();
+            }
+        } catch (error) {
+            console.info('json-server no responde: se lee el archivo en modo lectura');
+        }
     }
 
-    return await respuesta.json();
+    // Sin json-server (por ejemplo, en GitHub Pages) se lee el archivo, solo para ver
+    modoLectura = true;
+
+    const respuesta = await fetch(ARCHIVO_RECETAS);
+
+    if (!respuesta.ok) {
+        throw new Error('No se pudo leer ' + ARCHIVO_RECETAS + ' (' + respuesta.status + ')');
+    }
+
+    const datos = await respuesta.json();
+    return datos.recetas;
 }
 
 async function guardarReceta(receta) {
@@ -163,6 +187,14 @@ function mostrarVistaFoto() {
     }
 }
 
+// Muestra u oculta lo que solo tiene sentido con json-server encendido
+function aplicarModo() {
+    document.querySelector('#btnNueva').classList.toggle('d-none', modoLectura);
+
+    // el aviso solo sale en tu ordenador (en la web publicada no hace falta)
+    document.querySelector('#avisoLectura').classList.toggle('d-none', !(modoLectura && EN_LOCAL));
+}
+
 function mostrarAviso(texto) {
     const toast = document.querySelector('#toastAviso');
     toast.querySelector('.toast-body').textContent = texto;
@@ -216,9 +248,10 @@ function pintarRecetas(lista) {
             <span><i class="punto macro-g"></i> G ${receta.grasas} g</span>
           </div>
 
-          <small class="text-body-secondary d-block mb-3"><i class="bi bi-basket"></i> ${numIngredientes} ingredientes · Ver receta</small>
+          <small class="text-body-secondary d-block"><i class="bi bi-basket"></i> ${numIngredientes} ingredientes · Ver receta</small>
 
-          <div class="d-flex gap-2">
+          ${modoLectura ? '' : `
+          <div class="d-flex gap-2 mt-3">
             <button type="button" class="btn btn-outline-dark btn-sm btn-editar" data-id="${receta.id}">
               <i class="bi bi-pencil-fill"></i> Editar
             </button>
@@ -227,7 +260,7 @@ function pintarRecetas(lista) {
               data-id="${receta.id}" data-nombre="${escaparHtml(receta.nombre)}">
               <i class="bi bi-trash-fill"></i> Borrar
             </button>
-          </div>
+          </div>`}
         </div>
       </article>`;
 
@@ -404,14 +437,15 @@ async function iniciar() {
     try {
         recetas = await cargarRecetas();
         pintarRecetas(recetas);
+        aplicarModo();
     } catch (error) {
         console.error('No se pudieron cargar las recetas:', error);
 
         document.querySelector('#listaRecetas').innerHTML = `
       <div class="col-12">
         <div class="alert alert-warning mb-0">
-          No se pudieron cargar las recetas. ¿Está arrancado json-server?<br>
-          <code>npx json-server json/recetas.json --port 3001</code>
+          No se pudieron cargar las recetas.
+          ${EN_LOCAL ? '<br>Comprueba que existe <code>json/recetas.json</code>.' : ''}
         </div>
       </div>`;
     }

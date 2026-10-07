@@ -55,6 +55,12 @@
                     <i class="bi bi-plus-lg"></i> Nueva receta
                 </button>
             </div>
+            <div id="avisoLectura" class="alert alert-info d-none">
+                <i class="bi bi-info-circle"></i>
+                json-server no está encendido: estás en <strong>modo lectura</strong>.
+                Para crear, editar o borrar recetas, arráncalo con
+                <code>npx json-server json/recetas.json --port 3001</code> y recarga la página.
+            </div>
             <div id="listaRecetas" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4"></div>
         </div>
     </section>
