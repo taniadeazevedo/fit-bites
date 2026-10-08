@@ -619,10 +619,21 @@ h1 .resalte {
 .bowl-tarjeta .paso-bowl.activo { background: var(--verde); }  /* el paso activo sigue verde */
 
 .bowl-visual {
-  display: flex;                           /* cuenco a la izquierda y leyenda a la derecha */
-  align-items: center;                     /* centrados en vertical */
-  flex-wrap: wrap;                         /* si no caben, la leyenda baja */
-  gap: 1.5rem;                             /* separación */
+  background: var(--blanco);               /* panel blanco: separa el cuenco del resto y lo deja más limpio */
+  border-radius: 1.25rem;                  /* esquinas redondeadas */
+  padding: 1.5rem 2rem;                    /* aire por dentro */
+  display: flex;                           /* cuenco y leyenda en una fila... */
+  flex-direction: column;                  /* ...pero en móvil, uno debajo de otro (cuenco arriba) */
+  align-items: center;                     /* centrados */
+  gap: 1.5rem;                             /* separación entre cuenco y leyenda */
+}
+
+@media (min-width: 576px) {                /* en pantallas medianas y grandes... */
+  .bowl-visual {
+    flex-direction: row-reverse;           /* ...el cuenco pasa a la DERECHA y la leyenda a la izquierda */
+    justify-content: space-between;        /* repartidos: uno a cada lado */
+    gap: 2.5rem;                           /* más separación */
+  }
 }
 
 .cuenco-caja { width: 220px; }             /* el conjunto cuenco + borde mide 220px de ancho */
@@ -654,11 +665,25 @@ h1 .resalte {
 .capa-verduras { background: #4E9A5F; }    /* verduras: verde */
 .capa-extras { background: #B58B5E; }      /* salsas y extras: tostado */
 
-.leyenda-bowl li { margin-bottom: .35rem; font-size: .9rem; }  /* una línea por grupo */
+.leyenda-bowl { flex: 1; width: 100%; }  /* la leyenda ocupa todo el espacio que deja el cuenco */
 
-.leyenda-bowl strong { margin-left: .25rem; }   /* los gramos, junto al nombre */
+.leyenda-bowl li {
+  display: flex;                           /* nombre a la izquierda y gramos a la derecha, en la misma fila */
+  align-items: center;                     /* centrados en vertical */
+  gap: .6rem;                              /* separación entre el puntito y el nombre */
+  padding: .55rem 0;                       /* aire arriba y abajo */
+  border-bottom: 1px solid var(--borde);   /* una línea fina separa cada fila */
+  font-size: .95rem;                       /* tamaño de letra */
+}
 
-.leyenda-bowl .punto { width: .75rem; height: .75rem; }  /* los puntitos de color, algo más grandes */
+.leyenda-bowl li:last-child { border-bottom: 0; }  /* la última fila no necesita línea */
+
+.leyenda-bowl strong {
+  margin-left: auto;                       /* empuja los gramos al extremo derecho de la fila */
+  font-variant-numeric: tabular-nums;      /* los números tienen todos el mismo ancho: así se alinean en columna */
+}
+
+.leyenda-bowl .punto { width: .75rem; height: .75rem; margin: 0; flex: 0 0 auto; }  /* los puntitos de color, algo más grandes y sin encogerse */
 
 /* ---------- Aparecer al hacer scroll ---------- */
 .js .reveal {
