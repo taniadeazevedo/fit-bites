@@ -677,28 +677,23 @@ h1 .resalte {
 
 /* ---------- Botón de tema ---------- */
 .btn-tema {
-  width: 46px;                             /* círculo del mismo tamaño que el de la hamburguesa */
-  height: 46px;
   border: 0;                               /* sin borde */
-  border-radius: 50%;                      /* redondo */
-  background: var(--verde-soft);           /* fondo verde suave */
+  background: none;                        /* sin fondo: solo se ve el icono, sin círculo */
   color: var(--verde);                     /* el icono en verde */
-  font-size: 1.15rem;                      /* icono de buen tamaño */
-  display: inline-flex;                    /* centra el icono... */
-  align-items: center;                     /* ...en vertical... */
-  justify-content: center;                 /* ...y en horizontal */
-  transition: background .3s, transform .2s;  /* cambios suaves */
+  font-size: 1.35rem;                      /* icono de buen tamaño */
+  padding: .4rem;                          /* zona de pulsación cómoda alrededor del icono */
+  line-height: 1;                          /* sin altura de línea extra */
+  display: inline-flex;                    /* centra el icono */
+  transition: color .2s, transform .3s;    /* cambios suaves */
 }
 
-.btn-tema:hover { background: var(--lima); color: #202923; }  /* al pasar el ratón, se pone lima */
+.btn-tema:hover { color: var(--terracota); transform: rotate(20deg); }  /* al pasar el ratón, se pone terracota y gira un poquito */
 
-.btn-tema:active { transform: scale(.92); }  /* al pulsar, se encoge un poco */
+.btn-tema:active { transform: scale(.9); }  /* al pulsar, se encoge */
 
-.btn-tema:focus-visible { outline: 0; box-shadow: 0 0 0 .2rem rgba(36, 92, 69, .25); }  /* con teclado, un halo verde */
+.btn-tema:focus-visible { outline: 2px solid var(--verde); outline-offset: 2px; border-radius: .5rem; }  /* con teclado, un contorno verde */
 
-@media (min-width: 992px) {                /* en ordenador... */
-  .btn-tema { width: 40px; height: 40px; font-size: 1rem; }  /* ...un poco más pequeño */
-}
+[data-bs-theme="dark"] .btn-tema { color: var(--lima); }  /* en el tema oscuro, el icono en lima */
 
 /* ---------- Pie de página ---------- */
 .pie { border-top: 1px solid var(--borde); margin-top: 2rem; }  /* línea fina arriba y separación con lo de encima */
