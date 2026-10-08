@@ -478,7 +478,8 @@ a:hover {                     /* :hover = cuando el ratón está encima */
 
   .navbar-collapse .nav-item:nth-child(1) { animation-delay: .05s; }  /* el primero entra enseguida... */
   .navbar-collapse .nav-item:nth-child(2) { animation-delay: .13s; }  /* ...el segundo un poquito después... */
-  .navbar-collapse .nav-item:nth-child(3) { animation-delay: .21s; }  /* ...y el tercero el último: efecto cascada */
+  .navbar-collapse .nav-item:nth-child(3) { animation-delay: .21s; }  /* ...el tercero... */
+  .navbar-collapse .nav-item:nth-child(4) { animation-delay: .29s; }  /* ...y el cuarto el último: efecto cascada */
 }
 
 @keyframes entraMenu {                    /* la animación: de... */
@@ -580,7 +581,9 @@ h1 .resalte {
 
 .pill-tipo.activa { background: var(--verde); border-color: var(--verde); color: #fff; }  /* la píldora elegida: verde con texto blanco */
 
-.pill-proteina { margin-left: .5rem; }                 /* la de 🔥 va un poco separada de las demás */
+.pill-fav { margin-left: .5rem; }                      /* la de ❤️ va un poco separada de las de tipo de plato */
+
+.pill-fav.activa { background: #E0455A; border-color: #E0455A; color: #fff; }  /* la de favoritas activada: roja con texto blanco */
 
 .pill-proteina.activa { background: var(--lima); border-color: var(--lima); color: #202923; }  /* la de proteína activada: lima con texto oscuro */
 
@@ -770,10 +773,90 @@ h1 .resalte {
 
 /* ---------- Foto en la ventana de detalle ---------- */
 #detalleFoto {
-  display: block;                          /* en su propia línea, para poder centrarla */
-  width: 100%;                             /* ocupa el ancho disponible... */
-  max-width: 24rem;                        /* ...pero nunca más de 24rem (más o menos como la de la tarjeta): así no se agranda en pantallas grandes */
-  aspect-ratio: 20 / 17;                   /* proporción fija, la misma "cuadradita" de las tarjetas (85 %) */
-  object-fit: cover;                       /* la foto llena el hueco recortando lo que sobre, sin deformarse */
-  margin-inline: auto;                     /* centrada en la ventana */
+  display: block;                          /* en su propia línea */
+  width: 100%;                             /* llena todo el ancho de la ventana (sin márgenes a los lados) */
+  height: 17rem;                           /* altura fija: la foto no se agranda aunque la ventana sea ancha */
+  object-fit: cover;                       /* la foto rellena todo el hueco, recortando lo que sobre (como un zoom), sin deformarse */
 }
+
+/* =====================================================================
+   FUNCIONES NUEVAS: ordenar, favoritas y lista de la compra
+   ===================================================================== */
+
+/* ---------- Barra de filtros: píldoras + ordenar ---------- */
+.barra-filtros {
+  display: flex;                           /* píldoras y desplegable en una caja flexible... */
+  flex-direction: column;                  /* ...en móvil, uno debajo del otro... */
+  gap: .75rem;                             /* ...con separación */
+}
+
+@media (min-width: 768px) {                /* en pantallas medianas y grandes... */
+  .barra-filtros { flex-direction: row; align-items: flex-start; justify-content: space-between; gap: 1.5rem; }  /* ...en fila: píldoras a la izquierda y el orden a la derecha */
+}
+
+.barra-filtros .pills-scroll { flex: 1; min-width: 0; }  /* las píldoras ocupan el espacio libre; "min-width: 0" deja que se desplacen en vez de empujar */
+
+.ordenar-caja { width: auto; flex: 0 0 auto; }  /* el desplegable de orden mantiene su tamaño (anula el 100 % de Bootstrap) */
+
+.ordenar-caja .input-group-text { background: var(--blanco); color: var(--gris); border-radius: 999px 0 0 999px; }  /* el icono, con forma de píldora por la izquierda */
+
+.ordenar-caja .form-select { border-radius: 0 999px 999px 0; }  /* el desplegable, redondeado por la derecha */
+
+/* ---------- Favoritas ---------- */
+.btn-fav {
+  position: absolute;                      /* encima de la foto... */
+  top: .8rem;                              /* ...arriba... */
+  left: .8rem;                             /* ...a la izquierda (el 🔥 va a la derecha) */
+  width: 2.4rem;                           /* círculo de 2,4rem */
+  height: 2.4rem;
+  border: 0;                               /* sin borde */
+  border-radius: 50%;                      /* redondo */
+  background: rgba(255, 255, 255, .92);    /* blanco casi opaco para que se vea sobre cualquier foto */
+  color: #8a8f8c;                          /* corazón vacío en gris */
+  display: inline-flex;                    /* centra el icono */
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .18);  /* sombrita */
+  transition: transform .2s, color .2s;    /* cambios suaves */
+}
+
+.btn-fav:hover { transform: scale(1.1); }  /* al pasar el ratón, crece un poco */
+
+.btn-fav.activa { color: #E0455A; }        /* favorita: el corazón en rojo */
+
+.btn-fav.activa i { animation: latido .35s ease; }  /* al marcarla, el corazón "late" una vez */
+
+@keyframes latido {                        /* crece y vuelve a su tamaño */
+  50% { transform: scale(1.4); }
+}
+
+/* ---------- Botón del carrito en la tarjeta ---------- */
+.btn-compra {
+  border: 1px solid var(--verde);          /* borde verde */
+  color: var(--verde);                     /* icono verde */
+  background: transparent;                 /* sin relleno */
+}
+
+.btn-compra:hover { background: var(--verde-soft); color: var(--verde); border-color: var(--verde); }  /* al pasar el ratón, fondo verde suave */
+
+.btn-compra.activa { background: var(--verde); color: #fff; }  /* ya está en la lista: verde relleno */
+
+/* ---------- Lista de la compra ---------- */
+.item-compra {
+  display: flex;                           /* casilla, nombre y cantidad en fila */
+  align-items: center;
+  gap: .75rem;
+  padding: .6rem 0;
+  border-bottom: 1px solid var(--borde);   /* línea fina entre ingredientes */
+  cursor: pointer;                         /* manita: se puede pulsar en toda la fila */
+  margin: 0;
+}
+
+.item-compra .item-nombre { flex: 1; }     /* el nombre ocupa el espacio libre */
+
+.item-compra .item-cantidad { color: var(--gris); font-variant-numeric: tabular-nums; white-space: nowrap; }  /* la cantidad, en gris y alineada */
+
+.item-compra small { display: block; color: var(--gris); }  /* la nota "en 3 recetas", debajo del nombre */
+
+.item-compra.tachado .item-nombre,
+.item-compra.tachado .item-cantidad { text-decoration: line-through; opacity: .5; }  /* ingrediente marcado: tachado y apagado */

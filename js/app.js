@@ -33,6 +33,11 @@ let textoBusqueda = '';        // lo que se ha escrito en el buscador ('' = sin 
 let soloProteina = false;      // true = el interruptor "Alta en proteína" está activado
 let ingredientesBase = [];     // la tabla de ingredientes (cada uno con sus valores por 100 g)
 let bowl = [];                 // el bowl que estás montando: [{ id: 'arroz-blanco', gramos: 120 }, ...]
+let favoritas = [];            // ids de las recetas favoritas (como texto): ['1', '4']
+let soloFavoritas = false;     // true = la píldora "Favoritas" está activada
+let orden = '';                // cómo se ordenan las recetas ('' = orden original, 'proteina', 'kcal', 'tiempo' o 'nombre')
+let compra = [];               // ids de las recetas que están en la lista de la compra
+let compraOk = [];             // claves de los ingredientes ya tachados
 let observador = null;         // el "vigilante" que avisa cuando algo entra en pantalla (para las animaciones al hacer scroll)
 let pasoActual = 0;            // el paso en el que estás montando el bowl (0 = el primero, Proteína)
 
@@ -60,6 +65,9 @@ const PROTEINA_ALTA = 35;
 // "Mi día" se guarda en el navegador (localStorage), no en recetas.json
 const CLAVE_DIA = 'fitbites-dia';              // nombre con el que guardamos "lo de hoy" en el navegador
 const CLAVE_OBJETIVO = 'fitbites-objetivo';    // nombre con el que guardamos tu objetivo diario
+const CLAVE_FAV = 'fitbites-favoritas';        // nombre con el que guardamos tus recetas favoritas
+const CLAVE_COMPRA = 'fitbites-compra';        // nombre con el que guardamos las recetas de la lista de la compra
+const CLAVE_COMPRA_OK = 'fitbites-compra-ok';  // nombre con el que guardamos los ingredientes que ya has tachado
 const CLAVE_BOWL = 'fitbites-bowl';            // nombre con el que guardamos el bowl que estás montando
 
 // Objetivo orientativo para ganar masa muscular (la persona lo puede cambiar en la web)
@@ -230,9 +238,11 @@ async function reducirImagen(archivo) {
     return resultado;                                      // devolvemos la foto ya reducida, en texto
 }
 
-// Solo se pintan fotos que de verdad sean una imagen (data:image/...)
+// Solo se pintan fotos que de verdad sean una imagen: o un texto Base64 (data:image/...) o la ruta de un archivo de la carpeta imgs/ (imgs/recetas/receta-1.jpg)
 function fotoValida(foto) {
-    return typeof foto === 'string' && foto.startsWith('data:image/'); // tiene que ser texto Y empezar por "data:image/"
+    if (typeof foto !== 'string') return false;            // tiene que ser texto
+    return foto.startsWith('data:image/')                  // ...y empezar por "data:image/" (foto subida desde el formulario)...
+        || /^imgs\/[\w\-./]+\.(jpe?g|png|webp)$/i.test(foto); // ...o ser una ruta como "imgs/recetas/receta-1.jpg" (foto guardada como archivo, más nítida)
 }
 
 // Enseña u oculta la vista previa de la foto en el formulario
@@ -484,7 +494,8 @@ function rellenarTipos() {
     // las píldoras: "Todos" (valor vacío) y una por cada tipo; al final, la de 🔥 Alta en proteína
     pills.innerHTML = ['', ...TIPOS_PLATO]
         .map(tipo => `<button type="button" class="pill-tipo${tipo === tipoFiltro ? ' activa' : ''}" data-tipo="${escaparHtml(tipo)}">${tipo === '' ? 'Todos' : escaparHtml(tipo)}</button>`)
-        .join('') + `<button type="button" class="pill-tipo pill-proteina${soloProteina ? ' activa' : ''}" id="pillProteina" aria-pressed="${soloProteina}">🔥 Alta en proteína</button>`;
+        .join('') + `<button type="button" class="pill-tipo pill-fav${soloFavoritas ? ' activa' : ''}" id="pillFavoritas" aria-pressed="${soloFavoritas}">❤️ Favoritas</button>`
+        + `<button type="button" class="pill-tipo pill-proteina${soloProteina ? ' activa' : ''}" id="pillProteina" aria-pressed="${soloProteina}">🔥 Alta en proteína</button>`;
 }
 
 // Marca como "activa" la píldora del filtro elegido (sin volver a dibujarlas, para no perder el desplazamiento lateral)
@@ -496,6 +507,10 @@ function actualizarPills() {
     const proteina = document.querySelector('#pillProteina');           // la píldora de 🔥
     proteina.classList.toggle('activa', soloProteina);                  // activa si el filtro está puesto
     proteina.setAttribute('aria-pressed', soloProteina);                // y lo avisamos a los lectores de pantalla
+
+    const favoritasPill = document.querySelector('#pillFavoritas');     // la píldora de ❤️
+    favoritasPill.classList.toggle('activa', soloFavoritas);            // activa si el filtro está puesto
+    favoritasPill.setAttribute('aria-pressed', soloFavoritas);          // y lo avisamos a los lectores de pantalla
 }
 
 // Pasa un texto a minúsculas y le quita las tildes, para que "salmon" encuentre "Salmón"
@@ -518,14 +533,62 @@ function recetasFiltradas() {
         const coincideTexto = busqueda === '' || textoReceta.includes(busqueda); // sin búsqueda valen todas; si no, el texto debe contenerla
 
         const coincideProteina = !soloProteina || r.proteina >= PROTEINA_ALTA; // interruptor apagado: valen todas; encendido: solo las que llegan al mínimo de proteína
+        const coincideFavorita = !soloFavoritas || esFavorita(r.id); // píldora apagada: valen todas; encendida: solo las favoritas
 
-        return coincideTipo && coincideTexto && coincideProteina; // la receta se muestra solo si cumple las tres condiciones (&& = Y)
+        return coincideTipo && coincideTexto && coincideProteina && coincideFavorita; // la receta se muestra solo si cumple las cuatro condiciones (&& = Y)
     });
+}
+
+// Devuelve una COPIA de la lista ordenada según el desplegable (sort ordena una lista; con [...lista] trabajamos sobre una copia para no tocar la original)
+function ordenarRecetas(lista) {
+    const copia = [...lista];                              // los tres puntos "esparcen" la lista dentro de una nueva
+
+    // sort recibe una función que compara dos recetas (a y b): si devuelve un número negativo, a va antes; si es positivo, va antes b
+    if (orden === 'proteina') return copia.sort((a, b) => Number(b.proteina) - Number(a.proteina));  // de más a menos proteína
+    if (orden === 'kcal') return copia.sort((a, b) => Number(a.kcal) - Number(b.kcal));              // de menos a más calorías
+    if (orden === 'tiempo') return copia.sort((a, b) => Number(a.tiempo) - Number(b.tiempo));        // de menos a más minutos
+    if (orden === 'nombre') return copia.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));     // alfabético (localeCompare entiende tildes y ñ)
+    return copia;                                          // sin orden elegido: como vienen
+}
+
+/* ---------- FAVORITAS ---------- */
+
+// Lee una lista de textos guardada en localStorage (sirve para favoritas, compra, etc.)
+function leerLista(clave) {
+    try {                                                  // si lo guardado está roto, JSON.parse falla
+        const guardado = JSON.parse(localStorage.getItem(clave)); // lee el texto y lo convierte en lista
+        if (Array.isArray(guardado)) return guardado.map(String); // si es una lista, nos aseguramos de que todo sean textos
+    } catch {
+        // si está roto, empezamos con una lista vacía
+    }
+    return [];                                             // lista vacía
+}
+
+// Guarda una lista en localStorage
+function guardarLista(clave, lista) {
+    localStorage.setItem(clave, JSON.stringify(lista));    // lista -> texto -> localStorage
+}
+
+// ¿Esta receta es favorita?
+function esFavorita(id) {
+    return favoritas.includes(String(id));                 // includes mira si el id está en la lista
+}
+
+// Marca o desmarca una receta como favorita. Devuelve true si ahora es favorita
+function alternarFavorita(id) {
+    const clave = String(id);                              // el id, como texto
+    if (favoritas.includes(clave)) {                       // si ya era favorita...
+        favoritas = favoritas.filter(f => f !== clave);    // ...la quitamos (filter deja todas menos esa)
+    } else {                                               // si no...
+        favoritas.push(clave);                             // ...la añadimos
+    }
+    guardarLista(CLAVE_FAV, favoritas);                    // guardamos
+    return favoritas.includes(clave);                      // y devolvemos cómo ha quedado
 }
 
 // Pinta las recetas aplicando los filtros que haya puestos (tipo y buscador)
 function mostrarRecetas() {
-    pintarRecetas(recetasFiltradas());                          // pintarRecetas dibuja la lista que le pasemos
+    pintarRecetas(ordenarRecetas(recetasFiltradas()));          // filtramos, ordenamos y pintamos
 }
 
 /* ---------- HAZ TU BOWL ---------- */
@@ -751,10 +814,11 @@ function pintarRecetas(lista) {
     contenedor.innerHTML = '';                             // lo vaciamos antes de pintar (si no, se repetirían)
 
     if (lista.length === 0) {                              // si no hay ninguna receta...
-        const hayFiltro = tipoFiltro !== '' || textoBusqueda.trim() !== '' || soloProteina; // ¿hay algún filtro o búsqueda puestos?
+        const hayFiltro = tipoFiltro !== '' || textoBusqueda.trim() !== '' || soloProteina || soloFavoritas; // ¿hay algún filtro o búsqueda puestos?
         const mensaje = hayFiltro ? 'No hay recetas que coincidan con lo que buscas.' : 'Aún no hay recetas. ¡Añade la primera!'; // ...el mensaje depende de si hay un filtro puesto
         contenedor.innerHTML = `<p class="text-body-secondary">${mensaje}</p>`; // ...y lo escribimos
         pintarDia();                                       // ...refrescamos "Mi día"
+        pintarCompra();                                    // ...y la lista de la compra
         return;                                            // ...y terminamos
     }
 
@@ -781,6 +845,9 @@ function pintarRecetas(lista) {
               : `<div class="d-flex align-items-center justify-content-center"><i class="bi bi-egg-fried fs-1"></i></div>`}
           </div>
           ${receta.proteina >= PROTEINA_ALTA ? `<span class="recipe-tag recipe-tag--protein receta-fuego">🔥 Alta en proteína</span>` : ''}
+          <button type="button" class="btn-fav${esFavorita(receta.id) ? ' activa' : ''}" data-id="${receta.id}" aria-pressed="${esFavorita(receta.id)}" aria-label="Marcar como favorita">
+            <i class="bi ${esFavorita(receta.id) ? 'bi-heart-fill' : 'bi-heart'}"></i>
+          </button>
         </div>
 
         <div class="card-body">
@@ -812,6 +879,9 @@ function pintarRecetas(lista) {
             <button type="button" class="btn btn-verde btn-sm btn-dia" data-id="${receta.id}">
               <i class="bi bi-plus-lg"></i> Mi día
             </button>
+            <button type="button" class="btn btn-sm btn-compra${estaEnCompra(receta.id) ? ' activa' : ''}" data-id="${receta.id}" aria-pressed="${estaEnCompra(receta.id)}" aria-label="Añadir a la lista de la compra" title="Lista de la compra">
+              <i class="bi ${estaEnCompra(receta.id) ? 'bi-cart-check-fill' : 'bi-cart-plus'}"></i>
+            </button>
             ${modoLectura ? '' : `
             <button type="button" class="btn btn-outline-dark btn-sm btn-editar" data-id="${receta.id}">
               <i class="bi bi-pencil-fill"></i> Editar
@@ -829,7 +899,154 @@ function pintarRecetas(lista) {
     }
 
     pintarDia();     // las recetas han cambiado: recalcula "Mi día"
+    pintarCompra();  // y la lista de la compra (por si se ha editado o borrado alguna receta)
     observarReveal(); // las tarjetas nuevas se animan cuando entran en pantalla
+}
+
+/* ---------- LISTA DE LA COMPRA ---------- */
+
+// ¿Esta receta está en la lista de la compra?
+function estaEnCompra(id) {
+    return compra.includes(String(id));                    // includes mira si el id está en la lista
+}
+
+// Añade o quita una receta de la lista de la compra. Devuelve true si ahora está dentro
+function alternarCompra(id) {
+    const clave = String(id);                              // el id, como texto
+    if (compra.includes(clave)) {                          // si ya estaba...
+        compra = compra.filter(c => c !== clave);          // ...la quitamos
+    } else {                                               // si no...
+        compra.push(clave);                                // ...la añadimos
+    }
+    guardarLista(CLAVE_COMPRA, compra);                    // guardamos
+    return compra.includes(clave);                         // y devolvemos cómo ha quedado
+}
+
+// Convierte un ingrediente escrito a mano ("120 g de salmón", "2 huevos", "Cebolla") en datos que se pueden sumar
+function interpretarIngrediente(texto) {
+    const t = texto.trim();                                // sin espacios sobrantes
+
+    // 1) con gramos o mililitros: "120 g de salmón", "100gr Salmón", "1 kg de..." (los grupos entre paréntesis son: cantidad, unidad y nombre)
+    let m = t.match(/^(\d+(?:[.,]\d+)?)\s*(kg|gr|g|ml|l)\b\.?\s*(?:de\s+)?(.+)$/i);
+    if (m) {
+        let cantidad = Number(m[1].replace(',', '.'));     // la cantidad como número (cambiando la coma por un punto)
+        let unidad = m[2].toLowerCase();                   // la unidad en minúsculas
+        if (unidad === 'kg') { cantidad *= 1000; unidad = 'g'; }   // los kilos pasan a gramos
+        if (unidad === 'gr') unidad = 'g';                 // "gr" es lo mismo que "g"
+        if (unidad === 'l') { cantidad *= 1000; unidad = 'ml'; }   // los litros pasan a mililitros
+        return { cantidad, unidad, nombre: m[3].trim() };
+    }
+
+    // 2) con unidades sueltas: "2 huevos cocidos", "½ aguacate"
+    m = t.match(/^(½|\d+(?:[.,]\d+)?)\s+(?:de\s+)?(.+)$/);
+    if (m) {
+        const cantidad = m[1] === '½' ? 0.5 : Number(m[1].replace(',', '.')); // "½" es un carácter especial: lo traducimos a 0,5
+        return { cantidad, unidad: 'ud', nombre: m[2].trim() };
+    }
+
+    // 3) sin cantidad: "Cebolla", "Pimienta y orégano"
+    return { cantidad: null, unidad: '', nombre: t };
+}
+
+// Crea una "clave" para saber si dos ingredientes son el mismo: "Huevos cocidos" y "huevo" -> "huevo"
+function claveIngrediente(nombre) {
+    return normalizarTexto(nombre)                         // minúsculas y sin tildes
+        .replace(/\(.*?\)/g, '')                           // quita lo que va entre paréntesis
+        .replace(/\b(cocid[oa]s?|rallad[oa]s?)\b/g, '')    // quita "cocido", "rallada"...
+        .replace(/\bde\b/g, '')                            // quita la palabra "de" ("salsa de soja" = "salsa soja")
+        .replace(/\s+/g, ' ')                              // deja un solo espacio entre palabras
+        .trim()
+        .split(' ')                                        // separa en palabras...
+        .map(p => (p.length > 3 && p.endsWith('s') && !p.endsWith('ss') ? p.slice(0, -1) : p)) // ...y quita la "s" final del plural ("huevos" -> "huevo")
+        .join(' ');                                        // y las vuelve a unir
+}
+
+// Escribe un número con "½" cuando acaba en medio: 0,5 -> "½", 1,5 -> "1½"
+function numeroConMedio(n) {
+    const entero = Math.floor(n);                          // la parte entera
+    if (n - entero === 0.5) return (entero > 0 ? entero : '') + '½'; // si acaba en medio, lo escribimos con ½
+    return formatoNumero(n, 1);                            // si no, número normal con hasta un decimal
+}
+
+// Junta los ingredientes de varias recetas, sumando las cantidades de los que se repiten
+function agruparIngredientes(lista) {
+    const grupos = new Map();                              // Map = lista de pares "clave -> datos"
+
+    for (const receta of lista) {                          // por cada receta elegida...
+        for (const texto of (receta.ingredientes ?? [])) { // ...y por cada ingrediente suyo...
+            const dato = interpretarIngrediente(texto);    // ...lo interpretamos
+            const clave = claveIngrediente(dato.nombre);   // ...y calculamos su clave
+            if (clave === '') continue;                    // si se queda vacía, lo saltamos
+
+            if (!grupos.has(clave)) {                      // si es la primera vez que aparece...
+                grupos.set(clave, { clave, nombre: dato.nombre, g: 0, ml: 0, ud: 0, recetas: new Set() }); // ...creamos su ficha
+            }
+
+            const ficha = grupos.get(clave);               // la ficha de este ingrediente
+            ficha.recetas.add(String(receta.id));          // apuntamos en qué recetas sale (Set no repite)
+            if (dato.unidad === 'g') ficha.g += dato.cantidad;       // sumamos gramos...
+            else if (dato.unidad === 'ml') ficha.ml += dato.cantidad; // ...o mililitros...
+            else if (dato.unidad === 'ud') ficha.ud += dato.cantidad; // ...o unidades
+        }
+    }
+
+    // pasamos las fichas a una lista, con el nombre con mayúscula inicial y la cantidad ya escrita
+    return [...grupos.values()].map(f => {
+        const partes = [];                                 // trozos de la cantidad (por si hay gramos y unidades a la vez)
+        if (f.g > 0) partes.push(formatoNumero(f.g) + ' g');
+        if (f.ml > 0) partes.push(formatoNumero(f.ml) + ' ml');
+        if (f.ud > 0) partes.push(numeroConMedio(f.ud) + ' ud');
+
+        return {
+            clave: f.clave,
+            nombre: f.nombre.charAt(0).toUpperCase() + f.nombre.slice(1), // primera letra en mayúscula
+            cantidad: partes.join(' + '),                  // por ejemplo "220 g" o "2 ud"
+            nota: f.recetas.size > 1 ? `en ${f.recetas.size} recetas` : '' // si sale en varias recetas, lo decimos
+        };
+    });
+}
+
+// Dibuja el panel de la lista de la compra y el numerito del menú
+function pintarCompra() {
+    // las recetas elegidas (buscándolas por id; si alguna ya no existe, filter(Boolean) la descarta)
+    const elegidas = compra.map(id => recetas.find(r => String(r.id) === id)).filter(Boolean);
+    document.querySelector('#contadorCompra').textContent = elegidas.length; // el numerito del menú
+
+    // las etiquetas de las recetas, cada una con su × para quitarla
+    document.querySelector('#compraRecetas').innerHTML = elegidas.map(r => `
+      <span class="chip-ingrediente">${escaparHtml(r.nombre)}
+        <button type="button" class="compra-quitar" data-id="${r.id}" aria-label="Quitar ${escaparHtml(r.nombre)}">×</button>
+      </span>`).join('');
+
+    const lista = document.querySelector('#compraLista');  // el hueco de la lista
+
+    if (elegidas.length === 0) {                           // si no hay recetas...
+        lista.innerHTML = '<p class="text-body-secondary">Aún no hay nada. Pulsa el carrito 🛒 de una receta para añadir sus ingredientes.</p>';
+        return;
+    }
+
+    // los ingredientes: los ya tachados van al final; dentro de cada grupo, por orden alfabético
+    const items = agruparIngredientes(elegidas).sort((a, b) =>
+        (compraOk.includes(a.clave) - compraOk.includes(b.clave)) || a.nombre.localeCompare(b.nombre, 'es')); // (true - false) = 1: los tachados pesan más y bajan
+
+    lista.innerHTML = items.map(it => {
+        const hecho = compraOk.includes(it.clave);         // ¿está tachado?
+        return `
+      <label class="item-compra${hecho ? ' tachado' : ''}">
+        <input type="checkbox" class="form-check-input mt-0" data-clave="${escaparHtml(it.clave)}"${hecho ? ' checked' : ''}>
+        <span class="item-nombre">${escaparHtml(it.nombre)}${it.nota ? `<small>${it.nota}</small>` : ''}</span>
+        <span class="item-cantidad">${escaparHtml(it.cantidad)}</span>
+      </label>`;
+    }).join('');
+}
+
+// La lista como texto simple, para copiarla y pegarla donde quieras
+function textoListaCompra() {
+    const elegidas = compra.map(id => recetas.find(r => String(r.id) === id)).filter(Boolean); // las recetas elegidas
+    const lineas = agruparIngredientes(elegidas)           // los ingredientes juntos
+        .filter(it => !compraOk.includes(it.clave))        // sin los ya tachados
+        .map(it => '• ' + it.nombre + (it.cantidad ? ' — ' + it.cantidad : '')); // "• Salmón — 220 g"
+    return 'Lista de la compra (Fit Bites)\n' + lineas.join('\n'); // un título y una línea por ingrediente
 }
 
 /* ---------- ANIMACIONES AL HACER SCROLL ---------- */
@@ -1050,6 +1267,16 @@ async function enviarFormulario(e) {                       // "e" es el evento "
 async function iniciar() {
     document.documentElement.classList.add('js');         // avisa al CSS de que JavaScript funciona: solo entonces las secciones empiezan escondidas para animarse (si no hubiera JavaScript, se verían normales)
 
+    favoritas = leerLista(CLAVE_FAV);                      // recupera tus favoritas
+    compra = leerLista(CLAVE_COMPRA);                      // recupera la lista de la compra
+    compraOk = leerLista(CLAVE_COMPRA_OK);                 // y lo que ya habías tachado
+
+    // ---- App instalable: el service worker guarda una copia para usarla sin internet ----
+    // Solo se registra en la web publicada (no en tu ordenador): así, mientras programas, nunca ves archivos viejos guardados
+    if ('serviceWorker' in navigator && !EN_LOCAL) {       // si el navegador lo permite y no estamos en local...
+        navigator.serviceWorker.register('sw.js').catch(error => console.error('No se pudo registrar el service worker:', error)); // ...lo registramos
+    }
+
     // ---- Tema claro / oscuro ----
     aplicarTema(document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'dark' : 'light'); // pone bien el icono según el tema con el que cargó la página
     document.querySelector('#btnTema').addEventListener('click', () => { // al pulsar el botón...
@@ -1169,12 +1396,68 @@ async function iniciar() {
 
         if (pill.id === 'pillProteina') {                  // si es la de 🔥...
             soloProteina = !soloProteina;                  // ...cambiamos su estado (true pasa a false y al revés)
+        } else if (pill.id === 'pillFavoritas') {          // si es la de ❤️...
+            soloFavoritas = !soloFavoritas;                // ...igual
         } else {                                           // si es una de tipo...
             tipoFiltro = pill.dataset.tipo;                // ...apuntamos el tipo ('' si es "Todos")
         }
 
         actualizarPills();                                 // marcamos la píldora activa
         mostrarRecetas();                                  // repintamos las recetas
+    });
+
+    // desplegable de orden: al elegir otra opción, apuntamos el orden y repintamos
+    document.querySelector('#ordenar').addEventListener('change', (e) => {
+        orden = e.target.value;                            // 'proteina', 'kcal', 'tiempo', 'nombre' o '' (original)
+        mostrarRecetas();                                  // repinta las recetas ya ordenadas
+    });
+
+    // ---- Lista de la compra ----
+    const panelCompra = document.querySelector('#panelCompra'); // el panel lateral
+
+    panelCompra.addEventListener('change', (e) => {        // al marcar o desmarcar una casilla de ingrediente
+        const casilla = e.target.closest('input[data-clave]'); // ¿fue una casilla de la lista?
+        if (!casilla) return;                              // si no, nada
+
+        if (casilla.checked) {                             // si se ha marcado...
+            compraOk.push(casilla.dataset.clave);          // ...lo apuntamos como tachado
+        } else {                                           // si se ha desmarcado...
+            compraOk = compraOk.filter(c => c !== casilla.dataset.clave); // ...lo quitamos de los tachados
+        }
+        guardarLista(CLAVE_COMPRA_OK, compraOk);           // guardamos
+        pintarCompra();                                    // repintamos (el tachado baja al final)
+    });
+
+    panelCompra.addEventListener('click', (e) => {         // clics dentro del panel
+        const quitar = e.target.closest('.compra-quitar'); // ¿fue en la × de una receta?
+        if (!quitar) return;                               // si no, nada
+
+        alternarCompra(quitar.dataset.id);                 // la quitamos de la lista
+        pintarCompra();                                    // repintamos el panel
+        const botonTarjeta = document.querySelector(`.btn-compra[data-id="${quitar.dataset.id}"]`); // y su botón de carrito en la tarjeta
+        if (botonTarjeta) {                                // si la tarjeta está en pantalla...
+            botonTarjeta.classList.remove('activa');       // ...vuelve a verse como "no añadida"
+            botonTarjeta.setAttribute('aria-pressed', 'false');
+            botonTarjeta.querySelector('i').className = 'bi bi-cart-plus';
+        }
+    });
+
+    document.querySelector('#btnCompraVaciar').addEventListener('click', () => { // "Vaciar lista"
+        compra = [];                                       // sin recetas
+        compraOk = [];                                     // y sin nada tachado
+        guardarLista(CLAVE_COMPRA, compra);                // guardamos
+        guardarLista(CLAVE_COMPRA_OK, compraOk);
+        pintarCompra();                                    // repintamos el panel
+        mostrarRecetas();                                  // y las tarjetas (para que los carritos se apaguen)
+    });
+
+    document.querySelector('#btnCompraCopiar').addEventListener('click', async () => { // "Copiar lista"
+        try {                                              // el portapapeles puede fallar (permisos)
+            await navigator.clipboard.writeText(textoListaCompra()); // copia el texto
+            mostrarAviso('Lista copiada ✓');               // avisamos
+        } catch {
+            mostrarAviso('No se pudo copiar la lista');    // si falla, también avisamos
+        }
     });
 
     // buscador: cada vez que se escribe o se borra una letra, apuntamos el texto y repintamos
@@ -1186,6 +1469,32 @@ async function iniciar() {
     // clics en las tarjetas: editar, borrar (lo gestiona Bootstrap) o abrir el detalle
     // Ponemos UN solo oyente en toda la lista (delegación de eventos): sirve para todas las tarjetas, aunque se creen después
     document.querySelector('#listaRecetas').addEventListener('click', (e) => {
+        const botonFav = e.target.closest('.btn-fav');     // ¿fue en el corazón?
+
+        if (botonFav) {                                    // si sí...
+            const ahoraFavorita = alternarFavorita(botonFav.dataset.id); // ...la marcamos o desmarcamos
+            if (soloFavoritas && !ahoraFavorita) {         // si estamos viendo solo favoritas y ya no lo es...
+                mostrarRecetas();                          // ...repintamos (así desaparece de la lista)
+            } else {                                       // si no...
+                botonFav.classList.toggle('activa', ahoraFavorita);       // ...solo cambiamos este corazón (sin repintar todo)
+                botonFav.setAttribute('aria-pressed', ahoraFavorita);
+                botonFav.querySelector('i').className = 'bi ' + (ahoraFavorita ? 'bi-heart-fill' : 'bi-heart');
+            }
+            return;                                        // y no abrimos el detalle
+        }
+
+        const botonCompra = e.target.closest('.btn-compra'); // ¿fue en el carrito?
+
+        if (botonCompra) {                                 // si sí...
+            const dentro = alternarCompra(botonCompra.dataset.id); // ...la añadimos o quitamos de la lista
+            botonCompra.classList.toggle('activa', dentro);        // ...el botón cambia de aspecto
+            botonCompra.setAttribute('aria-pressed', dentro);
+            botonCompra.querySelector('i').className = 'bi ' + (dentro ? 'bi-cart-check-fill' : 'bi-cart-plus');
+            pintarCompra();                                // ...refrescamos el panel y el numerito
+            mostrarAviso(dentro ? 'Añadida a la lista de la compra ✓' : 'Quitada de la lista de la compra');
+            return;                                        // ...y no abrimos el detalle
+        }
+
         const botonDia = e.target.closest('.btn-dia');     // closest() sube desde donde se hizo clic hasta encontrar un elemento con esa clase (o null)
 
         if (botonDia) {                                    // si el clic fue en el botón "Mi día"...

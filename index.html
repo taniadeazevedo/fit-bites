@@ -17,6 +17,13 @@
     <title>Fit Bites</title> <!-- el texto de la pestaña del navegador -->
     <link rel="icon" type="image/svg+xml" href="favicon.svg"> <!-- el iconito de la pestaña: un cuenco con hojas (archivo favicon.svg) -->
 
+    <!-- APP INSTALABLE (PWA): estas líneas permiten "Añadir a la pantalla de inicio" y que se abra como una app -->
+    <link rel="manifest" href="manifest.webmanifest"> <!-- la "ficha" de la app: nombre, colores e iconos (archivo manifest.webmanifest) -->
+    <meta name="theme-color" content="#245C45"> <!-- color de la barra del móvil cuando la web está abierta -->
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png"> <!-- el icono que usa el iPhone en la pantalla de inicio -->
+    <meta name="apple-mobile-web-app-capable" content="yes"> <!-- el iPhone la abre a pantalla completa, como una app -->
+    <meta name="apple-mobile-web-app-title" content="Fit Bites"> <!-- el nombre bajo el icono en el iPhone -->
+
     <!-- Tema claro/oscuro: se decide ANTES de que se pinte la página para que no haya un parpadeo blanco.
          Usa el tema que elegiste la última vez (localStorage) o, si no hay, el del sistema (prefers-color-scheme) -->
     <script>
@@ -80,6 +87,14 @@
                             <span id="contadorDia" class="badge rounded-pill text-bg-dark">0</span> <!-- el numerito: JavaScript lo actualiza (por el id) -->
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <!-- abre el panel lateral "Lista de la compra" (otro offcanvas de Bootstrap) -->
+                        <a class="nav-link" href="#" data-bs-toggle="offcanvas" data-bs-target="#panelCompra"
+                            aria-controls="panelCompra">
+                            <i class="bi bi-cart3"></i> Compra
+                            <span id="contadorCompra" class="badge rounded-pill text-bg-dark">0</span> <!-- cuántas recetas hay en la lista: JavaScript lo actualiza -->
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -111,7 +126,20 @@
                     </button>
                 </div>
                 <!-- las píldoras de filtro (Todos, Bowl, Pasta..., 🔥 Alta en proteína): las crea JavaScript desde la lista TIPOS_PLATO. En móvil se desplazan hacia los lados -->
-                <div id="pillsTipo" class="pills-scroll" role="group" aria-label="Filtrar por tipo de plato"></div>
+                <div class="barra-filtros"> <!-- las píldoras a la izquierda y el desplegable de orden a la derecha (en móvil, uno debajo del otro) -->
+                    <div id="pillsTipo" class="pills-scroll" role="group" aria-label="Filtrar por tipo de plato"></div>
+                    <!-- desplegable para ordenar: value="" = el orden original. JavaScript lo escucha por su id (#ordenar) -->
+                    <div class="input-group input-group-sm ordenar-caja">
+                        <label for="ordenar" class="input-group-text"><i class="bi bi-arrow-down-up"></i><span class="visually-hidden">Ordenar por</span></label>
+                        <select id="ordenar" class="form-select">
+                            <option value="">Orden original</option>
+                            <option value="proteina">Más proteína</option>
+                            <option value="kcal">Menos calorías</option>
+                            <option value="tiempo">Más rápidas</option>
+                            <option value="nombre">Nombre (A-Z)</option>
+                        </select>
+                    </div>
+                </div>
             </div>
             <!-- aviso azul que solo se enseña en tu ordenador cuando json-server está apagado ("d-none" = oculto hasta que JavaScript lo muestre) -->
             <div id="avisoLectura" class="alert alert-info d-none">
@@ -224,6 +252,7 @@
                         <li><a href="#recetas">Recetas</a></li>
                         <li><a href="#bowl">Haz tu bowl</a></li>
                         <li><a href="#" data-bs-toggle="offcanvas" data-bs-target="#panelDia">Mi día</a></li> <!-- abre el panel lateral, igual que en el menú -->
+                        <li><a href="#" data-bs-toggle="offcanvas" data-bs-target="#panelCompra">Lista de la compra</a></li>
                     </ul>
                 </div>
                 <div class="col-6 col-md-4"> <!-- el proyecto -->
@@ -240,6 +269,31 @@
             </p>
         </div>
     </footer>
+
+    <!-- LISTA DE LA COMPRA (panel lateral): junta los ingredientes de las recetas que marques con el carrito 🛒 -->
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="panelCompra" aria-labelledby="tituloCompra">
+        <div class="offcanvas-header">
+            <div>
+                <h2 class="offcanvas-title h5 mb-0" id="tituloCompra">Lista de la compra</h2>
+                <small class="text-body-secondary">Una ración de cada receta</small>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
+        </div>
+
+        <div class="offcanvas-body d-flex flex-column">
+            <div id="compraRecetas" class="d-flex flex-wrap gap-2 mb-3"></div> <!-- las recetas elegidas, como etiquetas con una × -->
+            <div id="compraLista" class="flex-grow-1"></div> <!-- la lista de ingredientes con casillas para ir tachando -->
+
+            <div class="border-top pt-3 mt-3 d-flex gap-2"> <!-- botones abajo -->
+                <button id="btnCompraCopiar" type="button" class="btn btn-outline-dark btn-sm"> <!-- copia la lista como texto, para pegarla en el móvil o en WhatsApp -->
+                    <i class="bi bi-clipboard"></i> Copiar lista
+                </button>
+                <button id="btnCompraVaciar" type="button" class="btn btn-outline-danger btn-sm">
+                    <i class="bi bi-trash"></i> Vaciar lista
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- MI DÍA (panel lateral): se desliza desde la derecha. Es un "offcanvas" de Bootstrap -->
     <div class="offcanvas offcanvas-end" tabindex="-1" id="panelDia" aria-labelledby="tituloDia"> <!-- offcanvas-end = sale por la derecha; el id coincide con el data-bs-target del menú -->
