@@ -22,11 +22,11 @@
     <!-- Bootstrap Icons: los iconitos (bi bi-leaf-fill, bi bi-clock...) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
 
-    <!-- Google Fonts: las dos fuentes de la marca. Los "preconnect" avisan al navegador para que se conecte antes y cargue más rápido -->
+    <!-- Google Fonts: las fuentes de la marca (Syne para el logo y el título grande, Outfit para el resto de títulos, Inter para el texto). Los "preconnect" avisan al navegador para que se conecte antes y cargue más rápido -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700&family=Inter:wght@400;600&display=swap"
-        rel="stylesheet"> <!-- Outfit para títulos (pesos 500 y 700) e Inter para el texto (pesos 400 y 600) -->
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Outfit:wght@500;700&family=Inter:wght@400;600&display=swap"
+        rel="stylesheet"> <!-- Syne para el logo y el título principal (pesos 700 y 800), Outfit para el resto de títulos (500 y 700) e Inter para el texto (400 y 600) -->
 
     <!-- Nuestro CSS, DESPUÉS de Bootstrap para poder pisarlo -->
     <link rel="stylesheet" href="css/estilos.css">
@@ -39,14 +39,16 @@
         <div class="container"> <!-- centra el contenido y le da márgenes laterales -->
             <a class="navbar-brand" href="#"><i class="bi bi-leaf-fill"></i> Fit Bites</a> <!-- la marca: un icono de hoja + el nombre -->
             <!-- el botón de las tres rayitas (solo se ve en móvil). data-bs-toggle="collapse" + data-bs-target="#menu" = "al pulsar, despliega lo que tenga id=menu" -->
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menu"
-                aria-controls="menu" aria-expanded="false" aria-label="Abrir menú">
-                <span class="navbar-toggler-icon"></span> <!-- el dibujo de las tres rayitas -->
+            <button class="navbar-toggler hamburguesa" type="button" data-bs-toggle="collapse" data-bs-target="#menu"
+                aria-controls="menu" aria-expanded="false" aria-label="Abrir menú"> <!-- "hamburguesa" es una clase nuestra: le da el estilo y la animación -->
+                <span class="barra"></span> <!-- las tres rayitas, dibujadas con CSS: al abrir el menú se convierten en una X -->
+                <span class="barra"></span>
+                <span class="barra"></span>
             </button>
             <div class="collapse navbar-collapse" id="menu"> <!-- lo que se esconde en móvil; su id coincide con el data-bs-target del botón -->
                 <ul class="navbar-nav ms-auto"> <!-- lista de enlaces; "ms-auto" los empuja a la derecha -->
-                    <li class="nav-item"><a class="nav-link" href="#recetas">Recetas</a></li> <!-- enlace que baja a la sección con id="recetas" -->
-                    <li class="nav-item"><a class="nav-link" href="#bowl">Haz tu bowl</a></li> <!-- enlace que baja a la sección "Haz tu bowl" -->
+                    <li class="nav-item"><a class="nav-link" href="#recetas"><i class="bi bi-grid"></i> Recetas</a></li> <!-- enlace que baja a la sección con id="recetas" -->
+                    <li class="nav-item"><a class="nav-link" href="#bowl"><i class="bi bi-egg-fried"></i> Haz tu bowl</a></li> <!-- enlace que baja a la sección "Haz tu bowl" -->
                     <li class="nav-item">
                         <!-- este enlace NO cambia de página: abre el panel lateral "Mi día" (offcanvas de Bootstrap) -->
                         <a class="nav-link" href="#" data-bs-toggle="offcanvas" data-bs-target="#panelDia"

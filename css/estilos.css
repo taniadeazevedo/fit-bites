@@ -46,15 +46,21 @@ h1,
 h2,
 h3,
 h4,
-h5,
-.navbar-brand {                       /* la coma significa "todos estos a la vez": títulos y la marca del menú */
+h5 {                                  /* la coma significa "todos estos a la vez": los títulos */
   font-family: "Outfit", sans-serif;  /* fuente de los títulos (la de texto es Inter) */
   font-weight: 700;                   /* letra en negrita */
   letter-spacing: -0.03em;            /* junta un poco las letras (negativo = más apretadas) */
 }
 
+h1,
+.navbar-brand {                       /* el título grande de la portada y el logo usan otra fuente: Syne */
+  font-family: "Syne", sans-serif;    /* Syne es ancha y con mucha personalidad; si no carga, una sans-serif cualquiera */
+  font-weight: 800;                   /* extranegrita */
+  letter-spacing: -0.04em;            /* letras algo apretadas (Syne ya es ancha) */
+}
+
 h1 {
-  font-size: clamp(2.8rem, 6vw, 5rem);  /* tamaño adaptable: nunca menos de 2,8rem, nunca más de 5rem, y entre medias crece con la pantalla */
+  font-size: clamp(2.4rem, 5.5vw, 4.5rem);  /* tamaño adaptable: nunca menos de 2,4rem, nunca más de 4,5rem, y entre medias crece con la pantalla (Syne es ancha, por eso es algo menor que antes) */
   line-height: .95;                     /* altura de línea apretada para titulares grandes */
 }
 
@@ -362,3 +368,124 @@ a:hover {                     /* :hover = cuando el ratón está encima */
 .paso-bowl.activo { background: var(--verde); color: #fff; }  /* el paso en el que estás: relleno verde y texto blanco */
 
 .paso-bowl .badge { background: var(--lima); color: var(--carbon); margin-left: .25rem; }  /* el numerito de ingredientes añadidos en ese paso */
+
+/* ---------- Menú hamburguesa con animación ---------- */
+
+/* El botón: un círculo con tres rayitas hechas con CSS */
+.navbar-toggler.hamburguesa {
+  display: flex;                          /* las rayitas se apilan con flexbox */
+  flex-direction: column;                 /* una debajo de otra */
+  justify-content: center;                /* centradas en vertical */
+  align-items: center;                    /* centradas en horizontal */
+  gap: 6px;                               /* separación entre rayitas */
+  width: 46px;                            /* botón cuadrado de 46px... */
+  height: 46px;
+  padding: 0;                             /* sin relleno de Bootstrap */
+  border: 0;                              /* sin el borde gris de Bootstrap */
+  border-radius: 50%;                     /* ...con las esquinas al máximo = círculo */
+  background: var(--verde-soft);          /* fondo verde muy suave */
+  transition: background .3s, transform .2s;  /* el cambio de color y de tamaño es suave (no de golpe) */
+}
+
+@media (min-width: 992px) {               /* en pantallas grandes el menú ya se ve desplegado, así que el botón sobra */
+  .navbar-toggler.hamburguesa { display: none; }  /* lo escondemos (sin esto, nuestro "display: flex" de arriba pisaría al de Bootstrap) */
+}
+
+.navbar-toggler.hamburguesa:focus { box-shadow: 0 0 0 .2rem rgba(36, 92, 69, .25); }  /* al enfocarlo con teclado: un halo verde en vez del azul de Bootstrap */
+
+.navbar-toggler.hamburguesa:active { transform: scale(.92); }  /* al pulsarlo, se encoge un poquito (efecto "botón") */
+
+.hamburguesa .barra {
+  display: block;                         /* cada rayita es una caja... */
+  width: 22px;                            /* ...de 22px de ancho... */
+  height: 2px;                            /* ...y 2px de alto */
+  background: var(--verde);               /* en verde */
+  border-radius: 2px;                     /* puntas redondeadas */
+  transition: transform .4s cubic-bezier(.68, -.55, .27, 1.55), opacity .2s, width .3s;  /* todo se mueve con un pequeño "rebote" al final */
+}
+
+.hamburguesa .barra:nth-child(2) {        /* la rayita del medio... */
+  width: 14px;                            /* ...es más corta... */
+  align-self: flex-end;                   /* ...y se pega a la derecha */
+  margin-right: 12px;                     /* con un margen para que quede alineada con las otras */
+}
+
+/* Menú ABIERTO (Bootstrap pone aria-expanded="true" en el botón): las rayitas forman una X */
+.hamburguesa[aria-expanded="true"] { background: var(--lima); }  /* el círculo pasa a lima */
+
+.hamburguesa[aria-expanded="true"] .barra:nth-child(1) { transform: translateY(8px) rotate(45deg); }   /* la de arriba baja 8px y gira 45° */
+
+.hamburguesa[aria-expanded="true"] .barra:nth-child(2) { opacity: 0; transform: scaleX(0); }           /* la del medio desaparece */
+
+.hamburguesa[aria-expanded="true"] .barra:nth-child(3) { transform: translateY(-8px) rotate(-45deg); } /* la de abajo sube 8px y gira -45° */
+
+/* Enlaces del menú (en ordenador): una línea verde que crece desde la izquierda al pasar el ratón */
+.nav-link { position: relative; }         /* para poder colocar la línea respecto al enlace */
+
+.nav-link .badge { font-size: .75rem; vertical-align: middle; }  /* el numerito de "Mi día" no crece con el texto */
+
+@media (min-width: 992px) {               /* solo en pantallas grandes (a partir de 992px) */
+  .navbar-nav .nav-link::after {
+    content: "";                          /* un pseudo-elemento vacío: es la línea */
+    position: absolute;                   /* se coloca libremente dentro del enlace */
+    left: .5rem;                          /* empieza donde empieza el texto */
+    right: .5rem;                         /* y acaba donde acaba */
+    bottom: .2rem;                        /* un poco por encima del borde de abajo */
+    height: 2px;                          /* de 2px de grosor */
+    background: var(--verde);             /* verde */
+    transform: scaleX(0);                 /* al principio, con ancho 0 (invisible) */
+    transform-origin: left;               /* crece desde la izquierda */
+    transition: transform .3s;            /* y el crecimiento es suave */
+  }
+
+  .navbar-nav .nav-link:hover::after { transform: scaleX(1); }  /* al pasar el ratón, ocupa todo el ancho */
+}
+
+/* Menú desplegado en móvil: una tarjeta con enlaces grandes que entran uno a uno */
+@media (max-width: 991.98px) {            /* solo en pantallas pequeñas */
+  .navbar-collapse {
+    margin-top: .75rem;                   /* separado del logo */
+    padding: .5rem 1.25rem;               /* aire por dentro */
+    background: #fff;                     /* fondo blanco */
+    border: 1px solid var(--borde);       /* con borde fino */
+    border-radius: 1.25rem;               /* esquinas redondeadas */
+    box-shadow: 0 14px 34px rgba(36, 92, 69, .16);  /* sombra suave verdosa */
+  }
+
+  .navbar-nav .nav-link {
+    font-family: "Syne", sans-serif;      /* enlaces en Syne, como el logo */
+    font-size: 1.5rem;                    /* grandes, fáciles de tocar */
+    font-weight: 700;                     /* negrita */
+    letter-spacing: -.03em;               /* letras apretadas */
+    padding: .7rem 0;                     /* alto cómodo */
+    border-bottom: 1px solid var(--borde);  /* una línea fina separa cada enlace */
+    transition: color .2s, padding-left .25s;  /* los cambios son suaves */
+  }
+
+  .navbar-nav .nav-link:hover,
+  .navbar-nav .nav-link:focus { padding-left: .6rem; }  /* al tocar/pasar, el enlace se desplaza un poco a la derecha */
+
+  .navbar-nav .nav-item:last-child .nav-link { border-bottom: 0; }  /* el último enlace no necesita línea debajo */
+
+  .navbar-nav .nav-link .bi { color: var(--verde); margin-right: .35rem; }  /* los iconitos, en verde */
+
+  /* Mientras se abre (.collapsing) y ya abierto (.show), cada enlace entra con la animación "entraMenu" */
+  .navbar-collapse.collapsing .nav-item,
+  .navbar-collapse.show .nav-item {
+    animation: entraMenu .5s cubic-bezier(.22, 1, .36, 1) both;  /* 0,5 segundos; "both" = se queda invisible antes de empezar y visible al acabar */
+  }
+
+  .navbar-collapse .nav-item:nth-child(1) { animation-delay: .05s; }  /* el primero entra enseguida... */
+  .navbar-collapse .nav-item:nth-child(2) { animation-delay: .13s; }  /* ...el segundo un poquito después... */
+  .navbar-collapse .nav-item:nth-child(3) { animation-delay: .21s; }  /* ...y el tercero el último: efecto cascada */
+}
+
+@keyframes entraMenu {                    /* la animación: de... */
+  from { opacity: 0; transform: translateX(-28px); }  /* ...invisible y 28px a la izquierda... */
+  to { opacity: 1; transform: none; }                 /* ...a visible y en su sitio */
+}
+
+@media (prefers-reduced-motion: reduce) {  /* si la persona pidió "menos animaciones" en su sistema... */
+  .hamburguesa .barra,
+  .navbar-collapse .nav-item { transition: none; animation: none; }  /* ...las quitamos (accesibilidad) */
+}

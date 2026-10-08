@@ -953,6 +953,16 @@ async function enviarFormulario(e) {                       // "e" es el evento "
 /* ---------- ARRANQUE: lo primero que se ejecuta ---------- */
 
 async function iniciar() {
+    // ---- Menú hamburguesa: se cierra solo al elegir un enlace ----
+    const menu = document.querySelector('#menu');          // el menú desplegable
+    menu.querySelectorAll('.nav-link').forEach(enlace => { // por cada enlace del menú...
+        enlace.addEventListener('click', () => {           // ...al hacer clic...
+            if (menu.classList.contains('show')) {         // ...si el menú está abierto (solo pasa en móvil)...
+                bootstrap.Collapse.getOrCreateInstance(menu).hide(); // ...lo cerramos
+            }
+        });
+    });
+
     dia = leerDia();                                       // recupera "lo de hoy" del navegador
     objetivo = leerObjetivo();                             // recupera tu objetivo
     rellenarFormularioObjetivo();                          // lo pone en el formulario del objetivo
