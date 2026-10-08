@@ -1,0 +1,51 @@
+{
+  "ingredientes": [
+    { "id": "pechuga-pollo", "nombre": "Pechuga de pollo (airfryer)", "categoria": "Proteínas", "kcal": 165, "proteina": 31, "carbohidratos": 0, "grasas": 3.6 },
+    { "id": "pavo", "nombre": "Pavo (airfryer)", "categoria": "Proteínas", "kcal": 135, "proteina": 30, "carbohidratos": 0, "grasas": 1 },
+    { "id": "salmon", "nombre": "Salmón (airfryer)", "categoria": "Proteínas", "kcal": 206, "proteina": 22, "carbohidratos": 0, "grasas": 12 },
+    { "id": "atun-natural", "nombre": "Atún al natural (lata, escurrido)", "categoria": "Proteínas", "kcal": 116, "proteina": 26, "carbohidratos": 0, "grasas": 1 },
+    { "id": "gambas", "nombre": "Gambas (airfryer)", "categoria": "Proteínas", "kcal": 99, "proteina": 24, "carbohidratos": 0.2, "grasas": 0.3 },
+    { "id": "huevo", "nombre": "Huevo (airfryer)", "nota": "1 huevo ≈ 50 g", "categoria": "Proteínas", "kcal": 155, "proteina": 12.6, "carbohidratos": 1.1, "grasas": 10.6 },
+    { "id": "ternera-picada", "nombre": "Carne picada de ternera (airfryer)", "categoria": "Proteínas", "kcal": 250, "proteina": 26, "carbohidratos": 0, "grasas": 15 },
+    { "id": "tofu", "nombre": "Tofu firme", "categoria": "Proteínas", "kcal": 144, "proteina": 17, "carbohidratos": 3, "grasas": 9 },
+
+    { "id": "arroz-blanco", "nombre": "Arroz blanco cocido", "categoria": "Hidratos", "kcal": 130, "proteina": 2.7, "carbohidratos": 28, "grasas": 0.3 },
+    { "id": "arroz-integral", "nombre": "Arroz integral cocido", "categoria": "Hidratos", "kcal": 123, "proteina": 2.7, "carbohidratos": 25.6, "grasas": 1 },
+    { "id": "quinoa", "nombre": "Quinoa cocida", "categoria": "Hidratos", "kcal": 120, "proteina": 4.4, "carbohidratos": 21.3, "grasas": 1.9 },
+    { "id": "pasta", "nombre": "Pasta cocida", "categoria": "Hidratos", "kcal": 158, "proteina": 5.8, "carbohidratos": 31, "grasas": 0.9 },
+    { "id": "boniato", "nombre": "Boniato (airfryer)", "categoria": "Hidratos", "kcal": 90, "proteina": 2, "carbohidratos": 20.7, "grasas": 0.2 },
+    { "id": "patata", "nombre": "Patata (airfryer)", "categoria": "Hidratos", "kcal": 87, "proteina": 1.9, "carbohidratos": 20.1, "grasas": 0.1 },
+    { "id": "garbanzos", "nombre": "Garbanzos cocidos", "categoria": "Hidratos", "kcal": 164, "proteina": 8.9, "carbohidratos": 27.4, "grasas": 2.6 },
+    { "id": "lentejas", "nombre": "Lentejas cocidas", "categoria": "Hidratos", "kcal": 116, "proteina": 9, "carbohidratos": 20, "grasas": 0.4 },
+    { "id": "pan-integral", "nombre": "Pan integral", "nota": "1 rebanada ≈ 30 g", "categoria": "Hidratos", "kcal": 247, "proteina": 13, "carbohidratos": 41, "grasas": 3.4 },
+    { "id": "avena", "nombre": "Copos de avena", "categoria": "Hidratos", "kcal": 389, "proteina": 16.9, "carbohidratos": 66.3, "grasas": 6.9 },
+    { "id": "tortilla-trigo", "nombre": "Tortilla de trigo (wrap)", "nota": "1 wrap ≈ 60 g", "categoria": "Hidratos", "kcal": 310, "proteina": 8.5, "carbohidratos": 52, "grasas": 7 },
+
+    { "id": "aguacate", "nombre": "Aguacate", "nota": "½ aguacate ≈ 70 g", "categoria": "Verduras y fruta", "kcal": 160, "proteina": 2, "carbohidratos": 8.5, "grasas": 14.7 },
+    { "id": "zanahoria", "nombre": "Zanahoria", "categoria": "Verduras y fruta", "kcal": 41, "proteina": 0.9, "carbohidratos": 9.6, "grasas": 0.2 },
+    { "id": "pepino", "nombre": "Pepino", "categoria": "Verduras y fruta", "kcal": 15, "proteina": 0.7, "carbohidratos": 3.6, "grasas": 0.1 },
+    { "id": "tomate", "nombre": "Tomate", "categoria": "Verduras y fruta", "kcal": 18, "proteina": 0.9, "carbohidratos": 3.9, "grasas": 0.2 },
+    { "id": "remolacha", "nombre": "Remolacha (airfryer)", "categoria": "Verduras y fruta", "kcal": 44, "proteina": 1.7, "carbohidratos": 10, "grasas": 0.2 },
+    { "id": "rabano", "nombre": "Rábano", "categoria": "Verduras y fruta", "kcal": 16, "proteina": 0.7, "carbohidratos": 3.4, "grasas": 0.1 },
+    { "id": "espinacas", "nombre": "Espinacas", "categoria": "Verduras y fruta", "kcal": 23, "proteina": 2.9, "carbohidratos": 3.6, "grasas": 0.4 },
+    { "id": "brocoli", "nombre": "Brócoli (airfryer)", "categoria": "Verduras y fruta", "kcal": 35, "proteina": 2.4, "carbohidratos": 7.2, "grasas": 0.4 },
+    { "id": "maiz", "nombre": "Maíz dulce", "categoria": "Verduras y fruta", "kcal": 86, "proteina": 3.3, "carbohidratos": 19, "grasas": 1.4 },
+    { "id": "cebolla", "nombre": "Cebolla", "categoria": "Verduras y fruta", "kcal": 40, "proteina": 1.1, "carbohidratos": 9.3, "grasas": 0.1 },
+    { "id": "lechuga", "nombre": "Lechuga", "categoria": "Verduras y fruta", "kcal": 15, "proteina": 1.4, "carbohidratos": 2.9, "grasas": 0.2 },
+    { "id": "platano", "nombre": "Plátano", "nota": "1 plátano ≈ 120 g", "categoria": "Verduras y fruta", "kcal": 89, "proteina": 1.1, "carbohidratos": 22.8, "grasas": 0.3 },
+
+    { "id": "cottage", "nombre": "Queso cottage", "categoria": "Lácteos", "kcal": 98, "proteina": 11.1, "carbohidratos": 3.4, "grasas": 4.3 },
+    { "id": "yogur-griego", "nombre": "Yogur griego natural", "categoria": "Lácteos", "kcal": 97, "proteina": 9, "carbohidratos": 3.9, "grasas": 5 },
+    { "id": "queso-fresco-batido", "nombre": "Queso fresco batido 0 %", "categoria": "Lácteos", "kcal": 46, "proteina": 8, "carbohidratos": 3.5, "grasas": 0.2 },
+
+    { "id": "aceite-oliva", "nombre": "Aceite de oliva", "nota": "1 cucharada ≈ 10 g", "categoria": "Grasas y frutos secos", "kcal": 884, "proteina": 0, "carbohidratos": 0, "grasas": 100 },
+    { "id": "nueces", "nombre": "Nueces", "categoria": "Grasas y frutos secos", "kcal": 654, "proteina": 15.2, "carbohidratos": 13.7, "grasas": 65.2 },
+    { "id": "almendras", "nombre": "Almendras", "categoria": "Grasas y frutos secos", "kcal": 579, "proteina": 21.2, "carbohidratos": 21.6, "grasas": 49.9 },
+    { "id": "sesamo", "nombre": "Semillas de sésamo", "categoria": "Grasas y frutos secos", "kcal": 573, "proteina": 17.7, "carbohidratos": 23.4, "grasas": 49.7 },
+    { "id": "hummus", "nombre": "Hummus", "categoria": "Grasas y frutos secos", "kcal": 166, "proteina": 7.9, "carbohidratos": 14.3, "grasas": 9.6 },
+
+    { "id": "salsa-soja", "nombre": "Salsa de soja", "categoria": "Salsas y otros", "kcal": 53, "proteina": 8.1, "carbohidratos": 4.9, "grasas": 0.6 },
+    { "id": "miel", "nombre": "Miel", "categoria": "Salsas y otros", "kcal": 304, "proteina": 0.3, "carbohidratos": 82.4, "grasas": 0 },
+    { "id": "tomate-triturado", "nombre": "Tomate triturado", "categoria": "Salsas y otros", "kcal": 32, "proteina": 1.6, "carbohidratos": 5.8, "grasas": 0.3 }
+  ]
+}

@@ -346,3 +346,19 @@ a:hover {                     /* :hover = cuando el ratón está encima */
   border-color: var(--verde);        /* ...el borde se vuelve verde */
   box-shadow: 0 0 0 .2rem rgba(36, 92, 69, .2);  /* ...con un halo verde suave en lugar del azul */
 }
+
+/* ---------- Haz tu bowl ---------- */
+.linea-bowl { display: flex; align-items: center; gap: .75rem; padding: .6rem 0; border-bottom: 1px solid var(--borde); }  /* cada ingrediente: en fila, centrado, con una línea fina debajo */
+
+.linea-bowl .input-group { width: 7.5rem; }       /* la casilla de gramos no se estira: ancho fijo de 7,5rem */
+
+.macro-grande strong { font-size: 1.5rem; }       /* en los totales, el número se ve más grande (sobreescribe el 1rem de .macro strong) */
+
+#bowlTotales .macro { flex: 1 1 6rem; text-align: center; }  /* las 4 casillas de totales se reparten el ancho, con un mínimo de 6rem cada una */
+
+/* ---------- Haz tu bowl: pasos ---------- */
+.paso-bowl { border: 1px solid var(--verde); color: var(--verde); background: transparent; border-radius: 2rem; padding: .25rem .75rem; font-size: .875rem; }  /* cada paso es una "píldora" con borde verde y fondo transparente */
+
+.paso-bowl.activo { background: var(--verde); color: #fff; }  /* el paso en el que estás: relleno verde y texto blanco */
+
+.paso-bowl .badge { background: var(--lima); color: var(--carbon); margin-left: .25rem; }  /* el numerito de ingredientes añadidos en ese paso */

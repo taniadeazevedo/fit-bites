@@ -46,6 +46,7 @@
             <div class="collapse navbar-collapse" id="menu"> <!-- lo que se esconde en móvil; su id coincide con el data-bs-target del botón -->
                 <ul class="navbar-nav ms-auto"> <!-- lista de enlaces; "ms-auto" los empuja a la derecha -->
                     <li class="nav-item"><a class="nav-link" href="#recetas">Recetas</a></li> <!-- enlace que baja a la sección con id="recetas" -->
+                    <li class="nav-item"><a class="nav-link" href="#bowl">Haz tu bowl</a></li> <!-- enlace que baja a la sección "Haz tu bowl" -->
                     <li class="nav-item">
                         <!-- este enlace NO cambia de página: abre el panel lateral "Mi día" (offcanvas de Bootstrap) -->
                         <a class="nav-link" href="#" data-bs-toggle="offcanvas" data-bs-target="#panelDia"
@@ -103,6 +104,65 @@
             </div>
             <!-- AQUÍ pinta JavaScript las tarjetas. "row row-cols-..." = rejilla: 1 columna en móvil, 2 en tablet y 3 en ordenador; "g-4" = hueco entre tarjetas -->
             <div id="listaRecetas" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4"></div>
+        </div>
+    </section>
+
+    <!-- HAZ TU BOWL: eliges ingredientes, pones los gramos y la página suma calorías y macros. JavaScript rellena y recalcula todo -->
+    <section id="bowl" class="py-5 border-top"> <!-- sección con id="bowl": el enlace del menú baja hasta aquí; "border-top" = línea fina arriba -->
+        <div class="container">
+            <h2 class="h3 mb-1">🥣 Haz tu bowl</h2>
+            <p class="text-body-secondary mb-4">Elige ingredientes, pon los gramos y mira al instante cuánta proteína tiene tu plato.</p>
+
+            <div class="row g-4"> <!-- rejilla: en pantallas grandes, el formulario a la izquierda y el resultado a la derecha -->
+                <div class="col-lg-5"> <!-- 5 de 12 columnas -->
+                    <form id="formBowl" class="row g-2"> <!-- formulario para añadir un ingrediente -->
+                        <div class="col-12">
+                            <!-- los pasos (Proteína, Hidratos, Salsas...): JavaScript dibuja aquí un botón por paso -->
+                            <div id="bowlPasos" class="d-flex flex-wrap gap-1"></div>
+                        </div>
+                        <div class="col-12">
+                            <label for="bowlIngrediente" class="form-label mb-1">Ingrediente</label>
+                            <!-- desplegable: JavaScript lo rellena con los ingredientes del paso en el que estás -->
+                            <select id="bowlIngrediente" class="form-select" required>
+                                <option value="" selected disabled>Elige un ingrediente…</option> <!-- opción inicial: vacía y no elegible -->
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label for="bowlGramos" class="form-label mb-1">Cantidad</label>
+                            <div class="input-group"> <!-- une la casilla y la "g" en una sola pieza -->
+                                <input id="bowlGramos" type="number" min="1" value="100" class="form-control" required> <!-- gramos; empieza en 100 -->
+                                <span class="input-group-text">g</span>
+                            </div>
+                        </div>
+                        <div class="col-6 d-flex align-items-end"> <!-- el botón, alineado abajo con la casilla de gramos -->
+                            <button type="submit" class="btn btn-verde w-100"> <!-- type="submit" = envía el formulario; "w-100" = ancho completo -->
+                                <i class="bi bi-plus-lg"></i> Añadir
+                            </button>
+                        </div>
+                        <div class="col-12"> <!-- botón para saltar al paso siguiente; JavaScript le cambia el texto y lo oculta en el último paso -->
+                            <button id="btnBowlSiguiente" type="button" class="btn btn-outline-secondary btn-sm w-100"></button>
+                        </div>
+                    </form>
+                    <p class="small text-body-secondary mt-3 mb-0">
+                        Valores aproximados por cada 100 g, según tablas generales. Pesa los alimentos tal como se indica
+                        (por ejemplo, el arroz ya cocido). No sustituyen el consejo de un profesional.
+                    </p>
+                </div>
+
+                <div class="col-lg-7"> <!-- las 7 columnas restantes: tu plato y los totales -->
+                    <div id="bowlLista"></div> <!-- aquí JavaScript dibuja los ingredientes que has añadido -->
+                    <div id="bowlTotales" class="mt-3"></div> <!-- aquí JavaScript dibuja los totales y la barra de proteína -->
+                    <div class="d-flex flex-wrap gap-2 mt-3"> <!-- los botones, en fila -->
+                        <!-- guarda este plato como una receta (abre el formulario ya relleno). Solo con json-server encendido -->
+                        <button id="btnBowlReceta" type="button" class="btn btn-verde btn-sm">
+                            <i class="bi bi-journal-plus"></i> Guardar como receta
+                        </button>
+                        <button id="btnBowlVaciar" type="button" class="btn btn-outline-danger btn-sm">
+                            <i class="bi bi-trash"></i> Vaciar bowl
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
 

@@ -31,9 +31,24 @@ let recetaDetalleId = null;    // el id de la receta que se está viendo en la v
 let tipoFiltro = '';           // el tipo de plato elegido en el desplegable de arriba ('' = todos)
 let textoBusqueda = '';        // lo que se ha escrito en el buscador ('' = sin búsqueda)
 let soloProteina = false;      // true = el interruptor "Alta en proteína" está activado
+let ingredientesBase = [];     // la tabla de ingredientes (cada uno con sus valores por 100 g)
+let bowl = [];                 // el bowl que estás montando: [{ id: 'arroz-blanco', gramos: 120 }, ...]
+let pasoActual = 0;            // el paso en el que estás montando el bowl (0 = el primero, Proteína)
 
 // Tipos de plato: salen en el formulario Y en el filtro. Para añadir uno nuevo, escríbelo aquí y listo
 const TIPOS_PLATO = ['Bowl', 'Pasta', 'Ensalada', 'Hamburguesa', 'Fajita', 'Wrap', 'Sándwich', 'Arroz', 'Tortilla', 'Postre', 'Otro'];
+
+// Los pasos para montar el bowl, en orden: qué categoría se muestra y cuántos gramos salen por defecto
+const PASOS = [
+    { titulo: 'Proteína', categoria: 'Proteínas', gramos: 150 },
+    { titulo: 'Hidratos', categoria: 'Hidratos', gramos: 150 },
+    { titulo: 'Salsas', categoria: 'Salsas y otros', gramos: 15 },
+    { titulo: 'Verduras', categoria: 'Verduras y fruta', gramos: 80 },
+    { titulo: 'Lácteos', categoria: 'Lácteos', gramos: 50 },
+    { titulo: 'Extras', categoria: 'Grasas y frutos secos', gramos: 20 }
+];
+
+const ARCHIVO_INGREDIENTES = 'json/ingredientes.json';    // la tabla de ingredientes (valores por cada 100 g); es un archivo normal, no necesita json-server
 
 // Una receta se considera "alta en proteína" si tiene al menos estos gramos (cámbialo si quieres ser más o menos exigente)
 const PROTEINA_ALTA = 35;
@@ -41,6 +56,7 @@ const PROTEINA_ALTA = 35;
 // "Mi día" se guarda en el navegador (localStorage), no en recetas.json
 const CLAVE_DIA = 'fitbites-dia';              // nombre con el que guardamos "lo de hoy" en el navegador
 const CLAVE_OBJETIVO = 'fitbites-objetivo';    // nombre con el que guardamos tu objetivo diario
+const CLAVE_BOWL = 'fitbites-bowl';            // nombre con el que guardamos el bowl que estás montando
 
 // Objetivo orientativo para ganar masa muscular (la persona lo puede cambiar en la web)
 const OBJETIVO_DEFECTO = { kcal: 2100, proteina: 100, carbohidratos: 290, grasas: 60 }; // un objeto: cada dato tiene un nombre y un valor
@@ -232,6 +248,8 @@ function mostrarVistaFoto() {
 function aplicarModo() {
     // classList.toggle(clase, condición): pone la clase si la condición es true y la quita si es false
     document.querySelector('#btnNueva').classList.toggle('d-none', modoLectura); // en modo lectura se oculta "Nueva receta"
+
+    document.querySelector('#btnBowlReceta').classList.toggle('d-none', modoLectura); // guardar como receta solo se puede con json-server
 
     // el aviso solo sale en tu ordenador (en la web publicada no hace falta)
     document.querySelector('#avisoLectura').classList.toggle('d-none', !(modoLectura && EN_LOCAL)); // visible solo si: modo lectura Y en local
@@ -489,6 +507,190 @@ function recetasFiltradas() {
 // Pinta las recetas aplicando los filtros que haya puestos (tipo y buscador)
 function mostrarRecetas() {
     pintarRecetas(recetasFiltradas());                          // pintarRecetas dibuja la lista que le pasemos
+}
+
+/* ---------- HAZ TU BOWL ---------- */
+
+// Lee la tabla de ingredientes (valores por cada 100 g) del archivo json/ingredientes.json
+async function cargarIngredientes() {
+    const respuesta = await fetch(ARCHIVO_INGREDIENTES);   // pide el archivo (es un archivo normal: no necesita json-server)
+
+    if (!respuesta.ok) {                                   // si no se pudo leer...
+        throw new Error('No se pudo leer ' + ARCHIVO_INGREDIENTES + ' (' + respuesta.status + ')'); // ...lanza un error
+    }
+
+    const datos = await respuesta.json();                  // convierte el JSON en un objeto
+    return datos.ingredientes;                             // el archivo tiene la forma { "ingredientes": [...] }: devolvemos la lista
+}
+
+// Rellena el desplegable solo con los ingredientes del paso en el que estás
+function rellenarIngredientes() {
+    const selector = document.querySelector('#bowlIngrediente'); // el desplegable de la página
+    const paso = PASOS[pasoActual];                        // el paso actual (su título, su categoría y sus gramos)
+
+    selector.innerHTML = '<option value="" selected disabled>Elige ' + paso.titulo.toLowerCase() + '…</option>'; // lo vaciamos y dejamos solo la opción inicial
+
+    for (const ingrediente of ingredientesBase.filter(i => i.categoria === paso.categoria)) { // por cada ingrediente de la categoría de este paso...
+        const texto = ingrediente.nombre + (ingrediente.nota ? ' (' + ingrediente.nota + ')' : ''); // ...el texto: su nombre y, si tiene, la nota (por ejemplo "1 huevo ≈ 50 g")
+        selector.appendChild(new Option(texto, ingrediente.id)); // ...una opción: new Option(texto que se ve, valor interno = id)
+    }
+
+    document.querySelector('#bowlGramos').value = paso.gramos; // los gramos por defecto de este paso
+}
+
+// Dibuja los botones de los pasos (con cuántos ingredientes llevas en cada uno) y el botón "Siguiente"
+function pintarPasos() {
+    document.querySelector('#bowlPasos').innerHTML = PASOS.map((paso, i) => {
+        const cuantos = bowl.filter(l => ingredientesBase.find(ing => ing.id === l.id)?.categoria === paso.categoria).length; // cuántos ingredientes del bowl son de esta categoría
+        const numerito = cuantos > 0 ? ` <span class="badge rounded-pill">${cuantos}</span>` : ''; // si hay alguno, un numerito
+        return `<button type="button" class="paso-bowl${i === pasoActual ? ' activo' : ''}" data-paso="${i}">${i + 1}. ${paso.titulo}${numerito}</button>`; // un botón por paso; el actual lleva la clase "activo"
+    }).join('');
+
+    const siguiente = document.querySelector('#btnBowlSiguiente'); // el botón "Siguiente"
+    const hayMas = pasoActual < PASOS.length - 1;          // ¿queda algún paso después de este?
+    siguiente.classList.toggle('d-none', !hayMas);         // si no quedan más, se oculta
+    if (hayMas) siguiente.textContent = 'Siguiente: ' + PASOS[pasoActual + 1].titulo + ' →'; // si quedan, dice cuál viene
+}
+
+// Cambia de paso: actualiza el desplegable y los botones
+function cambiarPaso(numero) {
+    pasoActual = numero;                                   // apuntamos el paso nuevo
+    rellenarIngredientes();                                // el desplegable muestra los ingredientes de ese paso
+    pintarPasos();                                         // repintamos los botones
+}
+
+// Lee de localStorage el bowl que dejaste a medias
+function leerBowl() {
+    try {                                                  // si lo guardado está roto, JSON.parse falla
+        const guardado = JSON.parse(localStorage.getItem(CLAVE_BOWL)); // lee el texto y lo convierte en lista
+
+        if (Array.isArray(guardado)) {                     // comprobamos que de verdad es una lista
+            return guardado
+                .filter(l => typeof l.id === 'string' && Number(l.gramos) > 0) // nos quedamos solo con líneas válidas
+                .map(l => ({ id: l.id, gramos: Number(l.gramos) }));          // y las dejamos con la forma { id, gramos }
+        }
+    } catch {
+        // si está roto, empezamos con un bowl vacío
+    }
+
+    return [];                                             // bowl vacío
+}
+
+// Guarda el bowl en el navegador
+function guardarBowl() {
+    localStorage.setItem(CLAVE_BOWL, JSON.stringify(bowl)); // lista -> texto -> localStorage
+}
+
+// Añade un ingrediente al bowl (si ya estaba, suma los gramos)
+function anadirAlBowl(id, gramos) {
+    const linea = bowl.find(l => l.id === id);             // ¿ya está ese ingrediente en el bowl?
+
+    if (linea) {                                           // si ya estaba...
+        linea.gramos += gramos;                            // ...sumamos los gramos
+    } else {                                               // si no...
+        bowl.push({ id: id, gramos: gramos });             // ...lo añadimos al final de la lista
+    }
+
+    guardarBowl();                                         // guardamos
+    pintarBowl();                                          // y refrescamos lo que se ve
+}
+
+// Suma las calorías y los macros del bowl
+function totalesBowl() {
+    const totales = { kcal: 0, proteina: 0, carbohidratos: 0, grasas: 0 }; // empezamos con todo a cero
+
+    for (const linea of bowl) {                            // recorre cada ingrediente del bowl
+        const ingrediente = ingredientesBase.find(i => i.id === linea.id); // busca sus valores en la tabla
+        if (!ingrediente) continue;                        // si no lo encuentra, pasa al siguiente
+
+        const factor = linea.gramos / 100;                 // los datos son por 100 g: con 150 g el factor es 1,5
+
+        totales.kcal += ingrediente.kcal * factor;                    // suma las kcal de esa cantidad
+        totales.proteina += ingrediente.proteina * factor;            // suma la proteína
+        totales.carbohidratos += ingrediente.carbohidratos * factor;  // suma los carbohidratos
+        totales.grasas += ingrediente.grasas * factor;                // suma las grasas
+    }
+
+    return totales;                                        // devuelve el resultado
+}
+
+// Dibuja la lista de ingredientes y los totales del bowl
+function pintarBowl() {
+    pintarPasos();                                         // actualiza los numeritos de los pasos
+    const lista = document.querySelector('#bowlLista');    // el hueco de la lista
+    const lineas = bowl
+        .map(linea => ({ linea, ingrediente: ingredientesBase.find(i => i.id === linea.id) })) // a cada línea le unimos sus datos de la tabla
+        .filter(l => l.ingrediente);                       // y quitamos las que no tengan datos
+
+    if (lineas.length === 0) {                             // si todavía no hay nada...
+        lista.innerHTML = '<p class="text-body-secondary mb-0">Tu bowl está vacío. Añade el primer ingrediente.</p>'; // ...mensaje de ayuda
+    } else {
+        // un trozo de HTML por ingrediente: nombre, kcal y proteína, casilla de gramos y botón de quitar
+        lista.innerHTML = lineas.map(({ linea, ingrediente }) => `
+      <div class="linea-bowl" data-id="${escaparHtml(linea.id)}">
+        <div class="flex-grow-1">
+          <div class="fw-semibold">${escaparHtml(ingrediente.nombre)}</div>
+          <small class="text-body-secondary">${formatoNumero(ingrediente.kcal * linea.gramos / 100)} kcal · P ${formatoNumero(ingrediente.proteina * linea.gramos / 100, 1)} g</small>
+        </div>
+        <div class="input-group input-group-sm">
+          <input type="number" min="1" value="${linea.gramos}" class="form-control bowl-gramos" aria-label="Gramos de ${escaparHtml(ingrediente.nombre)}">
+          <span class="input-group-text">g</span>
+        </div>
+        <button type="button" class="btn btn-link btn-sm text-danger px-1 bowl-quitar" aria-label="Quitar ${escaparHtml(ingrediente.nombre)}">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>`).join('');
+    }
+
+    const t = totalesBowl();                               // los totales del bowl
+    const porcentaje = Math.min(100, Math.round(t.proteina / PROTEINA_ALTA * 100)); // % de la meta de proteína alcanzado (con tope en 100)
+    const falta = PROTEINA_ALTA - t.proteina;              // gramos que faltan para llegar a "alta en proteína"
+
+    // mensaje: si llegas a la meta, lo celebra; si no, dice cuánto falta
+    const estado = falta <= 0
+        ? '🔥 ¡Alta en proteína!'
+        : `Te faltan ${formatoNumero(falta, 1)} g para ser alta en proteína (${PROTEINA_ALTA} g)`;
+
+    // las cuatro casillas de totales (reutilizan las clases .macros y .macro que ya existían en tu CSS) y la barra de proteína
+    document.querySelector('#bowlTotales').innerHTML = `
+      <div class="macros">
+        <div class="macro macro-grande"><strong>${formatoNumero(t.proteina, 1)} g</strong>proteína</div>
+        <div class="macro macro-grande"><strong>${formatoNumero(t.kcal)}</strong>kcal</div>
+        <div class="macro macro-grande"><strong>${formatoNumero(t.carbohidratos, 1)} g</strong>carbohidratos</div>
+        <div class="macro macro-grande"><strong>${formatoNumero(t.grasas, 1)} g</strong>grasas</div>
+      </div>
+      <div class="fila-progreso mt-3">
+        <div class="d-flex justify-content-between small mb-1">
+          <strong>Proteína del plato</strong>
+          <span>${estado}</span>
+        </div>
+        <div class="progress" role="progressbar" aria-label="Proteína del plato" aria-valuenow="${porcentaje}" aria-valuemin="0" aria-valuemax="100">
+          <div class="progress-bar macro-p" style="width: ${porcentaje}%"></div>
+        </div>
+      </div>`;
+}
+
+// Abre el formulario de receta ya relleno con lo que has montado en el bowl
+function guardarBowlComoReceta() {
+    if (bowl.length === 0) return;                         // si el bowl está vacío, no hay nada que guardar
+
+    const t = totalesBowl();                               // los totales del bowl
+    abrirFormulario();                                     // abre el formulario (vacío, como una receta nueva)
+
+    const f = document.querySelector('#formReceta');       // el formulario
+    f.tipo.value = 'Bowl';                                 // el tipo ya viene elegido: Bowl
+    f.proteina.value = Math.round(t.proteina * 10) / 10;   // proteína con un decimal (multiplicar por 10, redondear y dividir)
+    f.carbohidratos.value = Math.round(t.carbohidratos * 10) / 10;  // carbohidratos con un decimal
+    f.grasas.value = Math.round(t.grasas * 10) / 10;       // grasas con un decimal
+    f.kcal.value = Math.round(t.kcal);                     // kcal redondeadas
+    kcalManual = true;                                     // respetamos estas kcal (no las recalcula a partir de los macros)
+
+    // los ingredientes del formulario: "120 g de arroz blanco cocido", etc.
+    ingredientesForm = bowl
+        .map(linea => ({ linea, ingrediente: ingredientesBase.find(i => i.id === linea.id) }))
+        .filter(l => l.ingrediente)
+        .map(({ linea, ingrediente }) => `${linea.gramos} g de ${ingrediente.nombre.toLowerCase()}`);
+    pintarIngredientes();                                  // los dibuja como etiquetas
 }
 
 /* ---------- PINTAR LA LISTA DE RECETAS ---------- */
@@ -779,6 +981,71 @@ async function iniciar() {
     // abrir el formulario para una receta nueva
     // () => abrirFormulario() es una "función flecha": una forma corta de escribir una función
     document.querySelector('#btnNueva').addEventListener('click', () => abrirFormulario());
+
+    // ---- Haz tu bowl ----
+    bowl = leerBowl();                                     // recupera el bowl que dejaste a medias
+
+    try {                                                  // la tabla de ingredientes se carga aparte de las recetas
+        ingredientesBase = await cargarIngredientes();     // lee json/ingredientes.json
+        rellenarIngredientes();                            // llena el desplegable
+    } catch (error) {                                      // si no se pudo leer...
+        console.error('No se pudieron cargar los ingredientes:', error); // ...consola
+        document.querySelector('#bowlLista').innerHTML = '<div class="alert alert-warning mb-0">No se pudo cargar la tabla de ingredientes.</div>'; // ...aviso en la página
+    }
+
+    pintarBowl();                                          // dibuja el bowl (vacío o el que estaba guardado)
+
+    document.querySelector('#formBowl').addEventListener('submit', (e) => { // al pulsar "Añadir"
+        e.preventDefault();                                // evita que recargue la página
+
+        const id = document.querySelector('#bowlIngrediente').value;      // el ingrediente elegido (su id)
+        const gramos = Number(document.querySelector('#bowlGramos').value); // los gramos escritos, convertidos en número
+
+        if (id === '' || !(gramos > 0)) return;            // si falta el ingrediente o los gramos no valen, no hacemos nada
+
+        anadirAlBowl(id, gramos);                          // lo añadimos al bowl
+        rellenarIngredientes();                            // dejamos el desplegable en blanco y los gramos por defecto para el siguiente
+    });
+
+    document.querySelector('#bowlPasos').addEventListener('click', (e) => { // clic en uno de los botones de paso
+        const boton = e.target.closest('[data-paso]');     // ¿fue en un botón de paso?
+        if (boton) cambiarPaso(Number(boton.dataset.paso)); // si sí, vamos a ese paso (dataset.paso viene como texto: lo pasamos a número)
+    });
+
+    document.querySelector('#btnBowlSiguiente').addEventListener('click', () => cambiarPaso(pasoActual + 1)); // "Siguiente": avanza un paso
+
+    document.querySelector('#bowlLista').addEventListener('change', (e) => { // "change" = cuando se termina de editar una casilla de gramos
+        const casilla = e.target.closest('.bowl-gramos');  // ¿fue una casilla de gramos?
+        if (!casilla) return;                              // si no, no hacemos nada
+
+        const id = casilla.closest('.linea-bowl').dataset.id;  // el id del ingrediente (guardado en la fila)
+        const gramos = Number(casilla.value);              // los gramos nuevos
+        const linea = bowl.find(l => l.id === id);         // la línea del bowl
+
+        if (linea && gramos > 0) {                         // si existe y los gramos valen...
+            linea.gramos = gramos;                         // ...actualizamos
+            guardarBowl();                                 // ...guardamos
+        }
+        pintarBowl();                                      // refrescamos (si los gramos no valían, vuelve el valor anterior)
+    });
+
+    document.querySelector('#bowlLista').addEventListener('click', (e) => { // clics en la lista del bowl
+        const botonQuitar = e.target.closest('.bowl-quitar'); // ¿fue en la "x" de un ingrediente?
+        if (!botonQuitar) return;                          // si no, nada
+
+        const id = botonQuitar.closest('.linea-bowl').dataset.id; // el id de ese ingrediente
+        bowl = bowl.filter(l => l.id !== id);              // lo quitamos de la lista (filter deja todos menos ese)
+        guardarBowl();                                     // guardamos
+        pintarBowl();                                      // refrescamos
+    });
+
+    document.querySelector('#btnBowlVaciar').addEventListener('click', () => { // botón "Vaciar bowl"
+        bowl = [];                                         // lista vacía
+        guardarBowl();                                     // guardamos
+        pintarBowl();                                      // refrescamos
+    });
+
+    document.querySelector('#btnBowlReceta').addEventListener('click', guardarBowlComoReceta); // botón "Guardar como receta"
 
     // filtro por tipo de plato: al elegir otra opción, apuntamos el tipo y repintamos
     document.querySelector('#filtroTipo').addEventListener('change', (e) => { // "change" = cuando se elige otra opción del desplegable
