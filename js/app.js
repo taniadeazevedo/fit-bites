@@ -33,6 +33,7 @@ let textoBusqueda = '';        // lo que se ha escrito en el buscador ('' = sin 
 let soloProteina = false;      // true = el interruptor "Alta en proteína" está activado
 let ingredientesBase = [];     // la tabla de ingredientes (cada uno con sus valores por 100 g)
 let bowl = [];                 // el bowl que estás montando: [{ id: 'arroz-blanco', gramos: 120 }, ...]
+let observador = null;         // el "vigilante" que avisa cuando algo entra en pantalla (para las animaciones al hacer scroll)
 let pasoActual = 0;            // el paso en el que estás montando el bowl (0 = el primero, Proteína)
 
 // Tipos de plato: salen en el formulario Y en el filtro. Para añadir uno nuevo, escríbelo aquí y listo
@@ -47,6 +48,9 @@ const PASOS = [
     { titulo: 'Lácteos', categoria: 'Lácteos', gramos: 50 },
     { titulo: 'Extras', categoria: 'Grasas y frutos secos', gramos: 20 }
 ];
+
+const CLAVE_TEMA = 'fitbites-tema';            // nombre con el que guardamos si prefieres tema claro u oscuro
+const NIVEL_CUENCO_LLENO = 450;                // gramos con los que el cuenco dibujado se ve lleno del todo
 
 const ARCHIVO_INGREDIENTES = 'json/ingredientes.json';    // la tabla de ingredientes (valores por cada 100 g); es un archivo normal, no necesita json-server
 
@@ -470,13 +474,28 @@ function rellenarFormularioObjetivo() {
 
 // Rellena los dos desplegables de tipo de plato (el del filtro y el del formulario) con la lista TIPOS_PLATO
 function rellenarTipos() {
-    const filtro = document.querySelector('#filtroTipo');       // el desplegable de arriba, para filtrar
     const formulario = document.querySelector('#recTipo');      // el desplegable del formulario de receta
+    const pills = document.querySelector('#pillsTipo');         // el hueco de las píldoras de filtro
 
     for (const tipo of TIPOS_PLATO) {                           // por cada tipo de la lista...
-        filtro.add(new Option(tipo, tipo));                     // ...añade una opción al filtro (new Option(texto, valor))
-        formulario.add(new Option(tipo, tipo));                 // ...y otra al formulario
+        formulario.add(new Option(tipo, tipo));                 // ...añade una opción al formulario (new Option(texto, valor))
     }
+
+    // las píldoras: "Todos" (valor vacío) y una por cada tipo; al final, la de 🔥 Alta en proteína
+    pills.innerHTML = ['', ...TIPOS_PLATO]
+        .map(tipo => `<button type="button" class="pill-tipo${tipo === tipoFiltro ? ' activa' : ''}" data-tipo="${escaparHtml(tipo)}">${tipo === '' ? 'Todos' : escaparHtml(tipo)}</button>`)
+        .join('') + `<button type="button" class="pill-tipo pill-proteina${soloProteina ? ' activa' : ''}" id="pillProteina" aria-pressed="${soloProteina}">🔥 Alta en proteína</button>`;
+}
+
+// Marca como "activa" la píldora del filtro elegido (sin volver a dibujarlas, para no perder el desplazamiento lateral)
+function actualizarPills() {
+    document.querySelectorAll('#pillsTipo [data-tipo]').forEach(p => {   // por cada píldora de tipo...
+        p.classList.toggle('activa', p.dataset.tipo === tipoFiltro);     // ...activa solo si es la del tipo elegido
+    });
+
+    const proteina = document.querySelector('#pillProteina');           // la píldora de 🔥
+    proteina.classList.toggle('activa', soloProteina);                  // activa si el filtro está puesto
+    proteina.setAttribute('aria-pressed', soloProteina);                // y lo avisamos a los lectores de pantalla
 }
 
 // Pasa un texto a minúsculas y le quita las tildes, para que "salmon" encuentre "Salmón"
@@ -614,9 +633,40 @@ function totalesBowl() {
     return totales;                                        // devuelve el resultado
 }
 
+// Dice a qué grupo del cuenco pertenece una categoría de ingrediente
+function grupoDe(categoria) {
+    if (categoria === 'Proteínas') return 'proteina';      // las proteínas
+    if (categoria === 'Hidratos') return 'hidratos';       // los hidratos
+    if (categoria === 'Verduras y fruta') return 'verduras'; // las verduras y la fruta
+    return 'extras';                                       // lo demás (lácteos, salsas, grasas): "salsas y extras"
+}
+
+// Dibuja el cuenco: cada capa tiene una altura proporcional a los gramos de su grupo
+function pintarCuenco() {
+    const gramos = { proteina: 0, hidratos: 0, verduras: 0, extras: 0 }; // gramos de cada grupo, empezando en cero
+
+    for (const linea of bowl) {                            // por cada ingrediente del bowl...
+        const ingrediente = ingredientesBase.find(i => i.id === linea.id); // ...busca sus datos
+        if (ingrediente) gramos[grupoDe(ingrediente.categoria)] += linea.gramos; // ...y suma sus gramos al grupo que le toca
+    }
+
+    const total = gramos.proteina + gramos.hidratos + gramos.verduras + gramos.extras; // gramos totales
+    const nivel = Math.min(1, total / NIVEL_CUENCO_LLENO); // cuánto está lleno el cuenco (de 0 a 1; con 450 g o más, lleno)
+
+    document.querySelectorAll('.capa').forEach(capa => {   // por cada capa del cuenco...
+        const parte = total > 0 ? gramos[capa.dataset.grupo] / total : 0; // ...qué fracción del plato es de su grupo
+        capa.style.height = (parte * nivel * 100) + '%';   // su altura: fracción x nivel de llenado (el CSS la anima)
+    });
+
+    document.querySelectorAll('[data-leyenda]').forEach(span => { // por cada gramaje de la leyenda...
+        span.textContent = formatoNumero(gramos[span.dataset.leyenda]) + ' g'; // ...escribe sus gramos
+    });
+}
+
 // Dibuja la lista de ingredientes y los totales del bowl
 function pintarBowl() {
     pintarPasos();                                         // actualiza los numeritos de los pasos
+    pintarCuenco();                                        // y el cuenco dibujado
     const lista = document.querySelector('#bowlLista');    // el hueco de la lista
     const lineas = bowl
         .map(linea => ({ linea, ingrediente: ingredientesBase.find(i => i.id === linea.id) })) // a cada línea le unimos sus datos de la tabla
@@ -708,12 +758,13 @@ function pintarRecetas(lista) {
         return;                                            // ...y terminamos
     }
 
-    for (const receta of lista) {                          // for...of: repite lo de dentro una vez por cada receta
+    for (const [indice, receta] of lista.entries()) {      // lo mismo, pero además nos da el número de orden de cada receta (entries() = pares [posición, receta])
         const pct = porcentajesMacros(receta);             // los % de proteína, carbohidratos y grasas
         const numIngredientes = (receta.ingredientes ?? []).length; // cuántos ingredientes tiene; "?? []" = si no tiene la lista, usa una vacía
 
         const col = document.createElement('div');         // crea un <div> nuevo (todavía fuera de la página)
-        col.className = 'col';                             // le pone la clase "col" de Bootstrap (una columna de la rejilla)
+        col.className = 'col reveal';                      // le pone la clase "col" de Bootstrap (una columna de la rejilla) y "reveal" (aparece con animación al hacer scroll)
+        col.style.setProperty('--i', indice % 3);          // su turno dentro de la fila (0, 1 o 2): así entran una tras otra
 
         // Dentro de las comillas inversas va el HTML de la tarjeta; ${...} inserta valores de la receta.
         // - La foto: si es válida se pinta la imagen; si no, un icono de huevo frito
@@ -723,23 +774,25 @@ function pintarRecetas(lista) {
         // - El botón "Mi día" sale siempre; "Editar" y "Borrar" solo si no estamos en modo lectura
         col.innerHTML = `
       <article class="card h-100 border-0 shadow-sm receta" data-id="${receta.id}">
-        <div class="receta-img ratio ratio-4x3 rounded-top">
-          ${fotoValida(receta.foto)
-            ? `<img src="${escaparHtml(receta.foto)}" class="receta-foto" alt="Foto de ${escaparHtml(receta.nombre)}">`
-            : `<div class="d-flex align-items-center justify-content-center"><i class="bi bi-egg-fried fs-1"></i></div>`}
+        <div class="position-relative">
+          <div class="receta-img ratio ratio-4x3">
+            ${fotoValida(receta.foto)
+              ? `<img src="${escaparHtml(receta.foto)}" class="receta-foto" alt="Foto de ${escaparHtml(receta.nombre)}">`
+              : `<div class="d-flex align-items-center justify-content-center"><i class="bi bi-egg-fried fs-1"></i></div>`}
+          </div>
+          ${receta.proteina >= PROTEINA_ALTA ? `<span class="recipe-tag recipe-tag--protein receta-fuego">🔥 Alta en proteína</span>` : ''}
         </div>
 
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <span class="d-flex flex-wrap gap-1">
               ${receta.tipo ? `<span class="recipe-tag">${escaparHtml(receta.tipo)}</span>` : ''}
-              ${receta.proteina >= PROTEINA_ALTA ? `<span class="recipe-tag recipe-tag--protein">🔥 Alta en proteína</span>` : ''}
             </span>
             <small class="text-body-secondary"><i class="bi bi-clock"></i> ${receta.tiempo} min</small>
           </div>
 
           <h3 class="h5">${escaparHtml(receta.nombre)}</h3>
-          <p class="mb-3"><strong class="fs-4">${receta.kcal}</strong> kcal</p>
+          <p class="mb-3"><strong class="kcal-grande">${receta.kcal}</strong> kcal</p>
 
           <div class="progress-stacked mb-2" aria-label="Reparto de macros">
             <div class="progress" role="progressbar" style="width: ${pct.p}%"><div class="progress-bar macro-p"></div></div>
@@ -776,6 +829,48 @@ function pintarRecetas(lista) {
     }
 
     pintarDia();     // las recetas han cambiado: recalcula "Mi día"
+    observarReveal(); // las tarjetas nuevas se animan cuando entran en pantalla
+}
+
+/* ---------- ANIMACIONES AL HACER SCROLL ---------- */
+
+// Vigila los elementos con la clase "reveal": cuando entran en pantalla les pone "visible" y el CSS los anima
+function observarReveal() {
+    const pendientes = document.querySelectorAll('.reveal:not(.visible):not([data-vigilado])'); // los "reveal" que aún no se han mostrado ni se están vigilando
+
+    if (!('IntersectionObserver' in window)) {             // si el navegador es muy antiguo y no tiene vigilante...
+        pendientes.forEach(el => el.classList.add('visible')); // ...los mostramos todos sin animar
+        return;
+    }
+
+    if (!observador) {                                     // la primera vez, creamos el vigilante
+        observador = new IntersectionObserver((entradas) => { // se ejecuta cada vez que algo entra o sale de la pantalla
+            for (const entrada of entradas) {              // por cada elemento que ha cambiado...
+                if (entrada.isIntersecting) {              // ...si ahora está dentro de la pantalla...
+                    entrada.target.classList.add('visible'); // ...le ponemos "visible" (el CSS hace la animación)...
+                    observador.unobserve(entrada.target);  // ...y dejamos de vigilarlo (solo se anima una vez)
+                }
+            }
+        }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' }); // se considera "dentro" cuando se ve un 12 % y ha subido 40px desde el borde de abajo
+    }
+
+    pendientes.forEach(el => {                             // por cada elemento pendiente...
+        el.dataset.vigilado = '1';                         // ...lo marcamos para no vigilarlo dos veces...
+        observador.observe(el);                            // ...y lo ponemos bajo vigilancia
+    });
+}
+
+/* ---------- TEMA CLARO / OSCURO ---------- */
+
+// Aplica el tema ('light' o 'dark'): cambia el atributo de <html>, el icono del botón y lo guarda
+function aplicarTema(tema) {
+    document.documentElement.setAttribute('data-bs-theme', tema); // Bootstrap y nuestro CSS leen este atributo
+
+    const oscuro = tema === 'dark';                        // ¿es el tema oscuro?
+    document.querySelector('#btnTema i').className = oscuro ? 'bi bi-sun' : 'bi bi-moon-stars'; // icono: un sol para volver al claro, una luna para ir al oscuro
+    document.querySelector('#btnTema').setAttribute('aria-label', oscuro ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'); // y el texto para lectores de pantalla
+
+    try { localStorage.setItem(CLAVE_TEMA, tema); } catch { } // lo guardamos para la próxima visita (si no se puede, no pasa nada)
 }
 
 /* ---------- DETALLE DE LA RECETA ---------- */
@@ -953,6 +1048,15 @@ async function enviarFormulario(e) {                       // "e" es el evento "
 /* ---------- ARRANQUE: lo primero que se ejecuta ---------- */
 
 async function iniciar() {
+    document.documentElement.classList.add('js');         // avisa al CSS de que JavaScript funciona: solo entonces las secciones empiezan escondidas para animarse (si no hubiera JavaScript, se verían normales)
+
+    // ---- Tema claro / oscuro ----
+    aplicarTema(document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'dark' : 'light'); // pone bien el icono según el tema con el que cargó la página
+    document.querySelector('#btnTema').addEventListener('click', () => { // al pulsar el botón...
+        const actual = document.documentElement.getAttribute('data-bs-theme'); // ...mira el tema actual...
+        aplicarTema(actual === 'dark' ? 'light' : 'dark'); // ...y cambia al otro
+    });
+
     // ---- Menú hamburguesa: se cierra solo al elegir un enlace ----
     const menu = document.querySelector('#menu');          // el menú desplegable
     menu.querySelectorAll('.nav-link').forEach(enlace => { // por cada enlace del menú...
@@ -1004,6 +1108,7 @@ async function iniciar() {
     }
 
     pintarBowl();                                          // dibuja el bowl (vacío o el que estaba guardado)
+    observarReveal();                                      // vigila las secciones con animación (por si las recetas no cargaran, que no se queden escondidas)
 
     document.querySelector('#formBowl').addEventListener('submit', (e) => { // al pulsar "Añadir"
         e.preventDefault();                                // evita que recargue la página
@@ -1057,22 +1162,25 @@ async function iniciar() {
 
     document.querySelector('#btnBowlReceta').addEventListener('click', guardarBowlComoReceta); // botón "Guardar como receta"
 
-    // filtro por tipo de plato: al elegir otra opción, apuntamos el tipo y repintamos
-    document.querySelector('#filtroTipo').addEventListener('change', (e) => { // "change" = cuando se elige otra opción del desplegable
-        tipoFiltro = e.target.value;                       // el valor elegido ('' si es "Todos")
-        mostrarRecetas();                                  // repinta solo las recetas de ese tipo
+    // píldoras de filtro: un solo oyente para todas (delegación). Una elige el tipo de plato y la de 🔥 activa o desactiva "Alta en proteína"
+    document.querySelector('#pillsTipo').addEventListener('click', (e) => {
+        const pill = e.target.closest('.pill-tipo');       // ¿se pulsó una píldora?
+        if (!pill) return;                                 // si no, nada
+
+        if (pill.id === 'pillProteina') {                  // si es la de 🔥...
+            soloProteina = !soloProteina;                  // ...cambiamos su estado (true pasa a false y al revés)
+        } else {                                           // si es una de tipo...
+            tipoFiltro = pill.dataset.tipo;                // ...apuntamos el tipo ('' si es "Todos")
+        }
+
+        actualizarPills();                                 // marcamos la píldora activa
+        mostrarRecetas();                                  // repintamos las recetas
     });
 
     // buscador: cada vez que se escribe o se borra una letra, apuntamos el texto y repintamos
     document.querySelector('#buscador').addEventListener('input', (e) => { // "input" = cada vez que cambia lo escrito
         textoBusqueda = e.target.value;                    // lo que hay escrito ahora mismo en la casilla
         mostrarRecetas();                                  // repinta solo las recetas que coinciden
-    });
-
-    // interruptor "Alta en proteína": al activarlo o desactivarlo, apuntamos su estado y repintamos
-    document.querySelector('#filtroProteina').addEventListener('change', (e) => { // "change" = cuando se marca o desmarca
-        soloProteina = e.target.checked;                   // checked es true si está activado y false si no
-        mostrarRecetas();                                  // repinta solo las recetas que cumplen
     });
 
     // clics en las tarjetas: editar, borrar (lo gestiona Bootstrap) o abrir el detalle

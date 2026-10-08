@@ -46,14 +46,14 @@ h1,
 h2,
 h3,
 h4,
-h5 {                                  /* la coma significa "todos estos a la vez": los títulos */
+h5,
+.navbar-brand {                       /* la coma significa "todos estos a la vez": títulos y la marca del menú */
   font-family: "Outfit", sans-serif;  /* fuente de los títulos (la de texto es Inter) */
   font-weight: 700;                   /* letra en negrita */
   letter-spacing: -0.03em;            /* junta un poco las letras (negativo = más apretadas) */
 }
 
-h1,
-.navbar-brand {                       /* el título grande de la portada y el logo usan otra fuente: Syne */
+h1 {                                  /* el título grande de la portada usa otra fuente: Syne */
   font-family: "Syne", sans-serif;    /* Syne es ancha y con mucha personalidad; si no carga, una sans-serif cualquiera */
   font-weight: 800;                   /* extranegrita */
   letter-spacing: -0.04em;            /* letras algo apretadas (Syne ya es ancha) */
@@ -159,7 +159,7 @@ a:hover {                     /* :hover = cuando el ratón está encima */
 
 .recipe-tag--protein {                    /* variante para etiquetas de proteína (se usa junto a .recipe-tag) */
   background: var(--lima);                /* fondo lima */
-  color: var(--carbon);                   /* texto oscuro */
+  color: #202923;                         /* texto siempre oscuro (el lima es claro también en el tema oscuro) */
 }
 
 .recipe-tag--sweet {                      /* variante para etiquetas dulces */
@@ -242,6 +242,7 @@ a:hover {                     /* :hover = cuando el ratón está encima */
 
 /* ---------- Tarjetas de receta ---------- */
 :root {                                   /* podemos tener varios :root: se suman. Aquí, colores nuevos para los macros */
+  --resalte: var(--lima);                 /* color del subrayado del título (en el tema oscuro será más suave) */
   --lima-suave: #E9F3C9;                  /* fondo del hueco de la foto cuando no hay foto */
   --macro-p: #2F6B4F;   /* proteína (verde) */
   --macro-c: #E0A93B;   /* carbohidratos (amarillo) */
@@ -367,7 +368,7 @@ a:hover {                     /* :hover = cuando el ratón está encima */
 
 .paso-bowl.activo { background: var(--verde); color: #fff; }  /* el paso en el que estás: relleno verde y texto blanco */
 
-.paso-bowl .badge { background: var(--lima); color: var(--carbon); margin-left: .25rem; }  /* el numerito de ingredientes añadidos en ese paso */
+.paso-bowl .badge { background: var(--lima); color: #202923; margin-left: .25rem; }  /* el numerito de ingredientes añadidos en ese paso */
 
 /* ---------- Menú hamburguesa con animación ---------- */
 
@@ -446,7 +447,7 @@ a:hover {                     /* :hover = cuando el ratón está encima */
   .navbar-collapse {
     margin-top: .75rem;                   /* separado del logo */
     padding: .5rem 1.25rem;               /* aire por dentro */
-    background: #fff;                     /* fondo blanco */
+    background: var(--blanco);            /* fondo de tarjeta (blanco en tema claro, gris verdoso oscuro en tema oscuro) */
     border: 1px solid var(--borde);       /* con borde fino */
     border-radius: 1.25rem;               /* esquinas redondeadas */
     box-shadow: 0 14px 34px rgba(36, 92, 69, .16);  /* sombra suave verdosa */
@@ -454,10 +455,10 @@ a:hover {                     /* :hover = cuando el ratón está encima */
 
   .navbar-nav .nav-link {
     font-family: "Syne", sans-serif;      /* enlaces en Syne, como el logo */
-    font-size: 1.5rem;                    /* grandes, fáciles de tocar */
+    font-size: 1.1rem;                    /* tamaño parecido al del resto de textos de la página (antes 1,5rem, que desentonaba) */
     font-weight: 700;                     /* negrita */
     letter-spacing: -.03em;               /* letras apretadas */
-    padding: .7rem 0;                     /* alto cómodo */
+    padding: .65rem 0;                    /* alto cómodo para tocar con el dedo */
     border-bottom: 1px solid var(--borde);  /* una línea fina separa cada enlace */
     transition: color .2s, padding-left .25s;  /* los cambios son suaves */
   }
@@ -488,4 +489,261 @@ a:hover {                     /* :hover = cuando el ratón está encima */
 @media (prefers-reduced-motion: reduce) {  /* si la persona pidió "menos animaciones" en su sistema... */
   .hamburguesa .barra,
   .navbar-collapse .nav-item { transition: none; animation: none; }  /* ...las quitamos (accesibilidad) */
+}
+
+/* ---------- Título de la portada con más rollo ---------- */
+
+header h1 { animation: subeTitulo .8s cubic-bezier(.22, 1, .36, 1) both; }  /* al cargar la página, el título sube y aparece (0,8 segundos) */
+
+/* "sabiendo lo que comes.": subrayado con rotulador lima, que se dibuja de izquierda a derecha */
+h1 .resalte {
+  background: linear-gradient(transparent 58%, var(--resalte) 58%) no-repeat left;  /* un fondo lima que solo cubre el 42 % de abajo de la línea (parece un rotulador) */
+  background-size: 0% 100%;                /* al principio mide 0 de ancho: no se ve */
+  animation: dibujaResalte .9s .5s cubic-bezier(.22, 1, .36, 1) forwards;  /* tras .5 s de espera, crece hasta el 100 %; "forwards" = se queda así al acabar */
+  -webkit-box-decoration-break: clone;     /* si la palabra se parte en dos líneas, cada trozo lleva su propio rotulador... */
+  box-decoration-break: clone;             /* ...(la misma orden, sin prefijo) */
+  padding: 0 .08em;                        /* un poquito de aire a los lados del rotulador */
+}
+
+@keyframes subeTitulo {                    /* de... */
+  from { opacity: 0; transform: translateY(24px); }  /* ...invisible y 24px más abajo... */
+  to { opacity: 1; transform: none; }                /* ...a visible y en su sitio */
+}
+
+@keyframes dibujaResalte {
+  to { background-size: 100% 100%; }       /* el rotulador crece hasta cubrir toda la palabra */
+}
+
+@media (prefers-reduced-motion: reduce) {  /* si la persona pidió "menos animaciones"... */
+  header h1 { animation: none; }           /* ...el título aparece sin moverse... */
+  h1 .resalte { animation: none; background-size: 100% 100%; }  /* ...y el rotulador ya está dibujado */
+}
+
+/* =====================================================================
+   MEJORAS VISUALES
+   ===================================================================== */
+
+/* ---------- Logo ---------- */
+.logo-cuenco { fill: var(--verde); }       /* el cuenco del logo, en verde */
+.logo-hoja-1 { fill: var(--lima-dark); }   /* la hoja grande, en lima oscuro */
+.logo-hoja-2 { fill: var(--lima); }        /* la hoja pequeña, en lima */
+
+/* ---------- Filtros: buscador y píldoras ---------- */
+.buscador-grande { flex: 1 1 14rem; width: auto; }  /* el buscador ocupa el espacio libre pero no baja de 14rem (si no cabe con el botón, el botón baja de línea). "width: auto" anula el 100 % que Bootstrap pone a los input-group */
+
+.buscador-grande .input-group-text {
+  background: var(--blanco);               /* fondo de tarjeta */
+  border-radius: 999px 0 0 999px;          /* redondeado solo a la izquierda */
+  padding-left: 1.1rem;                    /* aire a la izquierda de la lupa */
+  color: var(--gris);                      /* lupa en gris */
+}
+
+.buscador-grande .form-control {
+  border-radius: 0 999px 999px 0;          /* redondeado solo a la derecha: juntos forman una píldora */
+  padding: .65rem 1.1rem;                  /* casilla más alta y cómoda */
+  min-width: 0;                            /* anula el ancho mínimo antiguo (#buscador) para que se adapte */
+}
+
+.buscador-grande:focus-within .input-group-text,
+.buscador-grande:focus-within .form-control { border-color: var(--verde); }  /* al escribir, todo el borde se vuelve verde */
+
+.pills-scroll {
+  display: flex;                           /* píldoras en fila */
+  gap: .5rem;                              /* separación entre ellas */
+  overflow-x: auto;                        /* si no caben, se pueden deslizar hacia los lados */
+  padding-bottom: .4rem;                   /* un poco de aire para que no se corte la sombra */
+  scrollbar-width: none;                   /* oculta la barra de desplazamiento (Firefox) */
+}
+
+.pills-scroll::-webkit-scrollbar { display: none; }  /* oculta la barra de desplazamiento (Chrome y Safari) */
+
+@media (min-width: 768px) {                /* en pantallas medianas y grandes... */
+  .pills-scroll { flex-wrap: wrap; overflow-x: visible; }  /* ...las píldoras saltan de línea en vez de deslizarse */
+}
+
+.pill-tipo {
+  flex: 0 0 auto;                          /* no se encogen: mantienen su tamaño */
+  white-space: nowrap;                     /* el texto no se parte en dos líneas */
+  background: var(--blanco);               /* fondo de tarjeta */
+  color: var(--carbon);                    /* texto normal */
+  border: 1px solid var(--borde);          /* borde fino */
+  border-radius: 999px;                    /* forma de píldora */
+  padding: .4rem 1rem;                     /* espacio interior */
+  font-size: .9rem;                        /* letra algo pequeña */
+  font-weight: 600;                        /* semi-negrita */
+  transition: background .2s, color .2s, border-color .2s, transform .15s;  /* cambios suaves */
+}
+
+.pill-tipo:hover { border-color: var(--verde); }       /* al pasar el ratón, el borde se pone verde */
+
+.pill-tipo:active { transform: scale(.95); }           /* al pulsar, se encoge un poquito */
+
+.pill-tipo.activa { background: var(--verde); border-color: var(--verde); color: #fff; }  /* la píldora elegida: verde con texto blanco */
+
+.pill-proteina { margin-left: .5rem; }                 /* la de 🔥 va un poco separada de las demás */
+
+.pill-proteina.activa { background: var(--lima); border-color: var(--lima); color: #202923; }  /* la de proteína activada: lima con texto oscuro */
+
+/* ---------- Tarjetas de receta más "de revista" ---------- */
+.receta { border-radius: 1.5rem; overflow: hidden; }   /* esquinas más redondas; lo que sobresalga se recorta */
+
+.receta-img.ratio { --bs-aspect-ratio: 85%; }          /* la foto es más alta (antes 75 %) */
+
+.receta-foto { transition: transform .7s cubic-bezier(.22, 1, .36, 1); }  /* el zoom de la foto es suave */
+
+.receta:hover .receta-foto { transform: scale(1.07); }  /* al pasar el ratón por la tarjeta, la foto se acerca un 7 % */
+
+.receta-fuego {
+  position: absolute;                      /* se coloca encima de la foto... */
+  top: .8rem;                              /* ...a .8rem del borde de arriba... */
+  right: .8rem;                            /* ...y a .8rem del de la derecha */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .18);  /* sombrita para que se despegue de la foto */
+}
+
+.kcal-grande {
+  font-family: "Syne", sans-serif;         /* las calorías, en Syne */
+  font-size: 2rem;                         /* grandes */
+  font-weight: 800;                        /* extranegrita */
+  line-height: 1;                          /* altura de línea ajustada */
+}
+
+/* ---------- Haz tu bowl: tarjeta y cuenco ---------- */
+.bowl-tarjeta {
+  background: var(--verde-soft);           /* fondo verde suave */
+  border-radius: 2rem;                     /* esquinas muy redondeadas */
+  padding: clamp(1.25rem, 4vw, 2.5rem);    /* aire interior: se adapta a la pantalla (entre 1,25rem y 2,5rem) */
+}
+
+.bowl-tarjeta .paso-bowl { background: var(--blanco); }  /* los pasos, con fondo de tarjeta para que se vean sobre el verde */
+
+.bowl-tarjeta .paso-bowl.activo { background: var(--verde); }  /* el paso activo sigue verde */
+
+.bowl-visual {
+  display: flex;                           /* cuenco a la izquierda y leyenda a la derecha */
+  align-items: center;                     /* centrados en vertical */
+  flex-wrap: wrap;                         /* si no caben, la leyenda baja */
+  gap: 1.5rem;                             /* separación */
+}
+
+.cuenco-caja { width: 220px; }             /* el conjunto cuenco + borde mide 220px de ancho */
+
+.cuenco-borde {
+  height: 8px;                             /* barrita de 8px */
+  border-radius: 8px;                      /* puntas redondeadas */
+  background: var(--verde);                /* verde */
+  width: calc(100% + 16px);                /* un poquito más ancha que el cuenco... */
+  margin-left: -8px;                       /* ...y centrada */
+}
+
+.cuenco {
+  height: 110px;                           /* la mitad del ancho: una media circunferencia */
+  background: var(--blanco);               /* el cuenco vacío es blanco */
+  border: 3px solid var(--verde);          /* borde verde */
+  border-top: 0;                           /* sin borde arriba (ahí está la barrita) */
+  border-radius: 0 0 110px 110px;          /* redondeado solo abajo: forma de cuenco */
+  overflow: hidden;                        /* las capas se recortan con la forma del cuenco */
+  display: flex;                           /* las capas se apilan... */
+  flex-direction: column;                  /* ...una debajo de otra, en el orden del HTML */
+  justify-content: flex-end;               /* y se pegan al fondo: el cuenco se llena de abajo hacia arriba */
+}
+
+.capa { height: 0; transition: height .6s cubic-bezier(.22, 1, .36, 1); }  /* cada capa empieza sin altura y, al cambiar, crece con una animación suave */
+
+.capa-proteina { background: #D97855; }    /* proteína: terracota */
+.capa-hidratos { background: #E8C26A; }    /* hidratos: amarillo suave */
+.capa-verduras { background: #4E9A5F; }    /* verduras: verde */
+.capa-extras { background: #B58B5E; }      /* salsas y extras: tostado */
+
+.leyenda-bowl li { margin-bottom: .35rem; font-size: .9rem; }  /* una línea por grupo */
+
+.leyenda-bowl strong { margin-left: .25rem; }   /* los gramos, junto al nombre */
+
+.leyenda-bowl .punto { width: .75rem; height: .75rem; }  /* los puntitos de color, algo más grandes */
+
+/* ---------- Aparecer al hacer scroll ---------- */
+.js .reveal {
+  opacity: 0;                              /* al principio, invisible... */
+  transform: translateY(28px);             /* ...y 28px más abajo */
+  transition: opacity .7s ease, transform .7s cubic-bezier(.22, 1, .36, 1);  /* al aparecer, sube y se hace visible con suavidad */
+  transition-delay: calc(var(--i, 0) * 70ms);  /* las tarjetas de una misma fila entran una tras otra (--i lo pone JavaScript) */
+}
+
+.js .reveal.visible { opacity: 1; transform: none; }  /* cuando JavaScript le pone "visible", aparece en su sitio */
+
+@media (prefers-reduced-motion: reduce) {  /* si la persona pidió "menos animaciones"... */
+  .js .reveal { opacity: 1; transform: none; transition: none; }  /* ...todo se ve sin animar */
+  .receta-foto, .capa { transition: none; }
+}
+
+/* ---------- Botón de tema ---------- */
+.btn-tema {
+  width: 46px;                             /* círculo del mismo tamaño que el de la hamburguesa */
+  height: 46px;
+  border: 0;                               /* sin borde */
+  border-radius: 50%;                      /* redondo */
+  background: var(--verde-soft);           /* fondo verde suave */
+  color: var(--verde);                     /* el icono en verde */
+  font-size: 1.15rem;                      /* icono de buen tamaño */
+  display: inline-flex;                    /* centra el icono... */
+  align-items: center;                     /* ...en vertical... */
+  justify-content: center;                 /* ...y en horizontal */
+  transition: background .3s, transform .2s;  /* cambios suaves */
+}
+
+.btn-tema:hover { background: var(--lima); color: #202923; }  /* al pasar el ratón, se pone lima */
+
+.btn-tema:active { transform: scale(.92); }  /* al pulsar, se encoge un poco */
+
+.btn-tema:focus-visible { outline: 0; box-shadow: 0 0 0 .2rem rgba(36, 92, 69, .25); }  /* con teclado, un halo verde */
+
+@media (min-width: 992px) {                /* en ordenador... */
+  .btn-tema { width: 40px; height: 40px; font-size: 1rem; }  /* ...un poco más pequeño */
+}
+
+/* ---------- Pie de página ---------- */
+.pie { border-top: 1px solid var(--borde); margin-top: 2rem; }  /* línea fina arriba y separación con lo de encima */
+
+.pie h2 { font-size: .8rem; text-transform: uppercase; letter-spacing: .12em; color: var(--gris); margin-bottom: .75rem; }  /* títulos pequeños, en mayúsculas y gris */
+
+.pie li { margin-bottom: .4rem; }          /* separación entre enlaces */
+
+.pie-marca { font-family: "Outfit", sans-serif; font-size: 1.25rem; color: var(--verde); }  /* la marca del pie, como la del menú */
+
+/* ---------- TEMA OSCURO ---------- */
+/* Bootstrap pone data-bs-theme="dark" en <html> cuando se activa. Aquí cambiamos NUESTRAS variables de color */
+[data-bs-theme="dark"] {
+  --verde: #3B9570;                        /* verde más claro: se ve sobre fondo oscuro y aguanta texto blanco encima */
+  --verde-dark: #8FD6B0;                   /* en oscuro, el "hover" va a un verde más claro (no más oscuro) */
+  --verde-soft: #1E3027;                   /* fondos suaves: verde muy oscuro */
+  --lima-suave: #26361F;                   /* hueco de foto sin foto */
+  --crema: #101713;                        /* fondo de la página: casi negro verdoso */
+  --blanco: #19231E;                       /* tarjetas y cajas */
+  --carbon: #E6EDE8;                       /* texto principal: casi blanco */
+  --gris: #9BA9A1;                         /* texto secundario */
+  --borde: #2A3730;                        /* líneas finas */
+  --terracota-soft: #3A2A23;
+  --resalte: rgba(203, 232, 107, .3);      /* el subrayado del título, más suave para que se lea el texto */
+  --shadow-sm: 0 4px 16px rgba(0, 0, 0, .35);
+  --shadow-md: 0 12px 35px rgba(0, 0, 0, .45);
+}
+
+[data-bs-theme="dark"] .navbar { background: rgba(16, 23, 19, .88); }  /* barra de menú: crema oscuro semitransparente */
+
+[data-bs-theme="dark"] .navbar-brand { color: var(--lima); }           /* el nombre de la marca en lima */
+
+[data-bs-theme="dark"] .card { --bs-card-bg: var(--blanco); }          /* las tarjetas de Bootstrap usan nuestro color de caja */
+
+[data-bs-theme="dark"] .modal,
+[data-bs-theme="dark"] .offcanvas { --bs-modal-bg: var(--blanco); --bs-offcanvas-bg: var(--blanco); }  /* ventanas y panel lateral, igual */
+
+[data-bs-theme="dark"] .badge.text-bg-dark { background-color: var(--lima) !important; color: #202923 !important; }  /* el numerito de "Mi día" en lima (el negro no se vería) */
+
+[data-bs-theme="dark"] .btn-outline-dark {                             /* botones "Editar" y "Mi objetivo": en oscuro, borde y texto claros */
+  --bs-btn-color: var(--carbon);
+  --bs-btn-border-color: var(--carbon);
+  --bs-btn-hover-color: #101713;
+  --bs-btn-hover-bg: var(--carbon);
+  --bs-btn-hover-border-color: var(--carbon);
+  --bs-btn-active-color: #101713;
+  --bs-btn-active-bg: var(--carbon);
 }

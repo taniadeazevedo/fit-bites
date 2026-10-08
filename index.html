@@ -15,6 +15,17 @@
     <meta charset="UTF-8"> <!-- alfabeto de caracteres: así se ven bien las tildes y la ñ -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- en el móvil, la página usa el ancho real de la pantalla (si no, se vería diminuta) -->
     <title>Fit Bites</title> <!-- el texto de la pestaña del navegador -->
+    <link rel="icon" type="image/svg+xml" href="favicon.svg"> <!-- el iconito de la pestaña: un cuenco con hojas (archivo favicon.svg) -->
+
+    <!-- Tema claro/oscuro: se decide ANTES de que se pinte la página para que no haya un parpadeo blanco.
+         Usa el tema que elegiste la última vez (localStorage) o, si no hay, el del sistema (prefers-color-scheme) -->
+    <script>
+        try {                                                            // try/catch: si el navegador no deja leer localStorage, no se rompe nada
+            var guardado = localStorage.getItem('fitbites-tema');        // el tema guardado ('dark', 'light' o nada)
+            var oscuroSistema = window.matchMedia('(prefers-color-scheme: dark)').matches; // ¿tu sistema está en modo oscuro?
+            document.documentElement.setAttribute('data-bs-theme', guardado || (oscuroSistema ? 'dark' : 'light')); // Bootstrap lee este atributo para cambiar de tema
+        } catch (e) { }
+    </script>
 
     <!-- Bootstrap (CSS): las clases ya hechas (btn, card, row, col...). "integrity" es una firma de seguridad: si el archivo cambiara, el navegador lo bloquea -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
@@ -22,11 +33,11 @@
     <!-- Bootstrap Icons: los iconitos (bi bi-leaf-fill, bi bi-clock...) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
 
-    <!-- Google Fonts: las fuentes de la marca (Syne para el logo y el título grande, Outfit para el resto de títulos, Inter para el texto). Los "preconnect" avisan al navegador para que se conecte antes y cargue más rápido -->
+    <!-- Google Fonts: las fuentes de la marca (Syne para el título grande, Outfit para el logo y el resto de títulos, Inter para el texto). Los "preconnect" avisan al navegador para que se conecte antes y cargue más rápido -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Outfit:wght@500;700&family=Inter:wght@400;600&display=swap"
-        rel="stylesheet"> <!-- Syne para el logo y el título principal (pesos 700 y 800), Outfit para el resto de títulos (500 y 700) e Inter para el texto (400 y 600) -->
+        rel="stylesheet"> <!-- Syne para el título principal (pesos 700 y 800), Outfit para el logo y el resto de títulos (500 y 700) e Inter para el texto (400 y 600) -->
 
     <!-- Nuestro CSS, DESPUÉS de Bootstrap para poder pisarlo -->
     <link rel="stylesheet" href="css/estilos.css">
@@ -37,7 +48,19 @@
     <!-- NAVBAR: la barra de menú de arriba -->
     <nav class="navbar navbar-expand-lg"> <!-- barra de navegación; "expand-lg" = en pantallas grandes se ve desplegada y en móvil se recoge -->
         <div class="container"> <!-- centra el contenido y le da márgenes laterales -->
-            <a class="navbar-brand" href="#"><i class="bi bi-leaf-fill"></i> Fit Bites</a> <!-- la marca: un icono de hoja + el nombre -->
+            <a class="navbar-brand d-flex align-items-center gap-2" href="#"> <!-- la marca: un logo dibujado + el nombre -->
+                <!-- el logo en SVG (dibujo vectorial): un cuenco y dos hojitas. Cada <path> es una forma; las clases les ponen el color desde el CSS -->
+                <svg class="logo-marca" viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
+                    <path class="logo-cuenco" d="M3 16h26c0 7.2-5.8 13-13 13S3 23.2 3 16z" /> <!-- el cuenco: una media luna -->
+                    <path class="logo-hoja-1" d="M16 14C16 7 20 3 27 3c0 6.500-4 11-11 11z" /> <!-- la hoja grande -->
+                    <path class="logo-hoja-2" d="M15 14C15 9 12 6 6 6c0 5 3 8 9 8z" /> <!-- la hoja pequeña -->
+                </svg>
+                Fit Bites
+            </a>
+            <!-- botón de tema claro/oscuro: un iconito suelto, al lado de la hamburguesa. "ms-auto" lo empuja a la derecha; "order-lg-last" en pantallas grandes lo manda al final de la barra, tras los enlaces. JavaScript le cambia el icono -->
+            <button id="btnTema" type="button" class="btn-tema ms-auto me-2 ms-lg-2 me-lg-0 order-lg-last" aria-label="Cambiar entre tema claro y oscuro">
+                <i class="bi bi-moon-stars"></i>
+            </button>
             <!-- el botón de las tres rayitas (solo se ve en móvil). data-bs-toggle="collapse" + data-bs-target="#menu" = "al pulsar, despliega lo que tenga id=menu" -->
             <button class="navbar-toggler hamburguesa" type="button" data-bs-toggle="collapse" data-bs-target="#menu"
                 aria-controls="menu" aria-expanded="false" aria-label="Abrir menú"> <!-- "hamburguesa" es una clase nuestra: le da el estilo y la animación -->
@@ -66,7 +89,7 @@
     <header class="py-5"> <!-- "py-5" = espacio vertical grande por arriba y por abajo -->
         <div class="container">
             <p class="text-uppercase small fw-bold mb-2 etiqueta">Recetas con macros</p> <!-- frase pequeña en MAYÚSCULAS y negrita; "etiqueta" es una clase nuestra -->
-            <h1 class="display-4 mb-3">Come bien, sabiendo lo que comes.</h1> <!-- el título principal (h1: solo debe haber uno por página) -->
+            <h1 class="display-4 mb-3">Come bien, <span class="resalte">sabiendo lo que comes.</span></h1> <!-- el título principal (h1: solo debe haber uno por página). El <span> es una "etiqueta sin significado" que nos sirve para dar estilo a un trozo del texto: "resalte" = subrayado de rotulador lima -->
             <p class="lead mb-4">Tus recetas fit, con calorías y proteínas a la vista.</p> <!-- párrafo destacado -->
         </div>
     </header>
@@ -74,28 +97,21 @@
     <!-- RECETAS (en el paso 2 las pintará JavaScript) -->
     <section id="recetas" class="py-5"> <!-- una sección con id="recetas": el enlace del menú baja hasta aquí -->
         <div class="container">
-            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4"> <!-- fila con flexbox: filtro a la izquierda y botón a la derecha; "flex-wrap" deja que bajen de línea en móvil -->
-                <div class="d-flex flex-wrap align-items-center gap-2"> <!-- grupo de filtros: etiqueta, desplegable y buscador, en fila (y a la línea siguiente si no caben) -->
-                    <label for="filtroTipo" class="form-label mb-0 fw-semibold">Tipo de plato</label> <!-- la etiqueta; for="filtroTipo" la une con el desplegable -->
-                    <!-- desplegable para filtrar. Solo tiene "Todos": JavaScript añade el resto de opciones (Bowl, Pasta...) desde la lista TIPOS_PLATO. "w-auto" = ancho según su contenido -->
-                    <select id="filtroTipo" class="form-select w-auto">
-                        <option value="">Todos</option> <!-- value="" significa "sin filtro" -->
-                    </select>
-                    <!-- buscador: un "input-group" une el icono de la lupa y la casilla en una sola pieza -->
-                    <div class="input-group w-auto">
+            <!-- FILTROS: arriba el buscador a todo el ancho con el botón de nueva receta; debajo, los tipos de plato como píldoras -->
+            <div class="reveal mb-4"> <!-- "reveal" = aparece con una animación al llegar a la pantalla -->
+                <div class="d-flex flex-wrap gap-2 mb-3"> <!-- fila: buscador y botón -->
+                    <!-- buscador: un "input-group" une el icono de la lupa y la casilla en una sola pieza; "flex-grow-1" = ocupa todo el espacio libre -->
+                    <div class="input-group buscador-grande flex-grow-1">
                         <span class="input-group-text"><i class="bi bi-search"></i></span> <!-- el icono de lupa -->
-                        <!-- type="search" = casilla de búsqueda (en algunos navegadores trae una x para borrar); JavaScript la escucha por su id -->
-                        <input id="buscador" type="search" class="form-control" placeholder="Nombre o ingrediente" aria-label="Buscar recetas">
+                        <!-- type="search" = casilla de búsqueda; JavaScript la escucha por su id -->
+                        <input id="buscador" type="search" class="form-control" placeholder="Busca por nombre o ingrediente" aria-label="Buscar recetas">
                     </div>
-                    <!-- interruptor (switch de Bootstrap): activado, solo se ven las recetas con mucha proteína. JavaScript lo escucha por su id -->
-                    <div class="form-check form-switch mb-0 ms-1"> <!-- "form-switch" convierte la casilla en un interruptor; "ms-1" = un poco de margen a la izquierda -->
-                        <input id="filtroProteina" class="form-check-input" type="checkbox" role="switch"> <!-- la casilla en sí (type="checkbox": marcada o no) -->
-                        <label for="filtroProteina" class="form-check-label">🔥 Alta en proteína</label> <!-- su texto; for="filtroProteina" la une con la casilla -->
-                    </div>
+                    <button id="btnNueva" type="button" class="btn btn-verde"> <!-- botón "Nueva receta": JavaScript lo escucha por su id y lo oculta en modo lectura -->
+                        <i class="bi bi-plus-lg"></i> Nueva receta
+                    </button>
                 </div>
-                <button id="btnNueva" type="button" class="btn btn-verde"> <!-- botón "Nueva receta": JavaScript lo escucha por su id y lo oculta en modo lectura -->
-                    <i class="bi bi-plus-lg"></i> Nueva receta
-                </button>
+                <!-- las píldoras de filtro (Todos, Bowl, Pasta..., 🔥 Alta en proteína): las crea JavaScript desde la lista TIPOS_PLATO. En móvil se desplazan hacia los lados -->
+                <div id="pillsTipo" class="pills-scroll" role="group" aria-label="Filtrar por tipo de plato"></div>
             </div>
             <!-- aviso azul que solo se enseña en tu ordenador cuando json-server está apagado ("d-none" = oculto hasta que JavaScript lo muestre) -->
             <div id="avisoLectura" class="alert alert-info d-none">
@@ -110,8 +126,9 @@
     </section>
 
     <!-- HAZ TU BOWL: eliges ingredientes, pones los gramos y la página suma calorías y macros. JavaScript rellena y recalcula todo -->
-    <section id="bowl" class="py-5 border-top"> <!-- sección con id="bowl": el enlace del menú baja hasta aquí; "border-top" = línea fina arriba -->
+    <section id="bowl" class="py-5"> <!-- sección con id="bowl": el enlace del menú baja hasta aquí; "border-top" = línea fina arriba -->
         <div class="container">
+          <div class="bowl-tarjeta reveal"> <!-- la tarjeta con fondo verde suave que envuelve todo el apartado -->
             <h2 class="h3 mb-1">🥣 Haz tu bowl</h2>
             <p class="text-body-secondary mb-4">Elige ingredientes, pon los gramos y mira al instante cuánta proteína tiene tu plato.</p>
 
@@ -152,6 +169,24 @@
                 </div>
 
                 <div class="col-lg-7"> <!-- las 7 columnas restantes: tu plato y los totales -->
+                    <!-- EL CUENCO: se va llenando por capas según los gramos de cada grupo. JavaScript cambia la altura de cada capa -->
+                    <div class="bowl-visual mb-4">
+                        <div class="cuenco-caja"> <!-- el borde superior del cuenco y el cuenco debajo -->
+                            <div class="cuenco-borde"></div> <!-- la barrita del borde -->
+                            <div class="cuenco"> <!-- el cuenco: media luna que recorta las capas -->
+                                <div class="capa capa-verduras" data-grupo="verduras"></div> <!-- arriba: verduras y fruta -->
+                                <div class="capa capa-extras" data-grupo="extras"></div> <!-- salsas, lácteos y extras -->
+                                <div class="capa capa-proteina" data-grupo="proteina"></div> <!-- proteína -->
+                                <div class="capa capa-hidratos" data-grupo="hidratos"></div> <!-- abajo: hidratos -->
+                            </div>
+                        </div>
+                        <ul class="leyenda-bowl list-unstyled mb-0"> <!-- la leyenda: color, nombre y gramos de cada grupo -->
+                            <li><i class="punto capa-proteina"></i> Proteína <strong data-leyenda="proteina">0 g</strong></li>
+                            <li><i class="punto capa-hidratos"></i> Hidratos <strong data-leyenda="hidratos">0 g</strong></li>
+                            <li><i class="punto capa-verduras"></i> Verduras <strong data-leyenda="verduras">0 g</strong></li>
+                            <li><i class="punto capa-extras"></i> Salsas y extras <strong data-leyenda="extras">0 g</strong></li>
+                        </ul>
+                    </div>
                     <div id="bowlLista"></div> <!-- aquí JavaScript dibuja los ingredientes que has añadido -->
                     <div id="bowlTotales" class="mt-3"></div> <!-- aquí JavaScript dibuja los totales y la barra de proteína -->
                     <div class="d-flex flex-wrap gap-2 mt-3"> <!-- los botones, en fila -->
@@ -165,12 +200,45 @@
                     </div>
                 </div>
             </div>
+          </div> <!-- cierra .bowl-tarjeta -->
         </div>
     </section>
 
-    <footer class="py-4 border-top"> <!-- pie de página con una línea fina arriba -->
-        <div class="container small text-body-secondary"> <!-- letra pequeña y en gris -->
-            Valores nutricionales aproximados, introducidos por Tania y Cris.
+    <!-- PIE DE PÁGINA: la marca, enlaces rápidos y el aviso sobre los valores -->
+    <footer class="pie py-5">
+        <div class="container">
+            <div class="row g-4"> <!-- rejilla: en móvil, una columna debajo de otra -->
+                <div class="col-md-5"> <!-- la marca y una frase -->
+                    <div class="pie-marca d-flex align-items-center gap-2 mb-2">
+                        <svg class="logo-marca" viewBox="0 0 32 32" width="28" height="28" aria-hidden="true">
+                            <path class="logo-cuenco" d="M3 16h26c0 7.2-5.8 13-13 13S3 23.2 3 16z" />
+                            <path class="logo-hoja-1" d="M16 14C16 7 20 3 27 3c0 6.500-4 11-11 11z" />
+                            <path class="logo-hoja-2" d="M15 14C15 9 12 6 6 6c0 5 3 8 9 8z" />
+                        </svg>
+                        <strong>Fit Bites</strong>
+                    </div>
+                    <p class="text-body-secondary mb-0">Recetas fit con las calorías y las proteínas a la vista. Hechas en airfryer, pensadas para dos.</p>
+                </div>
+                <div class="col-6 col-md-3"> <!-- enlaces dentro de la página -->
+                    <h2 class="h6">Explora</h2>
+                    <ul class="list-unstyled mb-0">
+                        <li><a href="#recetas">Recetas</a></li>
+                        <li><a href="#bowl">Haz tu bowl</a></li>
+                        <li><a href="#" data-bs-toggle="offcanvas" data-bs-target="#panelDia">Mi día</a></li> <!-- abre el panel lateral, igual que en el menú -->
+                    </ul>
+                </div>
+                <div class="col-6 col-md-4"> <!-- el proyecto -->
+                    <h2 class="h6">Proyecto</h2>
+                    <ul class="list-unstyled mb-0">
+                        <li><a href="https://github.com/taniadeazevedo/fit-bites" target="_blank" rel="noopener"><i class="bi bi-github"></i> Código en GitHub</a></li> <!-- target="_blank" = en pestaña nueva; rel="noopener" = por seguridad -->
+                        <li><a href="#">Volver arriba <i class="bi bi-arrow-up"></i></a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="my-4"> <!-- línea separadora -->
+            <p class="small text-body-secondary mb-0">
+                Valores nutricionales aproximados, introducidos por Tania y Cris. No sustituyen el consejo de un profesional.
+            </p>
         </div>
     </footer>
 
