@@ -29,9 +29,14 @@ let idParaBorrar = null;       // el id de la receta que se va a borrar (lo apun
 let fotoForm = '';             // la foto del formulario convertida en texto (Base64); '' = sin foto
 let recetaDetalleId = null;    // el id de la receta que se está viendo en la ventana de detalle
 let tipoFiltro = '';           // el tipo de plato elegido en el desplegable de arriba ('' = todos)
+let textoBusqueda = '';        // lo que se ha escrito en el buscador ('' = sin búsqueda)
+let soloProteina = false;      // true = el interruptor "Alta en proteína" está activado
 
 // Tipos de plato: salen en el formulario Y en el filtro. Para añadir uno nuevo, escríbelo aquí y listo
 const TIPOS_PLATO = ['Bowl', 'Pasta', 'Ensalada', 'Hamburguesa', 'Fajita', 'Wrap', 'Sándwich', 'Arroz', 'Tortilla', 'Postre', 'Otro'];
+
+// Una receta se considera "alta en proteína" si tiene al menos estos gramos (cámbialo si quieres ser más o menos exigente)
+const PROTEINA_ALTA = 35;
 
 // "Mi día" se guarda en el navegador (localStorage), no en recetas.json
 const CLAVE_DIA = 'fitbites-dia';              // nombre con el que guardamos "lo de hoy" en el navegador
@@ -456,13 +461,32 @@ function rellenarTipos() {
     }
 }
 
-// Devuelve solo las recetas del tipo elegido (o todas si no hay filtro)
-function recetasFiltradas() {
-    if (tipoFiltro === '') return recetas;                      // sin filtro: todas las recetas
-    return recetas.filter(r => r.tipo === tipoFiltro);          // con filtro: solo las que tienen ese tipo
+// Pasa un texto a minúsculas y le quita las tildes, para que "salmon" encuentre "Salmón"
+function normalizarTexto(texto) {
+    return String(texto)                                       // aseguramos que es texto
+        .normalize('NFD')                                      // separa cada letra de su tilde: "ó" pasa a "o" + "´"
+        .replace(/[\u0300-\u036f]/g, '')                      // borra esas tildes sueltas (el rango \u0300-\u036f son las marcas de tilde)
+        .toLowerCase();                                        // todo en minúsculas
 }
 
-// Pinta las recetas aplicando el filtro que haya puesto
+// Devuelve las recetas que cumplen el tipo elegido, lo escrito en el buscador Y el interruptor de proteína
+function recetasFiltradas() {
+    const busqueda = normalizarTexto(textoBusqueda.trim());    // lo escrito, sin espacios sobrantes y sin tildes
+
+    return recetas.filter(r => {                               // filter se queda con las recetas para las que esto devuelva true
+        const coincideTipo = tipoFiltro === '' || r.tipo === tipoFiltro; // sin tipo elegido, valen todas; si no, el tipo debe coincidir
+
+        // el texto donde buscamos: el nombre y todos los ingredientes (join une la lista en un solo texto)
+        const textoReceta = normalizarTexto(r.nombre + ' ' + (r.ingredientes ?? []).join(' '));
+        const coincideTexto = busqueda === '' || textoReceta.includes(busqueda); // sin búsqueda valen todas; si no, el texto debe contenerla
+
+        const coincideProteina = !soloProteina || r.proteina >= PROTEINA_ALTA; // interruptor apagado: valen todas; encendido: solo las que llegan al mínimo de proteína
+
+        return coincideTipo && coincideTexto && coincideProteina; // la receta se muestra solo si cumple las tres condiciones (&& = Y)
+    });
+}
+
+// Pinta las recetas aplicando los filtros que haya puestos (tipo y buscador)
 function mostrarRecetas() {
     pintarRecetas(recetasFiltradas());                          // pintarRecetas dibuja la lista que le pasemos
 }
@@ -475,7 +499,8 @@ function pintarRecetas(lista) {
     contenedor.innerHTML = '';                             // lo vaciamos antes de pintar (si no, se repetirían)
 
     if (lista.length === 0) {                              // si no hay ninguna receta...
-        const mensaje = tipoFiltro ? 'No hay recetas de este tipo todavía.' : 'Aún no hay recetas. ¡Añade la primera!'; // ...el mensaje depende de si hay un filtro puesto
+        const hayFiltro = tipoFiltro !== '' || textoBusqueda.trim() !== '' || soloProteina; // ¿hay algún filtro o búsqueda puestos?
+        const mensaje = hayFiltro ? 'No hay recetas que coincidan con lo que buscas.' : 'Aún no hay recetas. ¡Añade la primera!'; // ...el mensaje depende de si hay un filtro puesto
         contenedor.innerHTML = `<p class="text-body-secondary">${mensaje}</p>`; // ...y lo escribimos
         pintarDia();                                       // ...refrescamos "Mi día"
         return;                                            // ...y terminamos
@@ -492,6 +517,7 @@ function pintarRecetas(lista) {
         // - La foto: si es válida se pinta la imagen; si no, un icono de huevo frito
         // - Las 3 barras de colores usan los porcentajes (pct) como ancho
         // - Arriba a la izquierda sale una etiqueta con el tipo de plato (Bowl, Pasta...), si la receta lo tiene
+        //   y otra, de color lima y con un 🔥, con "Alta en proteína" si llega al mínimo (PROTEINA_ALTA)
         // - El botón "Mi día" sale siempre; "Editar" y "Borrar" solo si no estamos en modo lectura
         col.innerHTML = `
       <article class="card h-100 border-0 shadow-sm receta" data-id="${receta.id}">
@@ -503,7 +529,10 @@ function pintarRecetas(lista) {
 
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center mb-2">
-            <span>${receta.tipo ? `<span class="recipe-tag">${escaparHtml(receta.tipo)}</span>` : ''}</span>
+            <span class="d-flex flex-wrap gap-1">
+              ${receta.tipo ? `<span class="recipe-tag">${escaparHtml(receta.tipo)}</span>` : ''}
+              ${receta.proteina >= PROTEINA_ALTA ? `<span class="recipe-tag recipe-tag--protein">🔥 Alta en proteína</span>` : ''}
+            </span>
             <small class="text-body-secondary"><i class="bi bi-clock"></i> ${receta.tiempo} min</small>
           </div>
 
@@ -755,6 +784,18 @@ async function iniciar() {
     document.querySelector('#filtroTipo').addEventListener('change', (e) => { // "change" = cuando se elige otra opción del desplegable
         tipoFiltro = e.target.value;                       // el valor elegido ('' si es "Todos")
         mostrarRecetas();                                  // repinta solo las recetas de ese tipo
+    });
+
+    // buscador: cada vez que se escribe o se borra una letra, apuntamos el texto y repintamos
+    document.querySelector('#buscador').addEventListener('input', (e) => { // "input" = cada vez que cambia lo escrito
+        textoBusqueda = e.target.value;                    // lo que hay escrito ahora mismo en la casilla
+        mostrarRecetas();                                  // repinta solo las recetas que coinciden
+    });
+
+    // interruptor "Alta en proteína": al activarlo o desactivarlo, apuntamos su estado y repintamos
+    document.querySelector('#filtroProteina').addEventListener('change', (e) => { // "change" = cuando se marca o desmarca
+        soloProteina = e.target.checked;                   // checked es true si está activado y false si no
+        mostrarRecetas();                                  // repinta solo las recetas que cumplen
     });
 
     // clics en las tarjetas: editar, borrar (lo gestiona Bootstrap) o abrir el detalle

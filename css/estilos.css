@@ -332,3 +332,17 @@ a:hover {                     /* :hover = cuando el ratón está encima */
 .linea-dia { display: flex; align-items: center; gap: .75rem; padding: .75rem 0; border-bottom: 1px solid var(--borde); }  /* cada plato de "Mi día": contenido en fila y centrado, con separación, espacio arriba/abajo y una línea fina debajo */
 
 .linea-dia .btn-group .btn { min-width: 2rem; }  /* los botones − + tienen un ancho mínimo para que no queden estrechos */
+
+/* ---------- Buscador de recetas ---------- */
+#buscador { min-width: 16rem; }   /* la casilla de búsqueda no se queda estrecha: al menos 16rem (unos 256 píxeles) */
+
+/* ---------- Interruptor "Alta en proteína" ---------- */
+.form-check-input:checked {          /* el interruptor (o casilla) cuando está activado... */
+  background-color: var(--verde);    /* ...se rellena con el verde de la marca (Bootstrap lo pone azul por defecto) */
+  border-color: var(--verde);        /* ...y su borde también */
+}
+
+.form-check-input:focus {            /* cuando se selecciona con el teclado o se hace clic... */
+  border-color: var(--verde);        /* ...el borde se vuelve verde */
+  box-shadow: 0 0 0 .2rem rgba(36, 92, 69, .2);  /* ...con un halo verde suave en lugar del azul */
+}
