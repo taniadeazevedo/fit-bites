@@ -767,3 +767,13 @@ h1 .resalte {
   --bs-btn-active-color: #101713;
   --bs-btn-active-bg: var(--carbon);
 }
+
+/* ---------- Foto en la ventana de detalle ---------- */
+#detalleFoto {
+  display: block;                          /* en su propia línea, para poder centrarla */
+  width: 100%;                             /* ocupa el ancho disponible... */
+  max-width: 24rem;                        /* ...pero nunca más de 24rem (más o menos como la de la tarjeta): así no se agranda en pantallas grandes */
+  aspect-ratio: 20 / 17;                   /* proporción fija, la misma "cuadradita" de las tarjetas (85 %) */
+  object-fit: cover;                       /* la foto llena el hueco recortando lo que sobre, sin deformarse */
+  margin-inline: auto;                     /* centrada en la ventana */
+}
