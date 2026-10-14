@@ -90,7 +90,7 @@ a:hover {                     /* :hover = cuando el ratón está encima */
 
 .btn-fit {
   background: var(--verde);   /* fondo verde */
-  color: white;               /* texto blanco */
+  color: white;             /* texto blanco */
   border: none;               /* sin borde */
   border-radius: 999px;       /* un radio enorme = esquinas totalmente redondas (forma de píldora) */
   padding: .8rem 1.4rem;      /* espacio interior: arriba/abajo .8rem, izquierda/derecha 1.4rem */
@@ -100,7 +100,7 @@ a:hover {                     /* :hover = cuando el ratón está encima */
 
 .btn-fit:hover {
   background: var(--verde-dark);    /* se oscurece al pasar el ratón */
-  color: white;                     /* el texto sigue blanco */
+  color: white;                   /* el texto sigue blanco */
   transform: translateY(-2px);      /* sube 2 píxeles: parece que el botón "se levanta" */
 }
 
