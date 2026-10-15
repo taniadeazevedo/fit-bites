@@ -56,7 +56,7 @@ export const CLAVES_USUARIO = {
     favoritas: 'fitbites-favoritas',              // tus recetas favoritas
     compra: 'fitbites-compra',                    // las recetas de la lista de la compra
     compraOk: 'fitbites-compra-ok',               // los ingredientes ya tachados
-    platos: 'fitbites-platos',                    // tus platos guardados (combinaciones de alimentos)
+    compraManual: 'fitbites-compra-manual',       // lo que apuntas a mano en la lista de la compra
     alimentosPropios: 'fitbites-alimentos-propios' // los alimentos que creas tú (tu yogur, tu marca de batido...)
 };
 

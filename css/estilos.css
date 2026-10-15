@@ -1141,3 +1141,19 @@ h1 .resalte {
   flex: 1;
   border-top: 1px solid var(--borde);
 }
+
+/* ---------- Lista de la compra: lo apuntado a mano ---------- */
+.item-compra .item-nombre { cursor: pointer; margin: 0; }   /* el nombre también marca la casilla (es un <label>) */
+
+.compra-borrar {
+  border: 0;                               /* la × para borrar, sin borde ni fondo */
+  background: none;
+  color: var(--gris);
+  font-size: 1.25rem;
+  line-height: 1;
+  padding: 0 .25rem;
+  border-radius: .25rem;
+}
+
+.compra-borrar:hover { color: #c0392b; }   /* al pasar el ratón, en rojo */
+.compra-borrar:focus-visible { outline: 3px solid var(--verde); outline-offset: 2px; }

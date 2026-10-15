@@ -1,7 +1,7 @@
 /* =====================================================================
    FIT BITES · almacen.js
    El "almacén" de los datos de cada persona (historial, objetivo,
-   favoritas, platos...). Todos los módulos leen y guardan AQUÍ, nunca
+   favoritas, compra...). Todos los módulos leen y guardan AQUÍ, nunca
    directamente en localStorage. Así:
    - siempre hay una copia en el navegador (funciona sin cuenta y sin internet)
    - si has entrado con tu cuenta, nube.js sube cada cambio a Firebase

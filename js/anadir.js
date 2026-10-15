@@ -1,9 +1,8 @@
 /* =====================================================================
    FIT BITES · anadir.js
-   La ventana para AÑADIR al diario. Tiene tres pestañas:
+   La ventana para AÑADIR al diario. Tiene dos pestañas:
    - Alimentos: buscas ("salm"), eliges, pones los gramos y ves al momento
      cuánto suma. Aquí también puedes crear tus propios alimentos.
-   - Mis platos: tus combinaciones guardadas, de un toque.
    - Recetas: las recetas de la web, por raciones.
    La ventana se queda abierta para añadir varias cosas seguidas.
    ===================================================================== */
@@ -11,12 +10,11 @@
 import { COMIDAS, CATEGORIAS_ALIMENTO } from './config.js'; // comidas y categorías
 import { estado, buscarReceta } from './estado.js';     // las recetas
 import { filtrarAlimentos, buscarAlimento, crearAlimentoPropio, borrarAlimentoPropio } from './alimentos.js'; // alimentos
-import { listaPlatos, buscarPlato, borrarPlato } from './platos.js'; // platos guardados
 import { anadirLinea, totalesLinea, comidaSugerida } from './dia.js'; // el diario
 import { escaparHtml, formatoNumero, numeroConMedio, normalizarTexto, mostrarAviso } from './utilidades.js'; // herramientas pequeñas
 
 // ---------- ESTADO DE ESTE ARCHIVO ----------
-let pestana = 'alimentos';     // la pestaña abierta: 'alimentos', 'platos' o 'recetas'
+let pestana = 'alimentos';     // la pestaña abierta: 'alimentos' o 'recetas'
 let texto = '';                // lo escrito en el buscador
 let categoria = '';            // la categoría elegida ('' = todas)
 let seleccion = null;          // lo elegido para añadir: { origen, ref, nombre, unidad, cantidad, valores } (o null)
@@ -28,7 +26,7 @@ function macros(v, decimales = 1) {
     return `${formatoNumero(v.kcal)} kcal · P ${formatoNumero(v.proteina, decimales)} · C ${formatoNumero(v.carbohidratos, decimales)} · G ${formatoNumero(v.grasas, decimales)}`;
 }
 
-// Saca los 4 valores de un objeto (alimento, plato o receta)
+// Saca los 4 valores de un objeto (alimento o receta)
 function valoresDe(objeto) {
     return { kcal: Number(objeto.kcal), proteina: Number(objeto.proteina), carbohidratos: Number(objeto.carbohidratos), grasas: Number(objeto.grasas) };
 }
@@ -41,10 +39,6 @@ function elegir(origen, ref, cantidad) {
         const a = buscarAlimento(ref);
         if (!a) return;
         seleccion = { origen, ref, nombre: a.nombre, unidad: 'g', cantidad: cantidad ?? a.racion ?? 100, valores: valoresDe(a), nota: a.nota };
-    } else if (origen === 'plato') {
-        const p = buscarPlato(ref);
-        if (!p) return;
-        seleccion = { origen, ref, nombre: p.nombre, unidad: 'racion', cantidad: cantidad ?? 1, valores: p.valores, nota: p.detalle };
     } else {
         const r = buscarReceta(ref);
         if (!r) return;
@@ -78,10 +72,6 @@ function pintarLista() {
             detalle: `${macros(a)} por 100 g${a.nota ? ' · ' + a.nota : ''}`,
             borrable: a.propio, etiqueta: a.propio ? 'Tuyo' : ''
         }));
-    } else if (pestana === 'platos') {
-        opciones = listaPlatos()
-            .filter(p => busqueda === '' || normalizarTexto(p.nombre).includes(busqueda))
-            .map(p => ({ origen: 'plato', ref: p.id, nombre: p.nombre, detalle: `${macros(p.valores, 0)} · ${p.detalle ?? ''}`, borrable: true }));
     } else {
         opciones = estado.recetas
             .filter(r => busqueda === '' || normalizarTexto(r.nombre).includes(busqueda))
@@ -89,9 +79,7 @@ function pintarLista() {
     }
 
     // mensaje si no hay nada
-    const vacio = pestana === 'platos' && listaPlatos().length === 0
-        ? 'Aún no tienes platos. Apunta una comida con varios alimentos y pulsa «Guardar como plato».'
-        : 'No hay nada que coincida. ' + (pestana === 'alimentos' ? 'Puedes crearlo abajo, en «Crear un alimento».' : '');
+    const vacio = 'No hay nada que coincida. ' + (pestana === 'alimentos' ? 'Puedes crearlo abajo, en «Crear un alimento».' : '');
 
     q('#anadirLista').innerHTML = opciones.length === 0
         ? `<p class="text-body-secondary small mb-0">${vacio}</p>`
@@ -157,7 +145,7 @@ function pintarPestanas() {
         b.classList.toggle('active', activa);
         b.setAttribute('aria-pressed', activa);
     });
-    const ejemplos = { alimentos: 'Busca: salmón, arroz, nueces…', platos: 'Busca en tus platos', recetas: 'Busca una receta' };
+    const ejemplos = { alimentos: 'Busca: salmón, arroz, nueces…', recetas: 'Busca una receta' };
     q('#anadirBuscar').placeholder = ejemplos[pestana];
 }
 
@@ -174,7 +162,7 @@ function pintarTodo() {
 // Por ejemplo, desde una receta: abrirAnadir({ origen: 'receta', ref: '3', cantidad: 1.5 })
 export function abrirAnadir({ comida, origen, ref, cantidad } = {}) {
     pintarComidas(comida ?? comidaSugerida());             // la comida (si no se dice, la que toca por la hora)
-    pestana = origen === 'receta' ? 'recetas' : origen === 'plato' ? 'platos' : 'alimentos';
+    pestana = origen === 'receta' ? 'recetas' : 'alimentos';
     texto = '';                                            // buscador vacío
     categoria = '';
     seleccion = null;
@@ -232,7 +220,7 @@ export function iniciarAnadir() {
             const { origen, ref } = borrar.dataset;
             const nombre = borrar.closest('.opcion-fila').querySelector('.opcion-nombre').textContent.replace('Tuyo', '').trim();
             if (!confirm(`¿Borrar «${nombre}»? Lo que ya apuntaste en el diario no cambia.`)) return;
-            if (origen === 'alimento') borrarAlimentoPropio(ref); else borrarPlato(ref);
+            if (origen === 'alimento') borrarAlimentoPropio(ref);  // (solo se pueden borrar tus alimentos propios)
             if (seleccion?.ref === ref) seleccion = null;  // si era lo elegido, se quita
             pintarLista();
             pintarSeleccion();

@@ -8,7 +8,7 @@
    la copia); si no hay, se usa la copia guardada. Así nunca te quedas con una versión vieja.
    ===================================================================== */
 
-const CACHE = 'fitbites-v3';                       // nombre de la "caja" donde guardamos las copias (v3: diario por comidas; si vuelves a cambiar la estructura, súbelo a v4)
+const CACHE = 'fitbites-v4';                       // nombre de la "caja" donde guardamos las copias (v4: sin «Mis platos» y compra a mano; si vuelves a cambiar la estructura, súbelo a v5)
 
 // Lo mínimo para que la web arranque sin internet (rutas relativas a esta carpeta)
 const ARCHIVOS = [
@@ -27,7 +27,6 @@ const ARCHIVOS = [
     'js/fotos.js',
     'js/interfaz.js',
     'js/alimentos.js',
-    'js/platos.js',
     'js/dia.js',
     'js/anadir.js',
     'js/recetas.js',

@@ -1,17 +1,20 @@
 /* =====================================================================
    FIT BITES · compra.js
-   La lista de la compra: junta los ingredientes de las recetas que
-   marcas con el carrito 🛒, suma las cantidades y deja ir tachando.
+   La lista de la compra: lo que apuntas A MANO ("leche", "1 kg de
+   patatas") y los ingredientes de las recetas que marcas con el
+   carrito 🛒 (sumando las cantidades). Todo se puede ir tachando.
    ===================================================================== */
 
 import { buscarReceta } from './estado.js';             // para encontrar cada receta por su id
 import { escaparHtml, normalizarTexto, formatoNumero, numeroConMedio, mostrarAviso } from './utilidades.js'; // herramientas pequeñas
 import { leer, guardar, alCambiarDatos } from './almacen.js'; // guardar la lista (navegador y, con cuenta, nube)
 import { mostrarRecetas } from './recetas.js';          // para repintar las tarjetas al vaciar la lista
+import { todosLosAlimentos } from './alimentos.js';    // para sugerir nombres al escribir
 
 // ---------- ESTADO DE ESTE ARCHIVO ----------
 let compra = [];               // ids de las recetas que están en la lista de la compra
 let compraOk = [];             // claves de los ingredientes ya tachados
+let manuales = [];             // lo apuntado a mano: [{ id: 'm...', texto: 'Leche', hecho: false }]
 
 /* ---------- LISTA DE LA COMPRA ---------- */
 
@@ -114,7 +117,7 @@ function agruparIngredientes(lista) {
 export function pintarCompra() {
     // las recetas elegidas (buscándolas por id; si alguna ya no existe, filter(Boolean) la descarta)
     const elegidas = compra.map(id => buscarReceta(id)).filter(Boolean);
-    document.querySelector('#contadorCompra').textContent = elegidas.length; // el numerito del menú
+    document.querySelector('#contadorCompra').textContent = elegidas.length + manuales.filter(m => !m.hecho).length; // el numerito del menú: recetas + lo apuntado a mano que falta por comprar
 
     // las etiquetas de las recetas, cada una con su × para quitarla
     document.querySelector('#compraRecetas').innerHTML = elegidas.map(r => `
@@ -124,20 +127,30 @@ export function pintarCompra() {
 
     const lista = document.querySelector('#compraLista');  // el hueco de la lista
 
-    if (elegidas.length === 0) {                           // si no hay recetas...
-        lista.innerHTML = '<p class="text-body-secondary">Aún no hay nada. Pulsa el carrito 🛒 de una receta para añadir sus ingredientes.</p>';
+    if (elegidas.length === 0 && manuales.length === 0) {  // si no hay nada...
+        lista.innerHTML = '<p class="text-body-secondary">Aún no hay nada. Escribe arriba lo que necesitas o pulsa el carrito 🛒 de una receta.</p>';
         return;
     }
 
-    // los ingredientes: los ya tachados van al final; dentro de cada grupo, por orden alfabético
-    const items = agruparIngredientes(elegidas).sort((a, b) =>
-        (compraOk.includes(a.clave) - compraOk.includes(b.clave)) || a.nombre.localeCompare(b.nombre, 'es')); // (true - false) = 1: los tachados pesan más y bajan
+    // todo junto en una lista: lo de las recetas (agrupado) y lo apuntado a mano
+    const items = [
+        ...agruparIngredientes(elegidas).map(it => ({ ...it, manual: false, hecho: compraOk.includes(it.clave) })),
+        ...manuales.map(m => ({ manual: true, id: m.id, nombre: m.texto, cantidad: '', nota: '', hecho: m.hecho }))
+    ].sort((a, b) => (a.hecho - b.hecho) || a.nombre.localeCompare(b.nombre, 'es')); // los tachados al final ((true - false) = 1: pesan más y bajan); dentro, por orden alfabético
 
     lista.innerHTML = items.map(it => {
-        const hecho = compraOk.includes(it.clave);         // ¿está tachado?
+        // lo apuntado a mano lleva además una × para borrarlo. Como el <label> no puede envolver ese botón, se une a su casilla con for="..." / id="..."
+        if (it.manual) {
+            return `
+      <div class="item-compra${it.hecho ? ' tachado' : ''}">
+        <input type="checkbox" class="form-check-input mt-0" id="${it.id}" data-manual="${it.id}"${it.hecho ? ' checked' : ''}>
+        <label class="item-nombre" for="${it.id}">${escaparHtml(it.nombre)}</label>
+        <button type="button" class="compra-borrar" data-manual="${it.id}" aria-label="Borrar ${escaparHtml(it.nombre)}">×</button>
+      </div>`;
+        }
         return `
-      <label class="item-compra${hecho ? ' tachado' : ''}">
-        <input type="checkbox" class="form-check-input mt-0" data-clave="${escaparHtml(it.clave)}"${hecho ? ' checked' : ''}>
+      <label class="item-compra${it.hecho ? ' tachado' : ''}">
+        <input type="checkbox" class="form-check-input mt-0" data-clave="${escaparHtml(it.clave)}"${it.hecho ? ' checked' : ''}>
         <span class="item-nombre">${escaparHtml(it.nombre)}${it.nota ? `<small>${it.nota}</small>` : ''}</span>
         <span class="item-cantidad">${escaparHtml(it.cantidad)}</span>
       </label>`;
@@ -150,7 +163,8 @@ function textoListaCompra() {
     const lineas = agruparIngredientes(elegidas)           // los ingredientes juntos
         .filter(it => !compraOk.includes(it.clave))        // sin los ya tachados
         .map(it => '• ' + it.nombre + (it.cantidad ? ' — ' + it.cantidad : '')); // "• Salmón — 220 g"
-    return 'Lista de la compra (Fit Bites)\n' + lineas.join('\n'); // un título y una línea por ingrediente
+    const aMano = manuales.filter(m => !m.hecho).map(m => '• ' + m.texto); // lo apuntado a mano (sin lo tachado)
+    return 'Lista de la compra (Fit Bites)\n' + [...aMano, ...lineas].join('\n'); // un título y una línea por producto
 }
 
 /* ---------- ARRANQUE: oyentes del panel de la compra ---------- */
@@ -165,15 +179,52 @@ function leerTextos(clave) {
 function leerCompra() {
     compra = leerTextos('compra');
     compraOk = leerTextos('compraOk');
+    const guardados = leer('compraManual', []);            // lo apuntado a mano
+    manuales = Array.isArray(guardados) ? guardados.filter(m => m && m.id && typeof m.texto === 'string') : [];
+}
+
+// Rellena las sugerencias del campo de texto con los alimentos de la tabla (sin repetir y en orden)
+function rellenarSugerencias() {
+    const nombres = [...new Set(todosLosAlimentos().map(a => a.nombre.replace(/\s*\(.*\)$/, '')))] // sin lo de entre paréntesis ("Arroz basmati (crudo)" -> "Arroz basmati"); new Set quita los repetidos
+        .sort((a, b) => a.localeCompare(b, 'es'));
+    document.querySelector('#sugerenciasCompra').innerHTML = nombres.map(n => `<option value="${escaparHtml(n)}"></option>`).join('');
 }
 
 export function iniciarCompra() {
     leerCompra();                                          // recupera la lista y lo tachado
+    rellenarSugerencias();                                 // las sugerencias al escribir
+
+    // APUNTAR A MANO: al enviar el formulario (botón o Enter), se añade a la lista
+    document.querySelector('#formCompraManual').addEventListener('submit', (e) => {
+        e.preventDefault();                                // que no recargue la página
+        const campo = e.target.texto;
+        const texto = campo.value.trim();
+        if (texto === '') return;
+
+        const repetido = manuales.some(m => normalizarTexto(m.texto) === normalizarTexto(texto) && !m.hecho); // ¿ya está sin tachar? (some = ¿alguno cumple?)
+        if (!repetido) {
+            manuales.push({ id: 'm' + Date.now().toString(36), texto: texto.charAt(0).toUpperCase() + texto.slice(1), hecho: false }); // con mayúscula inicial
+            guardar('compraManual', manuales);
+        }
+        campo.value = '';                                  // vaciamos la casilla para el siguiente
+        campo.focus();
+        pintarCompra();
+        if (repetido) mostrarAviso('Ya estaba en la lista');
+    });
     alCambiarDatos(() => { leerCompra(); pintarCompra(); }); // si llegan datos de la nube, se recarga
 
     const panelCompra = document.querySelector('#panelCompra'); // el panel lateral
 
     panelCompra.addEventListener('change', (e) => {        // al marcar o desmarcar una casilla de ingrediente
+        const casillaManual = e.target.closest('input[data-manual]'); // ¿una de lo apuntado a mano?
+        if (casillaManual) {
+            const item = manuales.find(m => m.id === casillaManual.dataset.manual);
+            if (item) item.hecho = casillaManual.checked;  // tachado o no
+            guardar('compraManual', manuales);
+            pintarCompra();
+            return;
+        }
+
         const casilla = e.target.closest('input[data-clave]'); // ¿fue una casilla de la lista?
         if (!casilla) return;                              // si no, nada
 
@@ -187,6 +238,15 @@ export function iniciarCompra() {
     });
 
     panelCompra.addEventListener('click', (e) => {         // clics dentro del panel
+        const borrar = e.target.closest('.compra-borrar'); // ¿fue en la × de algo apuntado a mano?
+        if (borrar) {
+            manuales = manuales.filter(m => m.id !== borrar.dataset.manual); // todos menos ese
+            guardar('compraManual', manuales);
+            pintarCompra();
+            document.querySelector('#compraManualTexto').focus(); // el botón ha desaparecido: el foco a la casilla de escribir
+            return;
+        }
+
         const quitar = e.target.closest('.compra-quitar'); // ¿fue en la × de una receta?
         if (!quitar) return;                               // si no, nada
 
@@ -203,7 +263,9 @@ export function iniciarCompra() {
     document.querySelector('#btnCompraVaciar').addEventListener('click', () => { // "Vaciar lista"
         compra = [];                                       // sin recetas
         compraOk = [];                                     // y sin nada tachado
-        guardar('compra', compra);                // guardamos
+        manuales = [];                                     // y sin lo apuntado a mano
+        guardar('compra', compra);                         // guardamos
+        guardar('compraManual', manuales);
         guardar('compraOk', compraOk);
         pintarCompra();                                    // repintamos el panel
         mostrarRecetas();                                  // y las tarjetas (para que los carritos se apaguen)

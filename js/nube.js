@@ -25,7 +25,7 @@ let auth = null;               // el servicio de cuentas
 let db = null;                 // la base de datos
 let referencia = null;         // el documento de la persona que ha entrado: usuarios/{uid}
 let dejarDeEscuchar = null;    // función para dejar de escuchar cambios de la nube
-let pendiente = {};            // cambios que esperan a subirse: { historial: {...}, platos: [...] }
+let pendiente = {};            // cambios que esperan a subirse: { historial: {...}, compra: [...] }
 let temporizador = null;       // el "reloj" que sube los cambios a los 0,8 s
 
 // Carga Firebase y avisa (con "alCambiarUsuario") cada vez que alguien entra o sale

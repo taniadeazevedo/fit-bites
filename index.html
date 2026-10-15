@@ -290,17 +290,24 @@
         </div>
     </footer>
 
-    <!-- LISTA DE LA COMPRA (panel lateral): junta los ingredientes de las recetas que marques con el carrito 🛒 -->
+    <!-- LISTA DE LA COMPRA (panel lateral): lo que apuntes a mano + los ingredientes de las recetas que marques con el carrito 🛒 -->
     <div class="offcanvas offcanvas-end" tabindex="-1" id="panelCompra" aria-labelledby="tituloCompra">
         <div class="offcanvas-header">
             <div>
                 <h2 class="offcanvas-title h5 mb-0" id="tituloCompra">Lista de la compra</h2>
-                <small class="text-body-secondary">Una ración de cada receta</small>
+                <small class="text-body-secondary">Apunta lo que necesites o marca recetas con el carrito</small>
             </div>
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
         </div>
 
         <div class="offcanvas-body d-flex flex-column">
+            <!-- APUNTAR A MANO: escribes ("leche", "2 kg de patatas") y Enter. <datalist> sugiere los alimentos de la tabla mientras escribes -->
+            <form id="formCompraManual" class="input-group mb-3">
+                <input id="compraManualTexto" name="texto" class="form-control" list="sugerenciasCompra" placeholder="Ej. leche, 1 kg de patatas…" aria-label="Producto para la lista de la compra" autocomplete="off" required maxlength="80">
+                <button type="submit" class="btn btn-verde"><i class="bi bi-plus-lg" aria-hidden="true"></i> Añadir</button>
+            </form>
+            <datalist id="sugerenciasCompra"></datalist> <!-- las sugerencias: las rellena JavaScript con la tabla de alimentos -->
+
             <div id="compraRecetas" class="d-flex flex-wrap gap-2 mb-3"></div> <!-- las recetas elegidas, como etiquetas con una × -->
             <div id="compraLista" class="flex-grow-1"></div> <!-- la lista de ingredientes con casillas para ir tachando -->
 
@@ -492,7 +499,6 @@
                     <!-- pestañas: qué quieres añadir -->
                     <div class="btn-group btn-group-sm w-100 mb-3 pestanas-anadir" role="group" aria-label="Qué añadir">
                         <button type="button" class="btn btn-outline-dark active" data-pestana="alimentos" aria-pressed="true">Alimentos</button>
-                        <button type="button" class="btn btn-outline-dark" data-pestana="platos" aria-pressed="false">Mis platos</button>
                         <button type="button" class="btn btn-outline-dark" data-pestana="recetas" aria-pressed="false">Recetas</button>
                     </div>
                     <div class="input-group buscador-grande mb-2">
@@ -560,28 +566,6 @@
         </div>
     </div>
 
-    <!-- GUARDAR COMO PLATO (modal pequeño): el nombre del plato -->
-    <div class="modal fade" id="modalPlato" tabindex="-1" aria-labelledby="tituloPlato" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-sm">
-            <div class="modal-content border-0">
-                <form id="formPlato">
-                    <div class="modal-header">
-                        <h2 class="modal-title h5" id="tituloPlato">Guardar como plato</h2>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                    </div>
-                    <div class="modal-body">
-                        <label for="platoNombre" class="form-label">Nombre del plato</label>
-                        <input id="platoNombre" name="nombre" class="form-control" required placeholder="Ej. Mi bowl de salmón" autocomplete="off">
-                        <p class="small text-body-secondary mt-2 mb-0">Se guarda como 1 ración. Lo encontrarás en «Añadir» → «Mis platos».</p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-verde">Guardar</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
     <!-- CUENTA (modal): entrar o crear cuenta (Google o email). Lo maneja cuenta.js -->
     <div class="modal fade" id="modalCuenta" tabindex="-1" aria-labelledby="tituloCuenta" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -593,7 +577,7 @@
                 <div class="modal-body">
                     <!-- SIN SESIÓN -->
                     <div id="cuentaFuera">
-                        <p class="text-body-secondary small">Con una cuenta, tu diario, tu objetivo y tus platos se guardan en la nube y los ves en el móvil y en el ordenador.</p>
+                        <p class="text-body-secondary small">Con una cuenta, tu diario, tu objetivo y tu lista de la compra se guardan en la nube y los ves en el móvil y en el ordenador.</p>
                         <button id="btnGoogle" type="button" class="btn btn-outline-dark w-100 mb-3">
                             <i class="bi bi-google" aria-hidden="true"></i> Continuar con Google
                         </button>

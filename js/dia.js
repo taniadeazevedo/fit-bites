@@ -8,8 +8,8 @@
      { "2026-10-15": { desayuno: [línea, línea], comida: [...], merienda: [], cena: [] } }
 
    Cada LÍNEA guarda una copia de sus valores, para que el historial no
-   cambie aunque luego corrijas un alimento o borres un plato:
-     { id, origen: 'alimento' | 'plato' | 'receta', ref, nombre,
+   cambie aunque luego corrijas o borres un alimento:
+     { id, origen: 'alimento' | 'receta', ref, nombre,
        cantidad, unidad: 'g' | 'racion', valores: { kcal, proteina, carbohidratos, grasas } }
    - unidad 'g'      -> valores por cada 100 g (cantidad = gramos)
    - unidad 'racion' -> valores por ración     (cantidad = raciones)
@@ -18,7 +18,6 @@
 import { COMIDAS, NUTRIENTES, OBJETIVO_DEFECTO, DIAS_GUARDADOS, CLAVE_DIA_ANTIGUO } from './config.js'; // ajustes
 import { estado, buscarReceta } from './estado.js';     // las recetas (para pasar al formato nuevo lo que tenías apuntado)
 import { leer, guardar, alCambiarDatos } from './almacen.js'; // guardar y leer los datos de la persona
-import { crearPlato } from './platos.js';               // "Guardar como plato"
 import { escaparHtml, formatoNumero, numeroConMedio, mayusculaInicial, fechaHoy, sumarDias, lunesDe, fechaLegible, mostrarAviso } from './utilidades.js'; // herramientas pequeñas
 import { abrirAnadir } from './anadir.js';              // la ventana para añadir alimentos
 
@@ -27,7 +26,6 @@ let historial = {};                        // lo comido cada día (ver arriba)
 let objetivo = { ...OBJETIVO_DEFECTO };    // tu objetivo diario ("..." = una copia, para no estropear el original)
 let fechaVista = null;                     // el día que se está viendo; null = "hoy" (así, si pasa la medianoche con la web abierta, sigue siendo hoy)
 let vista = 'dia';                         // qué se ve: 'dia' o 'semana'
-let comidaParaPlato = null;                // la comida que se va a guardar como plato (mientras está abierta su ventana)
 
 const INICIALES = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];   // las letras de los días de la semana, empezando en lunes
 
@@ -315,7 +313,7 @@ function pintarComidas() {
         const lineas = lineasDe(fecha, c.id);              // lo de esa comida
         const t = sumarLineas(lineas);                     // su total
 
-        // una fila por línea: nombre y macros; para alimentos, la casilla de gramos; para platos y recetas, − raciones +
+        // una fila por línea: nombre y macros; para alimentos, la casilla de gramos; para recetas, − raciones +
         const filas = lineas.map(l => {
             const nombre = escaparHtml(l.nombre);
             const control = l.unidad === 'g'
@@ -354,9 +352,6 @@ function pintarComidas() {
           <button type="button" class="btn btn-verde btn-sm btn-anadir" data-comida="${c.id}">
             <i class="bi bi-plus-lg" aria-hidden="true"></i> Añadir<span class="visually-hidden"> a ${c.nombre.toLowerCase()}</span>
           </button>
-          ${lineas.length > 1 ? `<button type="button" class="btn btn-link btn-sm btn-guardar-plato" data-comida="${c.id}">
-            <i class="bi bi-bookmark-plus" aria-hidden="true"></i> Guardar como plato<span class="visually-hidden"> (${c.nombre.toLowerCase()})</span>
-          </button>` : ''}
         </div>
       </section>`;
     }).join('');
@@ -503,18 +498,10 @@ export function iniciarDia() {
 
     const comidas = document.querySelector('#comidasDia'); // el hueco de las cuatro comidas
 
-    // clics: Añadir, Guardar como plato, − + y quitar
+    // clics: Añadir, − + y quitar
     comidas.addEventListener('click', (e) => {
         const anadir = e.target.closest('.btn-anadir');    // ¿"Añadir"?
         if (anadir) { abrirAnadir({ comida: anadir.dataset.comida }); return; }
-
-        const plato = e.target.closest('.btn-guardar-plato'); // ¿"Guardar como plato"?
-        if (plato) {
-            comidaParaPlato = plato.dataset.comida;        // apuntamos qué comida
-            document.querySelector('#formPlato').reset();  // el formulario, vacío
-            bootstrap.Modal.getOrCreateInstance(document.querySelector('#modalPlato')).show(); // y abrimos la ventana del nombre
-            return;
-        }
 
         const fila = e.target.closest('.linea-diario');    // ¿algo dentro de una línea?
         if (!fila) return;
@@ -535,21 +522,6 @@ export function iniciarDia() {
         const gramos = Number(casilla.value);              // los gramos nuevos
         if (gramos > 0) cambiarCantidad(fila.dataset.comida, fila.dataset.id, gramos);
         else pintarDia();                                  // si no valen, vuelve el valor anterior
-    });
-
-    // la ventana "Guardar como plato": al enviar, se crea el plato con lo de esa comida
-    document.querySelector('#formPlato').addEventListener('submit', (e) => {
-        e.preventDefault();                                // que no recargue la página
-        const nombre = e.target.nombre.value.trim();
-        const lineas = lineasDe(fechaActual(), comidaParaPlato);
-        if (nombre === '' || lineas.length === 0) return;
-
-        // lo que lleva, como texto: "150 g Salmón · 70 g Arroz basmati (crudo)"
-        const detalle = lineas.map(l => (l.unidad === 'g' ? `${formatoNumero(l.cantidad)} g ` : `×${numeroConMedio(l.cantidad)} `) + l.nombre).join(' · ');
-        crearPlato(nombre, sumarLineas(lineas), detalle);  // el plato guarda la suma como "1 ración"
-
-        bootstrap.Modal.getInstance(document.querySelector('#modalPlato')).hide();
-        mostrarAviso(`Plato «${nombre}» guardado ✓`);
     });
 
     // botón "Vaciar día"

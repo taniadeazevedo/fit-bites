@@ -2,13 +2,12 @@
    FIT BITES · app.js  (el punto de entrada)
    Idea general (el restaurante):
    - json/ y json-server = la despensa (alimentos y recetas)
-   - almacen.js = la libreta de cada cliente (su diario, objetivo, platos...),
+   - almacen.js = la libreta de cada cliente (su diario, objetivo, compra...),
      con copia en la nube si tiene cuenta (nube.js + cuenta.js)
    - los demás archivos de js/ = los camareros: cada uno atiende una zona
        dia.js         -> el diario por comidas y la semana (con gráficos)
-       anadir.js      -> la ventana para añadir alimentos, platos y recetas
+       anadir.js      -> la ventana para añadir alimentos y recetas
        alimentos.js   -> la tabla de alimentos y los que creas tú
-       platos.js      -> tus platos guardados
        recetas.js     -> las tarjetas de recetas, filtros y favoritas
        detalle.js     -> la ventana de una receta (con raciones)
        formulario.js  -> crear y editar recetas (con json-server)
@@ -27,7 +26,6 @@ import { estado } from './estado.js';                   // donde se guardan las 
 import { cargarRecetas } from './datos.js';             // pedir las recetas
 import { iniciarInterfaz, observarReveal } from './interfaz.js'; // tema, menú y animaciones
 import { iniciarAlimentos } from './alimentos.js';      // la tabla de alimentos
-import { iniciarPlatos } from './platos.js';            // tus platos
 import { iniciarDia } from './dia.js';                  // el diario
 import { iniciarAnadir } from './anadir.js';            // la ventana de añadir
 import { iniciarRecetas, mostrarRecetas, aplicarModo } from './recetas.js'; // la lista de recetas
@@ -71,7 +69,6 @@ async function iniciar() {
         document.querySelector('#avisoAlimentos').classList.remove('d-none'); // ...aviso en la página
     }
 
-    iniciarPlatos();                                       // tus platos
     iniciarDia();                                          // el diario (después de las recetas: así puede pasar al formato nuevo lo que tenías apuntado)
     iniciarAnadir();                                       // la ventana de añadir
     iniciarCompra();                                       // lista de la compra
