@@ -860,3 +860,284 @@ h1 .resalte {
 
 .item-compra.tachado .item-nombre,
 .item-compra.tachado .item-cantidad { text-decoration: line-through; opacity: .5; }  /* ingrediente marcado: tachado y apagado */
+
+/* =====================================================================
+   MI SEMANA, RACIONES Y ACCESIBILIDAD
+   ===================================================================== */
+
+/* ---------- Enlace "Saltar al contenido" ---------- */
+.saltar-contenido {
+  position: absolute;                      /* se saca del flujo de la página... */
+  left: 1rem;
+  top: -4rem;                              /* ...y se esconde por encima de la pantalla */
+  z-index: 2000;                           /* por encima de todo (también del menú) */
+  padding: .6rem 1rem;
+  border-radius: .75rem;
+  background: var(--verde);
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+  transition: top .2s;                     /* baja con suavidad */
+}
+
+.saltar-contenido:focus { top: 1rem; }     /* al llegar con Tab, baja y se ve */
+
+#recetas:focus { outline: none; }          /* la sección recibe el foco al saltar, pero no hace falta pintarle un contorno */
+
+/* ---------- Contorno de foco (teclado) ----------
+   :focus-visible = solo cuando se llega con el teclado (con el ratón no sale).
+   Así quien navega con Tab siempre sabe dónde está */
+.pill-tipo:focus-visible,
+.btn-fav:focus-visible,
+.btn-compra:focus-visible,
+.paso-bowl:focus-visible,
+.receta-titulo:focus-visible,
+.dia-semana:focus-visible,
+.btn-flecha:focus-visible,
+.chip-ingrediente button:focus-visible,
+.compra-quitar:focus-visible {
+  outline: 3px solid var(--verde);         /* contorno verde grueso... */
+  outline-offset: 2px;                     /* ...separado un poco del botón */
+}
+
+[data-bs-theme="dark"] :is(.pill-tipo, .btn-fav, .btn-compra, .paso-bowl, .receta-titulo, .dia-semana, .btn-flecha):focus-visible {
+  outline-color: var(--lima);              /* en oscuro, el contorno en lima (se ve mejor) */
+}
+
+/* ---------- Nombre de la receta (es un botón, pero se ve como un título) ---------- */
+.receta-titulo {
+  all: unset;                              /* quita TODOS los estilos de botón del navegador */
+  cursor: pointer;                         /* manita */
+  border-radius: .25rem;                   /* para que el contorno de foco quede redondeado */
+}
+
+.receta:hover .receta-titulo { text-decoration: underline; text-underline-offset: 3px; }  /* al pasar por la tarjeta, el nombre se subraya */
+
+/* ---------- Número de raciones entre − y + ---------- */
+.contador-raciones.disabled {
+  opacity: 1;                              /* Bootstrap apaga los botones "disabled" al 65 %: aquí no, para que el número se lea bien */
+  color: var(--carbon);                    /* y les pone un color fijo casi negro, que en el tema oscuro no se vería: usamos el color del texto */
+  min-width: 3rem;                         /* ancho fijo: no "baila" al pasar de 1 a 1½ */
+  font-variant-numeric: tabular-nums;      /* todas las cifras miden lo mismo */
+}
+
+/* ---------- Panel Mi día / Mi semana ---------- */
+.navegar-fecha {
+  display: flex;                           /* flecha, fecha y flecha en fila */
+  align-items: center;
+  gap: .5rem;
+}
+
+.btn-flecha {
+  width: 2.25rem;                          /* botón redondo */
+  height: 2.25rem;
+  border-radius: 50%;
+  border: 1px solid var(--borde);
+  color: var(--carbon);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-flecha:hover:not(:disabled) { background: var(--verde-soft); }  /* al pasar el ratón (si no está apagado), fondo verde suave */
+
+.btn-flecha:disabled { opacity: .3; }      /* apagada (no se puede ir al futuro): muy clarita */
+
+#resumenSemana .macro { flex: 1 1 0; text-align: center; }  /* las 3 cajitas del resumen se reparten el ancho */
+
+/* ---------- Gráfico de la semana (SVG) ---------- */
+.grafico-semana {
+  display: block;
+  width: 100%;                             /* ocupa todo el ancho del panel... */
+  height: auto;                            /* ...y la altura se ajusta sola (mantiene la proporción del viewBox) */
+  overflow: visible;                       /* que no se corte el texto del objetivo */
+}
+
+.grafico-semana .fondo-barra { fill: var(--verde-soft); }        /* el "carril" de fondo de cada día */
+.grafico-semana .barra { transition: height .3s, y .3s; }        /* las barras crecen con suavidad */
+.grafico-semana .barra-kcal { fill: var(--verde); }              /* en SVG el color de relleno es "fill" (no background-color) */
+.grafico-semana .macro-p { fill: var(--macro-p); }
+
+.grafico-semana .linea-meta {
+  stroke: var(--terracota);                /* "stroke" = color del trazo */
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;                   /* línea discontinua: 5 de trazo, 4 de hueco */
+}
+
+.grafico-semana .texto-meta {
+  fill: var(--gris);
+  font-size: 10px;
+  text-anchor: end;                        /* el texto acaba en el punto x (pegado a la derecha) */
+}
+
+.grafico-semana .etiqueta-barra {
+  fill: var(--gris);
+  font-size: 11px;
+  text-anchor: middle;                     /* centrado bajo su barra */
+}
+
+.grafico-semana .etiqueta-barra.hoy { fill: var(--carbon); font-weight: 700; }  /* la letra de hoy, más marcada */
+
+@media (prefers-reduced-motion: reduce) {
+  .grafico-semana .barra { transition: none; }  /* sin animación si la persona lo ha pedido */
+}
+
+/* ---------- Lista "Día a día" ---------- */
+.dia-semana {
+  display: flex;                           /* nombre del día a la izquierda, datos a la derecha */
+  justify-content: space-between;
+  gap: .75rem;
+  width: 100%;
+  padding: .6rem .5rem;
+  border: 0;
+  border-bottom: 1px solid var(--borde);   /* línea fina entre días */
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  font-size: .9rem;
+  border-radius: .25rem;
+}
+
+.dia-semana:hover:not(:disabled) { background: var(--verde-soft); }  /* al pasar el ratón, fondo verde suave */
+.dia-semana.hoy { font-weight: 600; }      /* hoy, en negrita */
+.dia-semana:disabled { opacity: .5; }      /* los días que aún no han llegado, apagados */
+
+/* ---------- Contraste en el tema oscuro ----------
+   El verde del tema oscuro (#3B9570) es claro para que se lea como TEXTO sobre fondo oscuro,
+   pero con texto blanco ENCIMA no llega al mínimo de contraste (4,5:1). Los botones rellenos
+   usan un verde algo más oscuro, con el que el blanco se lee bien (5,5:1) */
+[data-bs-theme="dark"] { --verde-boton: #2A7556; }
+
+[data-bs-theme="dark"] :is(.btn-verde, .btn-fit, .pill-tipo.activa, .paso-bowl.activo, .btn-compra.activa, .saltar-contenido) {
+  background-color: var(--verde-boton);    /* el verde más oscuro... */
+  border-color: var(--verde-boton);        /* ...también en el borde */
+}
+
+[data-bs-theme="dark"] :is(.btn-verde, .btn-fit):hover { background-color: #1F5A42; border-color: #1F5A42; }  /* al pasar el ratón, aún más oscuro */
+
+/* =====================================================================
+   DIARIO DE COMIDAS, VENTANA DE AÑADIR Y CUENTA
+   ===================================================================== */
+
+/* ---------- La tarjeta del diario (mismo estilo que tenía "Haz tu bowl") ---------- */
+.diario-tarjeta {
+  background: var(--verde-soft);           /* fondo verde suave */
+  border-radius: 2rem;                     /* esquinas muy redondeadas */
+  padding: clamp(1.25rem, 4vw, 2.5rem);    /* aire interior: se adapta a la pantalla */
+}
+
+.diario-cabecera {
+  display: flex;                           /* título a la izquierda, Día/Semana a la derecha */
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+}
+
+.diario-tarjeta .btn-outline-dark:not(.active) { background: var(--blanco); }  /* los botones sin pulsar, con fondo de tarjeta para que se vean sobre el verde */
+.diario-tarjeta .btn-flecha { background: var(--blanco); }
+
+.diario-tarjeta .progress { background: var(--blanco); }  /* el carril de las barras, blanco sobre el verde */
+
+/* ---------- Las cuatro comidas ---------- */
+.comidas-grid {
+  display: grid;                           /* rejilla... */
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr);   /* ...de una columna en móvil */
+}
+
+@media (min-width: 768px) {
+  .comidas-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }  /* dos columnas iguales en tablet y ordenador; minmax(0, 1fr) = una columna nunca crece por un texto largo (se recorta con "…") */
+}
+
+.comida-tarjeta {
+  background: var(--blanco);               /* tarjeta blanca */
+  border-radius: 1.25rem;
+  padding: 1rem 1.1rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.comida-cabecera {
+  display: flex;                           /* nombre de la comida a la izquierda, su total a la derecha */
+  justify-content: space-between;
+  align-items: baseline;
+  gap: .5rem;
+  margin-bottom: .5rem;
+}
+
+.comida-cabecera .bi { color: var(--verde); }  /* el icono de la comida, en verde */
+
+.comida-total {
+  font-size: .8rem;
+  color: var(--gris);
+  white-space: nowrap;                     /* que no se parta en dos líneas */
+  font-variant-numeric: tabular-nums;      /* las cifras miden lo mismo: no "bailan" */
+}
+
+.linea-diario {
+  display: flex;                           /* nombre, cantidad y × en fila */
+  align-items: center;
+  gap: .5rem;
+  padding: .5rem 0;
+  border-bottom: 1px solid var(--borde);   /* línea fina entre alimentos */
+}
+
+.min-w-0 { min-width: 0; }                 /* deja que un texto largo se recorte con "…" en vez de empujar */
+
+.cantidad-gramos { width: 6.5rem; flex: 0 0 auto; }  /* la casilla de gramos: estrecha y de tamaño fijo */
+
+/* ---------- Ventana de añadir ---------- */
+.lista-opciones {
+  display: grid;                           /* las opciones, una debajo de otra */
+  gap: .4rem;
+}
+
+.opcion-fila { display: flex; align-items: stretch; gap: .25rem; }  /* la opción y su papelera (si la tiene), en fila */
+
+.opcion {
+  flex: 1;                                 /* ocupa todo el ancho */
+  min-width: 0;
+  display: flex;
+  flex-direction: column;                  /* nombre arriba, valores abajo */
+  gap: .1rem;
+  text-align: left;
+  padding: .55rem .8rem;
+  border: 1px solid var(--borde);
+  border-radius: .9rem;
+  background: var(--blanco);
+  color: inherit;
+}
+
+.opcion:hover { border-color: var(--verde); }  /* al pasar el ratón, borde verde */
+.opcion.elegida { border-color: var(--verde); background: var(--verde-soft); box-shadow: inset 0 0 0 1px var(--verde); }  /* la elegida: borde verde doble y fondo suave */
+.opcion-nombre { font-weight: 600; }
+
+.seleccion-anadir {
+  flex-wrap: nowrap;                       /* nombre, cantidad y botón en una fila */
+  gap: .75rem;
+  background: var(--verde-soft);
+}
+
+@media (max-width: 575.98px) {
+  .seleccion-anadir { flex-wrap: wrap; }   /* en móvil pequeño, si no cabe, salta de línea */
+  .seleccion-anadir > .flex-grow-1 { flex-basis: 100%; }
+}
+
+.opcion:focus-visible { outline: 3px solid var(--verde); outline-offset: 2px; }  /* contorno al llegar con el teclado */
+[data-bs-theme="dark"] .opcion:focus-visible { outline-color: var(--lima); }
+
+/* ---------- Cuenta ---------- */
+.btn-cuenta { background: none; border: 0; }  /* el botón del menú se ve como un enlace más */
+
+.separador-o {
+  display: flex;                           /* "—— o con tu email ——" */
+  align-items: center;
+  gap: .75rem;
+}
+
+.separador-o::before,
+.separador-o::after {
+  content: "";                             /* dos rayas vacías, una a cada lado */
+  flex: 1;
+  border-top: 1px solid var(--borde);
+}

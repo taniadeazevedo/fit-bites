@@ -8,16 +8,34 @@
    la copia); si no hay, se usa la copia guardada. Así nunca te quedas con una versión vieja.
    ===================================================================== */
 
-const CACHE = 'fitbites-v1';                       // nombre de la "caja" donde guardamos las copias (si algún día cambias la estructura, súbelo a v2)
+const CACHE = 'fitbites-v3';                       // nombre de la "caja" donde guardamos las copias (v3: diario por comidas; si vuelves a cambiar la estructura, súbelo a v4)
 
 // Lo mínimo para que la web arranque sin internet (rutas relativas a esta carpeta)
 const ARCHIVOS = [
     './',
     'index.html',
     'css/estilos.css',
-    'js/app.js',
+    'js/app.js',                               // el JavaScript, dividido en módulos (todos hacen falta para arrancar)
+    'js/config.js',
+    'js/estado.js',
+    'js/utilidades.js',
+    'js/almacen.js',
+    'js/nube.js',
+    'js/firebase-config.js',
+    'js/cuenta.js',
+    'js/datos.js',
+    'js/fotos.js',
+    'js/interfaz.js',
+    'js/alimentos.js',
+    'js/platos.js',
+    'js/dia.js',
+    'js/anadir.js',
+    'js/recetas.js',
+    'js/detalle.js',
+    'js/formulario.js',
+    'js/compra.js',
     'json/recetas.json',
-    'json/ingredientes.json',
+    'json/alimentos.json',
     'favicon.svg',
     'icons/icon-192.png',
     'icons/icon-512.png'

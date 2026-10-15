@@ -6,8 +6,8 @@
      Idea general (el restaurante):
      - HTML (este archivo) = el comedor: las mesas, las ventanas y los letreros
      - css/estilos.css = la decoración
-     - js/app.js = el camarero: pinta las tarjetas de recetas y atiende los clics
-     Las ventanas emergentes (modales) y el panel lateral están al final del
+     - js/ = los camareros (módulos): app.js arranca y cada archivo atiende una zona
+     Las ventanas emergentes (modales) y el panel de la compra están al final del
      <body>, escondidos, hasta que el JavaScript los abre.
      =================================================================== -->
 
@@ -52,6 +52,9 @@
 
 <body> <!-- el cuerpo: todo lo que se ve en la página -->
 
+    <!-- ENLACE "SALTAR AL CONTENIDO": invisible hasta que se llega con la tecla Tab. Quien navega con teclado se ahorra pasar por todo el menú -->
+    <a class="saltar-contenido" href="#hoy">Saltar al contenido</a>
+
     <!-- NAVBAR: la barra de menú de arriba -->
     <nav class="navbar navbar-expand-lg"> <!-- barra de navegación; "expand-lg" = en pantallas grandes se ve desplegada y en móvil se recoge -->
         <div class="container"> <!-- centra el contenido y le da márgenes laterales -->
@@ -66,7 +69,7 @@
             </a>
             <!-- botón de tema claro/oscuro: un iconito suelto, al lado de la hamburguesa. "ms-auto" lo empuja a la derecha; "order-lg-last" en pantallas grandes lo manda al final de la barra, tras los enlaces. JavaScript le cambia el icono -->
             <button id="btnTema" type="button" class="btn-tema ms-auto me-2 ms-lg-2 me-lg-0 order-lg-last" aria-label="Cambiar entre tema claro y oscuro">
-                <i class="bi bi-moon-stars"></i>
+                <i class="bi bi-moon-stars" aria-hidden="true"></i>
             </button>
             <!-- el botón de las tres rayitas (solo se ve en móvil). data-bs-toggle="collapse" + data-bs-target="#menu" = "al pulsar, despliega lo que tenga id=menu" -->
             <button class="navbar-toggler hamburguesa" type="button" data-bs-toggle="collapse" data-bs-target="#menu"
@@ -77,52 +80,144 @@
             </button>
             <div class="collapse navbar-collapse" id="menu"> <!-- lo que se esconde en móvil; su id coincide con el data-bs-target del botón -->
                 <ul class="navbar-nav ms-auto"> <!-- lista de enlaces; "ms-auto" los empuja a la derecha -->
-                    <li class="nav-item"><a class="nav-link" href="#recetas"><i class="bi bi-grid"></i> Recetas</a></li> <!-- enlace que baja a la sección con id="recetas" -->
-                    <li class="nav-item"><a class="nav-link" href="#bowl"><i class="bi bi-egg-fried"></i> Haz tu bowl</a></li> <!-- enlace que baja a la sección "Haz tu bowl" -->
-                    <li class="nav-item">
-                        <!-- este enlace NO cambia de página: abre el panel lateral "Mi día" (offcanvas de Bootstrap) -->
-                        <a class="nav-link" href="#" data-bs-toggle="offcanvas" data-bs-target="#panelDia"
-                            aria-controls="panelDia">
-                            <i class="bi bi-calendar-check"></i> Mi día
-                            <span id="contadorDia" class="badge rounded-pill text-bg-dark">0</span> <!-- el numerito: JavaScript lo actualiza (por el id) -->
-                        </a>
-                    </li>
+                    <li class="nav-item"><a class="nav-link" href="#hoy"><i class="bi bi-journal-check" aria-hidden="true"></i> Mi diario</a></li> <!-- enlace que baja a la sección con id="hoy" -->
+                    <li class="nav-item"><a class="nav-link" href="#recetas"><i class="bi bi-grid" aria-hidden="true"></i> Recetas</a></li> <!-- enlace que baja a la sección con id="recetas" -->
                     <li class="nav-item">
                         <!-- abre el panel lateral "Lista de la compra" (otro offcanvas de Bootstrap) -->
-                        <a class="nav-link" href="#" data-bs-toggle="offcanvas" data-bs-target="#panelCompra"
+                        <a class="nav-link" href="#" role="button" data-bs-toggle="offcanvas" data-bs-target="#panelCompra"
                             aria-controls="panelCompra">
-                            <i class="bi bi-cart3"></i> Compra
+                            <i class="bi bi-cart3" aria-hidden="true"></i> Compra
                             <span id="contadorCompra" class="badge rounded-pill text-bg-dark">0</span> <!-- cuántas recetas hay en la lista: JavaScript lo actualiza -->
                         </a>
+                    </li>
+                    <!-- la cuenta: oculta ("d-none") hasta que JavaScript comprueba que Firebase está configurado -->
+                    <li class="nav-item d-none" id="itemCuenta">
+                        <button id="btnCuenta" type="button" class="nav-link btn-cuenta" data-bs-toggle="modal" data-bs-target="#modalCuenta">
+                            <i class="bi bi-person" aria-hidden="true"></i> Entrar
+                        </button>
                     </li>
                 </ul>
             </div>
         </div>
     </nav>
 
+    <!-- <main> = el contenido principal de la página (los lectores de pantalla pueden saltar directamente aquí) -->
+    <main>
+
     <!-- PORTADA: lo primero que se ve al entrar -->
-    <header class="py-5"> <!-- "py-5" = espacio vertical grande por arriba y por abajo -->
+    <header class="pt-5 pb-3"> <!-- "py-5" = espacio vertical grande por arriba y por abajo -->
         <div class="container">
-            <p class="text-uppercase small fw-bold mb-2 etiqueta">Recetas con macros</p> <!-- frase pequeña en MAYÚSCULAS y negrita; "etiqueta" es una clase nuestra -->
-            <h1 class="display-4 mb-3">Come bien, <span class="resalte">sabiendo lo que comes.</span></h1> <!-- el título principal (h1: solo debe haber uno por página). El <span> es una "etiqueta sin significado" que nos sirve para dar estilo a un trozo del texto: "resalte" = subrayado de rotulador lima -->
-            <p class="lead mb-4">Tus recetas fit, con calorías y proteínas a la vista.</p> <!-- párrafo destacado -->
+            <p class="text-uppercase small fw-bold mb-2 etiqueta">Tu diario de comidas</p> <!-- frase pequeña en MAYÚSCULAS y negrita; "etiqueta" es una clase nuestra -->
+            <h1 class="display-4 mb-3">Apunta lo que comes, <span class="resalte">se suma solo.</span></h1> <!-- el título principal (h1: solo debe haber uno por página). El <span> es una "etiqueta sin significado" que nos sirve para dar estilo a un trozo del texto: "resalte" = subrayado de rotulador lima -->
+            <p class="lead mb-0">Añade alimentos por gramos y ve al momento tus calorías, proteína, carbohidratos y grasas.</p> <!-- párrafo destacado -->
         </div>
     </header>
 
-    <!-- RECETAS (en el paso 2 las pintará JavaScript) -->
-    <section id="recetas" class="py-5"> <!-- una sección con id="recetas": el enlace del menú baja hasta aquí -->
+    <!-- MI DIARIO: lo que comes hoy por comidas, frente a tu objetivo. Con "Semana" se ven las medias y los gráficos. Lo pinta todo dia.js -->
+    <section id="hoy" class="py-4" tabindex="-1"> <!-- tabindex="-1" = el enlace "Saltar al contenido" puede llevar el foco aquí -->
         <div class="container">
+            <div class="diario-tarjeta reveal">
+                <div class="diario-cabecera">
+                    <h2 class="h3 mb-0">Mi diario</h2>
+                    <!-- Día / Semana: dos botones pegados (btn-group). JavaScript marca el elegido con "active" y aria-pressed -->
+                    <div class="btn-group btn-group-sm selector-vista" role="group" aria-label="Ver por">
+                        <button id="btnVistaDia" type="button" class="btn btn-outline-dark active" aria-pressed="true">Día</button>
+                        <button id="btnVistaSemana" type="button" class="btn btn-outline-dark" aria-pressed="false">Semana</button>
+                    </div>
+                </div>
+
+                <!-- la fecha con flechas para ir hacia atrás y hacia delante -->
+                <div class="navegar-fecha my-3">
+                    <button id="btnFechaAnterior" type="button" class="btn btn-sm btn-flecha" aria-label="Día anterior">
+                        <i class="bi bi-chevron-left" aria-hidden="true"></i>
+                    </button>
+                    <div class="text-center flex-grow-1">
+                        <strong id="fechaDia" class="d-block" aria-live="polite"></strong> <!-- la fecha: la escribe JavaScript; aria-live la lee en voz alta al cambiar -->
+                        <button id="btnIrHoy" type="button" class="btn btn-link btn-sm p-0 d-none">Volver a hoy</button> <!-- solo sale si estás viendo otro día -->
+                    </div>
+                    <button id="btnFechaSiguiente" type="button" class="btn btn-sm btn-flecha" aria-label="Día siguiente">
+                        <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                    </button>
+                </div>
+
+                <p id="avisoOtroDia" class="alert alert-info py-2 small d-none">Estás viendo otro día: lo que añadas se apunta en este día.</p>
+                <div id="avisoAlimentos" class="alert alert-warning d-none">No se pudo cargar la tabla de alimentos (<code>json/alimentos.json</code>).</div>
+
+                <!-- VISTA DÍA: a la izquierda las barras y el objetivo; a la derecha, las cuatro comidas -->
+                <div id="bloqueDia">
+                    <div class="row g-4">
+                        <div class="col-lg-4">
+                            <div id="progresoDia"></div> <!-- las 4 barras: kcal, proteína, carbohidratos y grasas -->
+                            <div class="d-flex flex-wrap gap-2 mt-3"> <!-- botones -->
+                                <!-- despliega la caja del objetivo (collapse de Bootstrap) -->
+                                <button type="button" class="btn btn-outline-dark btn-sm" data-bs-toggle="collapse"
+                                    data-bs-target="#cajaObjetivo" aria-expanded="false" aria-controls="cajaObjetivo">
+                                    <i class="bi bi-bullseye" aria-hidden="true"></i> Mi objetivo
+                                </button>
+                                <button id="btnVaciarDia" type="button" class="btn btn-outline-danger btn-sm">
+                                    <i class="bi bi-trash" aria-hidden="true"></i> Vaciar día
+                                </button>
+                            </div>
+                            <div id="cajaObjetivo" class="collapse mt-3"> <!-- la caja escondida con el formulario del objetivo -->
+                                <form id="formObjetivo" class="row g-2"> <!-- formulario con rejilla de 12 columnas y huecos pequeños -->
+                                    <div class="col-6"> <!-- ocupa 6 de 12 columnas = la mitad del ancho -->
+                                        <label for="objKcal" class="form-label small mb-1">Kcal</label> <!-- la etiqueta; for="objKcal" la une con el campo que tiene ese id -->
+                                        <input id="objKcal" name="kcal" type="number" min="1" class="form-control form-control-sm" required> <!-- campo numérico; name="kcal" es como JavaScript lo lee (f.kcal); min=1 y required = obligatorio -->
+                                    </div>
+                                    <div class="col-6">
+                                        <label for="objProteina" class="form-label small mb-1">Proteína (g)</label>
+                                        <input id="objProteina" name="proteina" type="number" min="1" class="form-control form-control-sm" required>
+                                    </div>
+                                    <div class="col-6">
+                                        <label for="objCarbos" class="form-label small mb-1">Carbohidratos (g)</label>
+                                        <input id="objCarbos" name="carbohidratos" type="number" min="1" class="form-control form-control-sm" required>
+                                    </div>
+                                    <div class="col-6">
+                                        <label for="objGrasas" class="form-label small mb-1">Grasas (g)</label>
+                                        <input id="objGrasas" name="grasas" type="number" min="1" class="form-control form-control-sm" required>
+                                    </div>
+                                    <div class="col-12 d-flex gap-2 align-items-center"> <!-- fila entera con los dos botones -->
+                                        <button type="submit" class="btn btn-verde btn-sm">Guardar objetivo</button> <!-- type="submit" = envía el formulario -->
+                                        <button id="btnObjetivoDefecto" type="button" class="btn btn-link btn-sm px-0">Restaurar</button> <!-- type="button" = NO envía el formulario -->
+                                    </div>
+                                </form>
+                                <p class="small text-body-secondary mt-2 mb-0">
+                                    Valores orientativos para ganar masa muscular entrenando 4-5 días por semana.
+                                    Ajústalos a tu caso; no sustituyen el consejo de un profesional.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-lg-8">
+                            <div id="comidasDia" class="comidas-grid"></div> <!-- las tarjetas de desayuno, comida, merienda y cena (las pinta dia.js) -->
+                        </div>
+                    </div>
+                    <p class="small text-body-secondary mt-3 mb-0">Pesa los alimentos en crudo, tal como los compras. Valores aproximados de tablas generales.</p>
+                </div>
+
+                <!-- VISTA SEMANA: resumen, gráficos y lista de días (lo dibuja todo dia.js) -->
+                <div id="bloqueSemana" class="d-none">
+                    <div id="resumenSemana"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- RECETAS: un extra. Se pueden apuntar en el diario por raciones -->
+    <section id="recetas" class="py-5" tabindex="-1"> <!-- una sección con id="recetas": el enlace del menú baja hasta aquí -->
+        <div class="container">
+            <h2 class="h3 mb-1">Recetas</h2>
+            <p class="text-body-secondary mb-4">Nuestras recetas fit. Pulsa «Apuntar» para añadirlas al diario por raciones.</p>
             <!-- FILTROS: arriba el buscador a todo el ancho con el botón de nueva receta; debajo, los tipos de plato como píldoras -->
             <div class="reveal mb-4"> <!-- "reveal" = aparece con una animación al llegar a la pantalla -->
                 <div class="d-flex flex-wrap gap-2 mb-3"> <!-- fila: buscador y botón -->
                     <!-- buscador: un "input-group" une el icono de la lupa y la casilla en una sola pieza; "flex-grow-1" = ocupa todo el espacio libre -->
                     <div class="input-group buscador-grande flex-grow-1">
-                        <span class="input-group-text"><i class="bi bi-search"></i></span> <!-- el icono de lupa -->
+                        <span class="input-group-text"><i class="bi bi-search" aria-hidden="true"></i></span> <!-- el icono de lupa -->
                         <!-- type="search" = casilla de búsqueda; JavaScript la escucha por su id -->
                         <input id="buscador" type="search" class="form-control" placeholder="Busca por nombre o ingrediente" aria-label="Buscar recetas">
                     </div>
                     <button id="btnNueva" type="button" class="btn btn-verde"> <!-- botón "Nueva receta": JavaScript lo escucha por su id y lo oculta en modo lectura -->
-                        <i class="bi bi-plus-lg"></i> Nueva receta
+                        <i class="bi bi-plus-lg" aria-hidden="true"></i> Nueva receta
                     </button>
                 </div>
                 <!-- las píldoras de filtro (Todos, Bowl, Pasta..., 🔥 Alta en proteína): las crea JavaScript desde la lista TIPOS_PLATO. En móvil se desplazan hacia los lados -->
@@ -130,7 +225,7 @@
                     <div id="pillsTipo" class="pills-scroll" role="group" aria-label="Filtrar por tipo de plato"></div>
                     <!-- desplegable para ordenar: value="" = el orden original. JavaScript lo escucha por su id (#ordenar) -->
                     <div class="input-group input-group-sm ordenar-caja">
-                        <label for="ordenar" class="input-group-text"><i class="bi bi-arrow-down-up"></i><span class="visually-hidden">Ordenar por</span></label>
+                        <label for="ordenar" class="input-group-text"><i class="bi bi-arrow-down-up" aria-hidden="true"></i><span class="visually-hidden">Ordenar por</span></label>
                         <select id="ordenar" class="form-select">
                             <option value="">Orden original</option>
                             <option value="proteina">Más proteína</option>
@@ -143,93 +238,19 @@
             </div>
             <!-- aviso azul que solo se enseña en tu ordenador cuando json-server está apagado ("d-none" = oculto hasta que JavaScript lo muestre) -->
             <div id="avisoLectura" class="alert alert-info d-none">
-                <i class="bi bi-info-circle"></i>
+                <i class="bi bi-info-circle" aria-hidden="true"></i>
                 json-server no está encendido: estás en <strong>modo lectura</strong>.
                 Para crear, editar o borrar recetas, arráncalo con
                 <code>npx json-server json/recetas.json --port 3001</code> y recarga la página.
             </div>
             <!-- AQUÍ pinta JavaScript las tarjetas. "row row-cols-..." = rejilla: 1 columna en móvil, 2 en tablet y 3 en ordenador; "g-4" = hueco entre tarjetas -->
             <div id="listaRecetas" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4"></div>
+            <!-- texto invisible ("visually-hidden") que JavaScript actualiza al filtrar: aria-live hace que un lector de pantalla diga "3 recetas" -->
+            <p id="contadorRecetas" class="visually-hidden" aria-live="polite"></p>
         </div>
     </section>
 
-    <!-- HAZ TU BOWL: eliges ingredientes, pones los gramos y la página suma calorías y macros. JavaScript rellena y recalcula todo -->
-    <section id="bowl" class="py-5"> <!-- sección con id="bowl": el enlace del menú baja hasta aquí; "border-top" = línea fina arriba -->
-        <div class="container">
-          <div class="bowl-tarjeta reveal"> <!-- la tarjeta con fondo verde suave que envuelve todo el apartado -->
-            <h2 class="h3 mb-4">🥣 Haz tu bowl</h2>
-
-            <div class="row g-4 g-xl-5"> <!-- rejilla: en pantallas grandes, el formulario a la izquierda y el resultado a la derecha; "g-xl-5" = más separación entre las dos columnas en pantallas muy grandes -->
-                <div class="col-lg-5"> <!-- 5 de 12 columnas -->
-                    <form id="formBowl" class="row g-2"> <!-- formulario para añadir un ingrediente -->
-                        <div class="col-12">
-                            <!-- los pasos (Proteína, Hidratos, Salsas...): JavaScript dibuja aquí un botón por paso -->
-                            <div id="bowlPasos" class="d-flex flex-wrap gap-1"></div>
-                        </div>
-                        <div class="col-12">
-                            <label for="bowlIngrediente" class="form-label mb-1">Ingrediente</label>
-                            <!-- desplegable: JavaScript lo rellena con los ingredientes del paso en el que estás -->
-                            <select id="bowlIngrediente" class="form-select" required>
-                                <option value="" selected disabled>Elige un ingrediente…</option> <!-- opción inicial: vacía y no elegible -->
-                            </select>
-                        </div>
-                        <div class="col-6">
-                            <label for="bowlGramos" class="form-label mb-1">Cantidad</label>
-                            <div class="input-group"> <!-- une la casilla y la "g" en una sola pieza -->
-                                <input id="bowlGramos" type="number" min="1" value="100" class="form-control" required> <!-- gramos; empieza en 100 -->
-                                <span class="input-group-text">g</span>
-                            </div>
-                        </div>
-                        <div class="col-6 d-flex align-items-end"> <!-- el botón, alineado abajo con la casilla de gramos -->
-                            <button type="submit" class="btn btn-verde w-100"> <!-- type="submit" = envía el formulario; "w-100" = ancho completo -->
-                                <i class="bi bi-plus-lg"></i> Añadir
-                            </button>
-                        </div>
-                        <div class="col-12"> <!-- botón para saltar al paso siguiente; JavaScript le cambia el texto y lo oculta en el último paso -->
-                            <button id="btnBowlSiguiente" type="button" class="btn btn-outline-secondary btn-sm w-100"></button>
-                        </div>
-                    </form>
-                    <p class="small text-body-secondary mt-3 mb-0">
-                        Valores aproximados por cada 100 g, según tablas generales. Pesa los alimentos tal como se indica
-                        (por ejemplo, el arroz ya cocido). No sustituyen el consejo de un profesional.
-                    </p>
-                </div>
-
-                <div class="col-lg-7"> <!-- las 7 columnas restantes: tu plato y los totales -->
-                    <!-- EL CUENCO: se va llenando por capas según los gramos de cada grupo. JavaScript cambia la altura de cada capa -->
-                    <div class="bowl-visual mb-4">
-                        <div class="cuenco-caja"> <!-- el borde superior del cuenco y el cuenco debajo -->
-                            <div class="cuenco-borde"></div> <!-- la barrita del borde -->
-                            <div class="cuenco"> <!-- el cuenco: media luna que recorta las capas -->
-                                <div class="capa capa-verduras" data-grupo="verduras"></div> <!-- arriba: verduras y fruta -->
-                                <div class="capa capa-extras" data-grupo="extras"></div> <!-- salsas, lácteos y extras -->
-                                <div class="capa capa-proteina" data-grupo="proteina"></div> <!-- proteína -->
-                                <div class="capa capa-hidratos" data-grupo="hidratos"></div> <!-- abajo: hidratos -->
-                            </div>
-                        </div>
-                        <ul class="leyenda-bowl list-unstyled mb-0"> <!-- la leyenda: color, nombre y gramos de cada grupo -->
-                            <li><i class="punto capa-proteina"></i> Proteína <strong data-leyenda="proteina">0 g</strong></li>
-                            <li><i class="punto capa-hidratos"></i> Hidratos <strong data-leyenda="hidratos">0 g</strong></li>
-                            <li><i class="punto capa-verduras"></i> Verduras <strong data-leyenda="verduras">0 g</strong></li>
-                            <li><i class="punto capa-extras"></i> Salsas y extras <strong data-leyenda="extras">0 g</strong></li>
-                        </ul>
-                    </div>
-                    <div id="bowlLista"></div> <!-- aquí JavaScript dibuja los ingredientes que has añadido -->
-                    <div id="bowlTotales" class="mt-3"></div> <!-- aquí JavaScript dibuja los totales y la barra de proteína -->
-                    <div class="d-flex flex-wrap gap-2 mt-3"> <!-- los botones, en fila -->
-                        <!-- guarda este plato como una receta (abre el formulario ya relleno). Solo con json-server encendido -->
-                        <button id="btnBowlReceta" type="button" class="btn btn-verde btn-sm">
-                            <i class="bi bi-journal-plus"></i> Guardar como receta
-                        </button>
-                        <button id="btnBowlVaciar" type="button" class="btn btn-outline-danger btn-sm">
-                            <i class="bi bi-trash"></i> Vaciar bowl
-                        </button>
-                    </div>
-                </div>
-            </div>
-          </div> <!-- cierra .bowl-tarjeta -->
-        </div>
-    </section>
+    </main> <!-- fin del contenido principal -->
 
     <!-- PIE DE PÁGINA: la marca, enlaces rápidos y el aviso sobre los valores -->
     <footer class="pie py-5">
@@ -244,22 +265,21 @@
                         </svg>
                         <strong>Fit Bites</strong>
                     </div>
-                    <p class="text-body-secondary mb-0">Recetas fit con las calorías y las proteínas a la vista. Hechas en airfryer, pensadas para dos.</p>
+                    <p class="text-body-secondary mb-0">Tu diario de comidas: apunta lo que comes y ve tus calorías y proteínas al momento.</p>
                 </div>
                 <div class="col-6 col-md-3"> <!-- enlaces dentro de la página -->
                     <h2 class="h6">Explora</h2>
                     <ul class="list-unstyled mb-0">
+                        <li><a href="#hoy">Mi diario</a></li>
                         <li><a href="#recetas">Recetas</a></li>
-                        <li><a href="#bowl">Haz tu bowl</a></li>
-                        <li><a href="#" data-bs-toggle="offcanvas" data-bs-target="#panelDia">Mi día</a></li> <!-- abre el panel lateral, igual que en el menú -->
-                        <li><a href="#" data-bs-toggle="offcanvas" data-bs-target="#panelCompra">Lista de la compra</a></li>
+                        <li><a href="#" role="button" data-bs-toggle="offcanvas" data-bs-target="#panelCompra">Lista de la compra</a></li>
                     </ul>
                 </div>
                 <div class="col-6 col-md-4"> <!-- el proyecto -->
                     <h2 class="h6">Proyecto</h2>
                     <ul class="list-unstyled mb-0">
-                        <li><a href="https://github.com/taniadeazevedo/fit-bites" target="_blank" rel="noopener"><i class="bi bi-github"></i> Código en GitHub</a></li> <!-- target="_blank" = en pestaña nueva; rel="noopener" = por seguridad -->
-                        <li><a href="#">Volver arriba <i class="bi bi-arrow-up"></i></a></li>
+                        <li><a href="https://github.com/taniadeazevedo/fit-bites" target="_blank" rel="noopener"><i class="bi bi-github" aria-hidden="true"></i> Código en GitHub</a></li> <!-- target="_blank" = en pestaña nueva; rel="noopener" = por seguridad -->
+                        <li><a href="#">Volver arriba <i class="bi bi-arrow-up" aria-hidden="true"></i></a></li>
                     </ul>
                 </div>
             </div>
@@ -286,72 +306,11 @@
 
             <div class="border-top pt-3 mt-3 d-flex gap-2"> <!-- botones abajo -->
                 <button id="btnCompraCopiar" type="button" class="btn btn-outline-dark btn-sm"> <!-- copia la lista como texto, para pegarla en el móvil o en WhatsApp -->
-                    <i class="bi bi-clipboard"></i> Copiar lista
+                    <i class="bi bi-clipboard" aria-hidden="true"></i> Copiar lista
                 </button>
                 <button id="btnCompraVaciar" type="button" class="btn btn-outline-danger btn-sm">
-                    <i class="bi bi-trash"></i> Vaciar lista
+                    <i class="bi bi-trash" aria-hidden="true"></i> Vaciar lista
                 </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MI DÍA (panel lateral): se desliza desde la derecha. Es un "offcanvas" de Bootstrap -->
-    <div class="offcanvas offcanvas-end" tabindex="-1" id="panelDia" aria-labelledby="tituloDia"> <!-- offcanvas-end = sale por la derecha; el id coincide con el data-bs-target del menú -->
-        <div class="offcanvas-header"> <!-- cabecera del panel -->
-            <div>
-                <h2 class="offcanvas-title h5 mb-0" id="tituloDia">Mi día</h2> <!-- título (h2 con el tamaño de un h5) -->
-                <small id="fechaDia" class="text-body-secondary"></small> <!-- la fecha de hoy: la escribe JavaScript -->
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button> <!-- la X; data-bs-dismiss="offcanvas" = "cierra este panel" -->
-        </div>
-
-        <div class="offcanvas-body d-flex flex-column"> <!-- cuerpo del panel; flex en columna para que los botones queden abajo -->
-
-            <!-- Progreso frente al objetivo (lo dibuja JavaScript) -->
-            <div id="progresoDia" class="mb-4"></div> <!-- aquí van las 4 barras: kcal, proteína, carbohidratos y grasas -->
-
-            <h3 class="h6">Lo que llevas hoy</h3>
-            <div id="lineasDia" class="flex-grow-1"></div> <!-- aquí va la lista de platos; "flex-grow-1" = ocupa todo el espacio libre -->
-            <p class="small text-body-secondary mt-2 mb-0">1 ración = los valores que ves en la tarjeta de la receta.</p> <!-- nota aclaratoria -->
-
-            <div class="border-top pt-3 mt-3 d-flex gap-2"> <!-- zona de botones: línea arriba, botones en fila con separación -->
-                <!-- este botón despliega la caja del objetivo (collapse de Bootstrap: muestra u oculta lo que tenga id="cajaObjetivo") -->
-                <button type="button" class="btn btn-outline-dark btn-sm" data-bs-toggle="collapse"
-                    data-bs-target="#cajaObjetivo" aria-expanded="false" aria-controls="cajaObjetivo">
-                    <i class="bi bi-bullseye"></i> Mi objetivo
-                </button>
-                <button id="btnVaciarDia" type="button" class="btn btn-outline-danger btn-sm"> <!-- JavaScript lo escucha por su id -->
-                    <i class="bi bi-trash"></i> Vaciar día
-                </button>
-            </div>
-
-            <div id="cajaObjetivo" class="collapse mt-3"> <!-- la caja escondida con el formulario del objetivo -->
-                <form id="formObjetivo" class="row g-2"> <!-- formulario con rejilla de 12 columnas y huecos pequeños -->
-                    <div class="col-6"> <!-- ocupa 6 de 12 columnas = la mitad del ancho -->
-                        <label for="objKcal" class="form-label small mb-1">Kcal</label> <!-- la etiqueta; for="objKcal" la une con el campo que tiene ese id -->
-                        <input id="objKcal" name="kcal" type="number" min="1" class="form-control form-control-sm" required> <!-- campo numérico; name="kcal" es como JavaScript lo lee (f.kcal); min=1 y required = obligatorio -->
-                    </div>
-                    <div class="col-6">
-                        <label for="objProteina" class="form-label small mb-1">Proteína (g)</label>
-                        <input id="objProteina" name="proteina" type="number" min="1" class="form-control form-control-sm" required>
-                    </div>
-                    <div class="col-6">
-                        <label for="objCarbos" class="form-label small mb-1">Carbohidratos (g)</label>
-                        <input id="objCarbos" name="carbohidratos" type="number" min="1" class="form-control form-control-sm" required>
-                    </div>
-                    <div class="col-6">
-                        <label for="objGrasas" class="form-label small mb-1">Grasas (g)</label>
-                        <input id="objGrasas" name="grasas" type="number" min="1" class="form-control form-control-sm" required>
-                    </div>
-                    <div class="col-12 d-flex gap-2 align-items-center"> <!-- fila entera con los dos botones -->
-                        <button type="submit" class="btn btn-verde btn-sm">Guardar objetivo</button> <!-- type="submit" = envía el formulario -->
-                        <button id="btnObjetivoDefecto" type="button" class="btn btn-link btn-sm px-0">Restaurar</button> <!-- type="button" = NO envía el formulario -->
-                    </div>
-                </form>
-                <p class="small text-body-secondary mt-2 mb-0">
-                    Valores orientativos para ganar masa muscular entrenando 4-5 días por semana.
-                    Ajústalos a tu caso; no sustituyen el consejo de un profesional.
-                </p>
             </div>
         </div>
     </div>
@@ -438,7 +397,7 @@
                         <div id="vistaFotoCaja" class="mt-2 d-none"> <!-- la vista previa; oculta hasta que se elige una foto -->
                             <img id="vistaFoto" class="foto-vista rounded" alt="Vista previa de la foto"> <!-- alt = descripción de la imagen (accesibilidad) -->
                             <button id="btnQuitarFoto" type="button" class="btn btn-link btn-sm text-danger d-block px-0">
-                                <i class="bi bi-trash"></i> Quitar foto
+                                <i class="bi bi-trash" aria-hidden="true"></i> Quitar foto
                             </button>
                         </div>
                         <div id="errorFoto" class="text-danger small mt-1 d-none"></div> <!-- aquí JavaScript escribe un error si la foto no vale -->
@@ -450,7 +409,7 @@
                             <div class="input-group"> <!-- une la casilla y el botón en una sola pieza -->
                                 <input id="campoIngrediente" class="form-control" placeholder="Ej. 150 g de pechuga de pollo"> <!-- placeholder = texto gris de ejemplo -->
                                 <button id="btnAnadirIngrediente" type="button" class="btn btn-outline-dark">
-                                    <i class="bi bi-plus-lg"></i> Añadir
+                                    <i class="bi bi-plus-lg" aria-hidden="true"></i> Añadir
                                 </button>
                             </div>
                             <ul id="listaIngredientes"></ul> <!-- aquí JavaScript dibuja los ingredientes como etiquetas -->
@@ -480,12 +439,22 @@
                     <p id="detalleMeta" class="text-body-secondary mb-1"></p> <!-- categoría, tiempo y kcal -->
                     <p id="detalleMacros" class="fw-semibold"></p> <!-- proteína, carbohidratos y grasas -->
 
+                    <!-- RACIONES: − 1 + . Al cambiarlas, JavaScript recalcula kcal, macros e ingredientes -->
+                    <div class="d-flex align-items-center gap-2 mt-3">
+                        <span id="etiquetaRaciones" class="small fw-semibold">Raciones</span>
+                        <div class="btn-group btn-group-sm" role="group" aria-labelledby="etiquetaRaciones"> <!-- aria-labelledby = el grupo se llama como el texto "Raciones" -->
+                            <button id="detalleMenos" type="button" class="btn btn-outline-dark" aria-label="Media ración menos">−</button>
+                            <span id="detalleRaciones" class="btn btn-outline-dark disabled contador-raciones" aria-live="polite">1</span> <!-- el número: aria-live lo lee al cambiar -->
+                            <button id="detalleMas" type="button" class="btn btn-outline-dark" aria-label="Media ración más">+</button>
+                        </div>
+                    </div>
+
                     <h3 class="h6 mt-4">Ingredientes</h3>
                     <ul id="detalleIngredientes" class="mb-0"></ul> <!-- la lista de ingredientes ("mb-0" = sin margen debajo) -->
                 </div>
                 <div class="modal-footer">
-                    <button id="detalleAnadirDia" type="button" class="btn btn-verde"> <!-- añade esta receta a "Mi día" -->
-                        <i class="bi bi-plus-lg"></i> Añadir a mi día
+                    <button id="detalleAnadirDia" type="button" class="btn btn-verde"> <!-- añade esta receta (con las raciones elegidas) a "Mi día" -->
+                        <i class="bi bi-plus-lg" aria-hidden="true"></i> <span id="detalleAnadirTexto">Apuntar en el diario</span> <!-- JavaScript cambia el texto: "Apuntar ×2 en el diario" -->
                     </button>
                 </div>
             </div>
@@ -510,6 +479,160 @@
         </div>
     </div>
 
+    <!-- AÑADIR AL DIARIO (modal): buscar un alimento, poner los gramos y añadir. Lo maneja anadir.js -->
+    <div class="modal fade" id="modalAnadir" tabindex="-1" aria-labelledby="tituloAnadir" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+            <div class="modal-content border-0">
+                <div class="modal-header gap-2">
+                    <h2 class="modal-title h5 mb-0" id="tituloAnadir">Añadir a</h2>
+                    <select id="anadirComida" class="form-select form-select-sm w-auto" aria-label="Comida"></select> <!-- desayuno, comida... (lo rellena JavaScript) -->
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- pestañas: qué quieres añadir -->
+                    <div class="btn-group btn-group-sm w-100 mb-3 pestanas-anadir" role="group" aria-label="Qué añadir">
+                        <button type="button" class="btn btn-outline-dark active" data-pestana="alimentos" aria-pressed="true">Alimentos</button>
+                        <button type="button" class="btn btn-outline-dark" data-pestana="platos" aria-pressed="false">Mis platos</button>
+                        <button type="button" class="btn btn-outline-dark" data-pestana="recetas" aria-pressed="false">Recetas</button>
+                    </div>
+                    <div class="input-group buscador-grande mb-2">
+                        <span class="input-group-text"><i class="bi bi-search" aria-hidden="true"></i></span>
+                        <input id="anadirBuscar" type="search" class="form-control" placeholder="Busca: salmón, arroz, nueces…" aria-label="Buscar" autocomplete="off">
+                    </div>
+                    <div id="anadirCategorias" class="pills-scroll mb-3" role="group" aria-label="Filtrar por categoría"></div> <!-- las píldoras de categoría -->
+                    <div id="anadirLista" class="lista-opciones"></div> <!-- los resultados (los pinta JavaScript) -->
+                    <p id="anadirContador" class="visually-hidden" aria-live="polite"></p> <!-- "12 resultados", para lectores de pantalla -->
+
+                    <!-- CREAR UN ALIMENTO PROPIO (por ejemplo tu yogur o tu marca de batido): se despliega -->
+                    <div id="bloqueCrearAlimento" class="mt-3 pt-3 border-top">
+                        <button type="button" class="btn btn-outline-dark btn-sm" data-bs-toggle="collapse" data-bs-target="#cajaCrearAlimento" aria-expanded="false" aria-controls="cajaCrearAlimento">
+                            <i class="bi bi-plus-circle" aria-hidden="true"></i> Crear un alimento
+                        </button>
+                        <div id="cajaCrearAlimento" class="collapse">
+                            <form id="formAlimento" class="row g-2 mt-1" novalidate>
+                                <p class="small text-body-secondary mb-1 col-12">Copia los valores <strong>por 100 g</strong> de la etiqueta. Las kcal se calculan solas (puedes corregirlas).</p>
+                                <div class="col-md-8">
+                                    <label for="alNombre" class="form-label small mb-1">Nombre</label>
+                                    <input id="alNombre" name="nombre" class="form-control form-control-sm" required minlength="2" placeholder="Ej. Yogur proteico de fresa">
+                                    <div class="invalid-feedback">Escribe el nombre.</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="alCategoria" class="form-label small mb-1">Categoría</label>
+                                    <select id="alCategoria" name="categoria" class="form-select form-select-sm"></select> <!-- la rellena JavaScript -->
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label for="alProteina" class="form-label small mb-1">Proteína (g)</label>
+                                    <input id="alProteina" name="proteina" type="number" min="0" step="0.1" class="form-control form-control-sm" required>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label for="alCarbos" class="form-label small mb-1">Carbohidratos (g)</label>
+                                    <input id="alCarbos" name="carbohidratos" type="number" min="0" step="0.1" class="form-control form-control-sm" required>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label for="alGrasas" class="form-label small mb-1">Grasas (g)</label>
+                                    <input id="alGrasas" name="grasas" type="number" min="0" step="0.1" class="form-control form-control-sm" required>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label for="alKcal" class="form-label small mb-1">Kcal</label>
+                                    <input id="alKcal" name="kcal" type="number" min="0" class="form-control form-control-sm" required>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label for="alRacion" class="form-label small mb-1">Ración (g, opcional)</label>
+                                    <input id="alRacion" name="racion" type="number" min="1" class="form-control form-control-sm" placeholder="100">
+                                </div>
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-verde btn-sm">Crear alimento</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <!-- abajo: lo elegido, su cantidad y cuánto suma (oculto hasta que eliges algo) -->
+                <div id="anadirSeleccion" class="modal-footer seleccion-anadir d-none">
+                    <div class="flex-grow-1 min-w-0">
+                        <strong id="selNombre" class="d-block text-truncate"></strong>
+                        <small id="selMacros" class="text-body-secondary" aria-live="polite"></small> <!-- "= 240 kcal · P 30..." -->
+                    </div>
+                    <div id="selCantidad"></div> <!-- gramos o raciones -->
+                    <button id="btnAnadirSeleccion" type="button" class="btn btn-verde">Añadir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GUARDAR COMO PLATO (modal pequeño): el nombre del plato -->
+    <div class="modal fade" id="modalPlato" tabindex="-1" aria-labelledby="tituloPlato" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content border-0">
+                <form id="formPlato">
+                    <div class="modal-header">
+                        <h2 class="modal-title h5" id="tituloPlato">Guardar como plato</h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <div class="modal-body">
+                        <label for="platoNombre" class="form-label">Nombre del plato</label>
+                        <input id="platoNombre" name="nombre" class="form-control" required placeholder="Ej. Mi bowl de salmón" autocomplete="off">
+                        <p class="small text-body-secondary mt-2 mb-0">Se guarda como 1 ración. Lo encontrarás en «Añadir» → «Mis platos».</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-verde">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- CUENTA (modal): entrar o crear cuenta (Google o email). Lo maneja cuenta.js -->
+    <div class="modal fade" id="modalCuenta" tabindex="-1" aria-labelledby="tituloCuenta" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0">
+                <div class="modal-header">
+                    <h2 class="modal-title h5" id="tituloCuenta">Entrar</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- SIN SESIÓN -->
+                    <div id="cuentaFuera">
+                        <p class="text-body-secondary small">Con una cuenta, tu diario, tu objetivo y tus platos se guardan en la nube y los ves en el móvil y en el ordenador.</p>
+                        <button id="btnGoogle" type="button" class="btn btn-outline-dark w-100 mb-3">
+                            <i class="bi bi-google" aria-hidden="true"></i> Continuar con Google
+                        </button>
+                        <p class="separador-o small text-body-secondary"><span>o con tu email</span></p>
+                        <form id="formCuenta" class="d-grid gap-2">
+                            <div id="campoNombreCuenta" class="d-none">
+                                <label for="cuentaNombreInput" class="form-label small mb-1">Nombre</label>
+                                <input id="cuentaNombreInput" name="nombre" class="form-control" autocomplete="given-name">
+                            </div>
+                            <div>
+                                <label for="cuentaEmail" class="form-label small mb-1">Email</label>
+                                <input id="cuentaEmail" name="email" type="email" class="form-control" required autocomplete="email">
+                            </div>
+                            <div>
+                                <label for="cuentaContrasena" class="form-label small mb-1">Contraseña</label>
+                                <input id="cuentaContrasena" name="contrasena" type="password" class="form-control" required minlength="6" autocomplete="current-password">
+                            </div>
+                            <div id="errorCuenta" class="text-danger small d-none" role="alert"></div> <!-- role="alert" = el lector de pantalla lo lee al aparecer -->
+                            <button id="btnEnviarCuenta" type="submit" class="btn btn-verde">Entrar</button>
+                        </form>
+                        <div class="d-flex justify-content-between flex-wrap mt-2">
+                            <button id="btnCambiarModo" type="button" class="btn btn-link btn-sm px-0">¿No tienes cuenta? Créala</button>
+                            <button id="btnOlvido" type="button" class="btn btn-link btn-sm px-0">¿Olvidaste la contraseña?</button>
+                        </div>
+                    </div>
+                    <!-- CON SESIÓN -->
+                    <div id="cuentaDentro" class="d-none">
+                        <p class="mb-1">Has entrado como</p>
+                        <p class="fw-semibold" id="cuentaNombre"></p>
+                        <p class="small text-body-secondary">Tus datos se guardan en tu cuenta. Al cerrar sesión se borran de este navegador (siguen en tu cuenta).</p>
+                        <button id="btnSalir" type="button" class="btn btn-outline-danger">
+                            <i class="bi bi-box-arrow-right" aria-hidden="true"></i> Cerrar sesión
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- AVISO (toast): el mensajito que aparece abajo a la derecha y se va solo ("Receta guardada ✓", etc.) -->
     <div class="toast-container position-fixed bottom-0 end-0 p-3"> <!-- contenedor fijo en la esquina inferior derecha -->
         <div id="toastAviso" class="toast text-bg-dark border-0" role="status" aria-live="polite" aria-atomic="true"> <!-- aria-live = los lectores de pantalla lo anuncian -->
@@ -526,8 +649,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
         crossorigin="anonymous"></script>
-    <!-- 2) Nuestro JavaScript (el camarero), DESPUÉS de Bootstrap porque lo usa -->
-    <script src="js/app.js"></script>
+    <!-- 2) Nuestro JavaScript, DESPUÉS de Bootstrap porque lo usa. type="module" = app.js puede importar los demás archivos de js/ (y espera solo a que la página esté leída) -->
+    <script type="module" src="js/app.js"></script>
 </body>
 
 </html>
