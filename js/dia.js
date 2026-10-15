@@ -3,6 +3,11 @@
    El DIARIO: lo que comes cada día, separado por comidas (desayuno,
    comida, merienda y cena), frente a tu objetivo. Y la vista "Semana"
    con medias y gráficos.
+   Diseño inspirado en los diarios más usados (MyFitnessPal, Yazio...):
+   - arriba, una tira con los 7 días de la semana para cambiar de día
+   - un anillo con las calorías que te quedan: Objetivo − Comido = Restantes
+   - cada comida es una lista: nombre y cantidad a la izquierda, kcal a la derecha;
+     al pulsar una fila se abre para cambiar la cantidad o eliminarla
 
    Se guarda en el almacén con esta forma (el historial):
      { "2026-10-15": { desayuno: [línea, línea], comida: [...], merienda: [], cena: [] } }
@@ -18,7 +23,7 @@
 import { COMIDAS, NUTRIENTES, OBJETIVO_DEFECTO, DIAS_GUARDADOS, CLAVE_DIA_ANTIGUO } from './config.js'; // ajustes
 import { estado, buscarReceta } from './estado.js';     // las recetas (para pasar al formato nuevo lo que tenías apuntado)
 import { leer, guardar, alCambiarDatos } from './almacen.js'; // guardar y leer los datos de la persona
-import { escaparHtml, formatoNumero, numeroConMedio, mayusculaInicial, fechaHoy, sumarDias, lunesDe, fechaLegible, mostrarAviso } from './utilidades.js'; // herramientas pequeñas
+import { escaparHtml, formatoNumero, numeroConMedio, mayusculaInicial, fechaHoy, sumarDias, lunesDe, fechaLegible, textoAFecha, mostrarAviso } from './utilidades.js'; // herramientas pequeñas
 import { abrirAnadir } from './anadir.js';              // la ventana para añadir alimentos
 
 // ---------- ESTADO DE ESTE ARCHIVO ----------
@@ -26,8 +31,10 @@ let historial = {};                        // lo comido cada día (ver arriba)
 let objetivo = { ...OBJETIVO_DEFECTO };    // tu objetivo diario ("..." = una copia, para no estropear el original)
 let fechaVista = null;                     // el día que se está viendo; null = "hoy" (así, si pasa la medianoche con la web abierta, sigue siendo hoy)
 let vista = 'dia';                         // qué se ve: 'dia' o 'semana'
+let lineaEditando = null;                  // el id de la fila que está abierta para editar (o null)
 
 const INICIALES = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];   // las letras de los días de la semana, empezando en lunes
+const MACROS = NUTRIENTES.filter(n => n.clave !== 'kcal'); // proteína, carbohidratos y grasas (sin las kcal, que van en el anillo)
 
 /* ---------- LÍNEAS: crear, comprobar y sumar ---------- */
 
@@ -59,6 +66,12 @@ function sumarLineas(lineas) {
         for (const n of NUTRIENTES) totales[n.clave] += t[n.clave]; // ...se suman
     }
     return totales;
+}
+
+// La cantidad escrita para leerla: "80 g" o "1½ ración" / "2 raciones"
+function textoCantidad(l) {
+    if (l.unidad === 'g') return `${formatoNumero(l.cantidad)} g`;
+    return `${numeroConMedio(l.cantidad)} ${l.cantidad > 1 ? 'raciones' : 'ración'}`;
 }
 
 /* ---------- LEER Y GUARDAR ---------- */
@@ -178,6 +191,22 @@ export function comidaSugerida() {
     return COMIDAS.find(c => hora < c.hasta).id;           // la primera comida cuyo "hasta" aún no ha llegado
 }
 
+// Los alimentos que has apuntado últimamente (para la lista "Recientes" al añadir), con la última cantidad que usaste
+// Devuelve hasta "cuantos": [{ ref: 'salmon', cantidad: 125 }, ...]
+export function alimentosRecientes(cuantos = 6) {
+    const vistos = new Map();                              // ref -> cantidad (un Map recuerda el orden en que se añaden)
+    const fechas = Object.keys(historial).sort().reverse(); // de la fecha más nueva a la más antigua
+    for (const fecha of fechas) {
+        const lineas = lineasDelDia(fecha).slice().reverse(); // dentro del día, de lo último apuntado a lo primero
+        for (const l of lineas) {
+            if (l.origen === 'alimento' && !vistos.has(l.ref)) vistos.set(l.ref, l.cantidad); // la primera vez que lo vemos (la más reciente)
+            if (vistos.size >= cuantos) break;
+        }
+        if (vistos.size >= cuantos) break;
+    }
+    return [...vistos].map(([ref, cantidad]) => ({ ref, cantidad })); // de Map a lista de objetos
+}
+
 // Añade una línea a una comida del día que se está viendo. Devuelve el texto del aviso
 export function anadirLinea(comida, linea) {
     const fecha = fechaActual();
@@ -190,7 +219,7 @@ export function anadirLinea(comida, linea) {
 
     const nombreComida = COMIDAS.find(c => c.id === comida).nombre.toLowerCase(); // "comida", "cena"...
     const cuando = fecha === fechaHoy() ? '' : ` de ${nombreDelDia(fecha)}`;     // si no es hoy, lo decimos
-    return `${linea.nombre} → ${nombreComida}${cuando} ✓`;
+    return `${linea.nombre} añadido a ${nombreComida}${cuando}`;
 }
 
 // Busca una línea por su comida y su id
@@ -213,28 +242,36 @@ function quitarLinea(comida, id) {
     const dia = historial[fechaActual()];
     if (!dia || Array.isArray(dia)) return;
     dia[comida] = (dia[comida] ?? []).filter(l => l.id !== id); // todas menos esa
+    if (lineaEditando === id) lineaEditando = null;        // ya no hay nada que editar
     guardarHistorial();
     pintarDia();
 }
 
 /* ---------- PINTAR ---------- */
 
-// Dibuja la sección entera: cabecera y la vista elegida (día o semana)
+// Cambia entre la vista "día" y "semana" (también la usan las pestañas del móvil)
+export function cambiarVista(nueva) {
+    vista = nueva;
+    pintarDia();
+}
+
+// Dibuja la sección entera: cabecera, tira de días y la vista elegida (día o semana)
 export function pintarDia() {
-    pintarCabecera();                                      // fecha, flechas y botones Día / Semana
+    pintarCabecera();                                      // fecha, Día / Semana y "Volver a hoy"
+    pintarTira();                                          // los 7 días
 
     document.querySelector('#bloqueDia').classList.toggle('d-none', vista !== 'dia');        // el bloque del día se ve solo en la vista "día"
     document.querySelector('#bloqueSemana').classList.toggle('d-none', vista !== 'semana');  // y el de la semana, en la vista "semana"
 
     if (vista === 'dia') {
-        pintarProgreso();                                  // las barras frente al objetivo
+        pintarResumen();                                   // el anillo y los macros
         pintarComidas();                                   // las cuatro comidas
     } else {
         pintarVistaSemana();
     }
 }
 
-// La cabecera: fecha (o semana), flechas, "Volver a hoy" y Día / Semana
+// La cabecera: fecha (o semana), Día / Semana y "Volver a hoy"
 function pintarCabecera() {
     const fecha = fechaActual();
     const hoy = fechaHoy();
@@ -247,65 +284,99 @@ function pintarCabecera() {
     document.querySelector('#btnVistaSemana').setAttribute('aria-pressed', enSemana);
 
     let texto;                                             // el texto de la fecha
-    let estamosEnHoy;                                      // ¿lo que vemos incluye hoy? (para apagar la flecha →)
+    let estamosEnHoy;                                      // ¿lo que vemos incluye hoy?
 
     if (enSemana) {                                        // "Semana del 12 al 18 de octubre"
         const lunes = lunesDe(fecha);
         const domingo = sumarDias(lunes, 6);
         texto = `Semana del ${fechaLegible(lunes, { day: 'numeric' })} al ${fechaLegible(domingo, { day: 'numeric', month: 'long' })}`;
         estamosEnHoy = lunes === lunesDe(hoy);
-    } else {                                               // "Hoy · jueves, 15 de octubre"
-        const legible = fechaLegible(fecha);
-        texto = fecha === hoy ? 'Hoy · ' + legible : mayusculaInicial(legible);
+    } else {                                               // "Hoy, jueves 15 de octubre"
+        const legible = fechaLegible(fecha, { weekday: 'long', day: 'numeric', month: 'long' }).replace(',', ''); // sin la coma: "jueves 15 de octubre"
+        texto = fecha === hoy ? 'Hoy, ' + legible : fecha === sumarDias(hoy, -1) ? 'Ayer, ' + legible : mayusculaInicial(legible);
         estamosEnHoy = fecha === hoy;
     }
 
     document.querySelector('#fechaDia').textContent = texto; // aria-live la lee en voz alta al cambiar
-
-    const siguiente = document.querySelector('#btnFechaSiguiente');
-    siguiente.disabled = estamosEnHoy;                     // no se puede ir al futuro
     document.querySelector('#btnIrHoy').classList.toggle('d-none', estamosEnHoy); // "Volver a hoy" solo si estás en otro día
-    document.querySelector('#btnFechaAnterior').setAttribute('aria-label', enSemana ? 'Semana anterior' : 'Día anterior');
-    siguiente.setAttribute('aria-label', enSemana ? 'Semana siguiente' : 'Día siguiente');
 
     // si estás viendo otro día, un aviso: lo que añadas irá a ese día
     document.querySelector('#avisoOtroDia').classList.toggle('d-none', enSemana || estamosEnHoy);
 }
 
-// Las 4 barras: lo que llevas frente a tu objetivo
-function pintarProgreso() {
-    const totales = totalesDe(fechaActual());
+// La tira de los 7 días (de lunes a domingo) de la semana que se está viendo
+function pintarTira() {
+    const hoy = fechaHoy();
+    const elegida = fechaActual();
+    const lunes = lunesDe(elegida);
 
-    document.querySelector('#progresoDia').innerHTML = NUTRIENTES.map(n => {
-        const valor = totales[n.clave];                    // lo que llevas
-        const meta = objetivo[n.clave];                    // tu objetivo
-        const porcentaje = Math.min(100, Math.round(valor / meta * 100)); // % conseguido (con tope en 100)
-        const diferencia = Math.round(meta - valor);       // cuánto falta (si es negativo, te has pasado)
+    document.querySelector('#diasTira').innerHTML = INICIALES.map((letra, i) => {
+        const fecha = sumarDias(lunes, i);                 // lunes + i días
+        const conDatos = lineasDelDia(fecha).length > 0;   // ¿tiene algo apuntado? (sale un puntito)
+        const marcada = vista === 'dia' && fecha === elegida; // el día que se está viendo (en la vista semana, ninguno)
+        const kcal = conDatos ? `, ${formatoNumero(totalesDe(fecha).kcal)} kcal` : ''; // para el lector de pantalla
+        const clases = ['dia-tira', fecha === hoy ? 'hoy' : '', conDatos ? 'con-datos' : ''].join(' ');
+        return `<button type="button" class="${clases}" data-fecha="${fecha}" aria-pressed="${marcada}"${fecha > hoy ? ' disabled' : ''}
+                  aria-label="${mayusculaInicial(fechaLegible(fecha, { weekday: 'long', day: 'numeric' }))}${fecha === hoy ? ' (hoy)' : ''}${kcal}">
+                  <span class="letra" aria-hidden="true">${letra}</span>
+                  <span class="numero" aria-hidden="true">${textoAFecha(fecha).getDate()}</span>
+                </button>`;
+    }).join('');
 
-        const estadoTexto = diferencia >= 0                // operador ternario: condición ? sí : no
-            ? `faltan ${formatoNumero(diferencia)} ${n.unidad}`
-            : `<span class="excedido">+${formatoNumero(-diferencia)} ${n.unidad} de más</span>`;
+    document.querySelector('#btnFechaSiguiente').disabled = lunes === lunesDe(hoy); // no se puede ir a semanas futuras
+}
 
-        // aria-valuetext es lo que lee un lector de pantalla: "1.200 de 2.100 kcal"
-        return `
-      <div class="fila-progreso">
-        <div class="d-flex justify-content-between flex-wrap gap-1 small mb-1">
-          <strong>${n.nombre}</strong>
-          <span>${formatoNumero(valor)} / ${formatoNumero(meta)} ${n.unidad} · ${estadoTexto}</span>
+// El resumen: anillo de calorías, "Objetivo − Comido = Restantes" y las barras de los macros
+function pintarResumen() {
+    const t = totalesDe(fechaActual());
+    const restantes = Math.round(objetivo.kcal - t.kcal);  // lo que queda (si es negativo, te has pasado)
+    const pasado = restantes < 0;
+
+    // el anillo: un círculo cuyo trazo se "llena" según el % del objetivo
+    // stroke-dasharray = lo largo de la línea; stroke-dashoffset = cuánto se esconde. Escondiendo menos, se ve más anillo
+    const radio = 52;
+    const circunferencia = 2 * Math.PI * radio;            // la longitud del círculo: 2·π·r
+    const proporcion = Math.min(1, t.kcal / objetivo.kcal); // de 0 a 1 (con tope en 1)
+    const esconder = circunferencia * (1 - proporcion);
+
+    document.querySelector('#anilloDia').innerHTML = `
+      <div class="anillo-caja">
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+          <circle class="anillo-carril" cx="60" cy="60" r="${radio}" />
+          <circle class="anillo-progreso${pasado ? ' pasado' : ''}" cx="60" cy="60" r="${radio}"
+            stroke-dasharray="${circunferencia}" stroke-dashoffset="${esconder}" />
+        </svg>
+        <div class="anillo-centro${pasado ? ' pasado' : ''}">
+          <span class="anillo-numero">${formatoNumero(Math.abs(restantes))}</span>
+          <span class="anillo-etiqueta">${pasado ? 'kcal de más' : 'kcal restantes'}</span>
         </div>
-        <div class="progress" role="progressbar" aria-label="${n.nombre}" aria-valuenow="${porcentaje}" aria-valuemin="0" aria-valuemax="100" aria-valuetext="${formatoNumero(valor)} de ${formatoNumero(meta)} ${n.unidad}">
-          <div class="progress-bar ${n.clase}" style="width: ${porcentaje}%"></div>
+      </div>
+      <div class="ecuacion" role="group" aria-label="Calorías">
+        <div><strong>${formatoNumero(objetivo.kcal)}</strong><span>Objetivo</span></div>
+        <div><strong>${formatoNumero(t.kcal)}</strong><span>Comido</span></div>
+        <div><strong class="${pasado ? 'excedido' : ''}">${formatoNumero(restantes)}</strong><span>Restantes</span></div>
+      </div>`;
+
+    // las 3 barras de macros: "Proteína  82 / 100 g"
+    document.querySelector('#progresoDia').innerHTML = MACROS.map(n => {
+        const valor = t[n.clave];
+        const meta = objetivo[n.clave];
+        const porcentaje = Math.min(100, Math.round(valor / meta * 100)); // con tope en 100 para que no se salga
+        const pasadoMacro = valor > meta * 1.05;           // más de un 5 % por encima: lo marcamos
+        return `
+      <div class="macro-fila">
+        <div class="macro-fila-texto">
+          <span><i class="punto ${n.clase}" aria-hidden="true"></i>${n.nombre}</span>
+          <span class="valor"><strong class="${pasadoMacro ? 'excedido' : ''}">${formatoNumero(valor)}</strong> / ${formatoNumero(meta)} g</span>
+        </div>
+        <div class="macro-barra" role="progressbar" aria-label="${n.nombre}" aria-valuenow="${porcentaje}" aria-valuemin="0" aria-valuemax="100" aria-valuetext="${formatoNumero(valor)} de ${formatoNumero(meta)} gramos">
+          <span class="${n.clase}" style="width: ${porcentaje}%"></span>
         </div>
       </div>`;
     }).join('');
 }
 
-// Texto corto con los macros: "240 kcal · P 30 · C 10 · G 8"
-function textoMacros(t) {
-    return `${formatoNumero(t.kcal)} kcal · P ${formatoNumero(t.proteina, 1)} · C ${formatoNumero(t.carbohidratos, 1)} · G ${formatoNumero(t.grasas, 1)}`;
-}
-
-// Las cuatro tarjetas de comidas con sus líneas
+// Las cuatro comidas: título con su total, las filas y "+ Añadir alimento"
 function pintarComidas() {
     const fecha = fechaActual();
 
@@ -313,46 +384,56 @@ function pintarComidas() {
         const lineas = lineasDe(fecha, c.id);              // lo de esa comida
         const t = sumarLineas(lineas);                     // su total
 
-        // una fila por línea: nombre y macros; para alimentos, la casilla de gramos; para recetas, − raciones +
         const filas = lineas.map(l => {
             const nombre = escaparHtml(l.nombre);
+            const lt = totalesLinea(l);                    // los totales de esta fila
+            const abierta = l.id === lineaEditando;        // ¿está abierta para editar?
+            const idEditor = 'editor-' + escaparHtml(l.id); // un id para unir el botón con su editor (aria-controls)
+
+            // el editor: gramos (casilla) o raciones (− +), y los botones Eliminar y Listo
             const control = l.unidad === 'g'
                 ? `<div class="input-group input-group-sm cantidad-gramos">
                      <input type="number" min="1" step="1" inputmode="decimal" value="${l.cantidad}" class="form-control linea-gramos" aria-label="Gramos de ${nombre}">
                      <span class="input-group-text">g</span>
                    </div>`
                 : `<div class="btn-group btn-group-sm" role="group" aria-label="Raciones de ${nombre}">
-                     <button type="button" class="btn btn-outline-dark linea-menos" aria-label="Media ración menos de ${nombre}">−</button>
-                     <span class="btn btn-outline-dark disabled contador-raciones">× ${numeroConMedio(l.cantidad)}</span>
-                     <button type="button" class="btn btn-outline-dark linea-mas" aria-label="Media ración más de ${nombre}">+</button>
+                     <button type="button" class="btn btn-outline-dark linea-menos" aria-label="Media ración menos">−</button>
+                     <span class="btn btn-outline-dark disabled contador-raciones">${numeroConMedio(l.cantidad)}</span>
+                     <button type="button" class="btn btn-outline-dark linea-mas" aria-label="Media ración más">+</button>
                    </div>`;
 
             return `
-          <li class="linea-diario" data-id="${escaparHtml(l.id)}" data-comida="${c.id}">
-            <div class="flex-grow-1 min-w-0">
-              <div class="fw-semibold text-truncate">${nombre}</div>
-              <small class="text-body-secondary">${textoMacros(totalesLinea(l))}</small>
-            </div>
-            ${control}
-            <button type="button" class="btn btn-link btn-sm text-danger px-1 linea-quitar" aria-label="Quitar ${nombre}">
-              <i class="bi bi-x-lg" aria-hidden="true"></i>
+          <li class="fila-alimento${abierta ? ' editando' : ''}" data-id="${escaparHtml(l.id)}" data-comida="${c.id}">
+            <button type="button" class="fila-alimento-boton" aria-expanded="${abierta}" aria-controls="${idEditor}">
+              <span class="fila-texto">
+                <span class="fila-nombre">${nombre}</span>
+                <span class="fila-detalle">${textoCantidad(l)} · P ${formatoNumero(lt.proteina, 1)} · C ${formatoNumero(lt.carbohidratos, 1)} · G ${formatoNumero(lt.grasas, 1)}</span>
+              </span>
+              <span class="fila-kcal">${formatoNumero(lt.kcal)} <small>kcal</small></span>
             </button>
+            ${abierta ? `
+            <div class="fila-editor" id="${idEditor}">
+              ${control}
+              <button type="button" class="btn btn-link btn-sm text-danger linea-quitar ms-auto">Eliminar</button>
+              <button type="button" class="btn btn-verde btn-sm linea-listo">Listo</button>
+            </div>` : ''}
           </li>`;
         }).join('');
 
-        // la tarjeta de la comida: título con su total, las filas y los botones
+        // la tarjeta de la comida
         return `
-      <section class="comida-tarjeta" aria-labelledby="titulo-${c.id}">
+      <section class="tarjeta comida-tarjeta" aria-labelledby="titulo-${c.id}">
         <div class="comida-cabecera">
-          <h3 id="titulo-${c.id}" class="h6 mb-0"><i class="bi ${c.icono}" aria-hidden="true"></i> ${c.nombre}</h3>
-          <span class="comida-total">${lineas.length ? `${formatoNumero(t.kcal)} kcal · P ${formatoNumero(t.proteina)} g` : ''}</span>
+          <div>
+            <h2 id="titulo-${c.id}" class="comida-titulo">${c.nombre}</h2>
+            ${lineas.length ? `<span class="comida-macros">P ${formatoNumero(t.proteina)} · C ${formatoNumero(t.carbohidratos)} · G ${formatoNumero(t.grasas)}</span>` : ''}
+          </div>
+          <span class="comida-kcal">${lineas.length ? `${formatoNumero(t.kcal)} kcal` : ''}</span>
         </div>
-        ${lineas.length ? `<ul class="list-unstyled mb-2">${filas}</ul>` : '<p class="small text-body-secondary mb-2">Nada apuntado.</p>'}
-        <div class="d-flex flex-wrap gap-2 align-items-center">
-          <button type="button" class="btn btn-verde btn-sm btn-anadir" data-comida="${c.id}">
-            <i class="bi bi-plus-lg" aria-hidden="true"></i> Añadir<span class="visually-hidden"> a ${c.nombre.toLowerCase()}</span>
-          </button>
-        </div>
+        ${lineas.length ? `<ul class="lista-filas">${filas}</ul>` : ''}
+        <button type="button" class="btn-anadir-comida btn-anadir" data-comida="${c.id}">
+          <i class="bi bi-plus-lg" aria-hidden="true"></i> Añadir alimento<span class="visually-hidden"> a ${c.nombre.toLowerCase()}</span>
+        </button>
       </section>`;
     }).join('');
 }
@@ -389,26 +470,32 @@ function pintarVistaSemana() {
 
     document.querySelector('#resumenSemana').innerHTML = `
       ${resumen}
-      <div class="row g-4 mt-1">
+      <div class="row g-3 mt-1">
         <div class="col-md-6">
-          <h3 class="h6 mb-1">Calorías</h3>
-          ${graficoBarras({ valores: dias.map(d => d.totales.kcal), meta: objetivo.kcal, nombres, indiceHoy, clase: 'barra-kcal', unidad: 'kcal', titulo: 'Calorías' })}
+          <div class="tarjeta p-3">
+            <h2 class="h6 mb-2">Calorías</h2>
+            ${graficoBarras({ valores: dias.map(d => d.totales.kcal), meta: objetivo.kcal, nombres, indiceHoy, clase: 'barra-kcal', unidad: 'kcal', titulo: 'Calorías' })}
+          </div>
         </div>
         <div class="col-md-6">
-          <h3 class="h6 mb-1">Proteína</h3>
-          ${graficoBarras({ valores: dias.map(d => d.totales.proteina), meta: objetivo.proteina, nombres, indiceHoy, clase: 'macro-p', unidad: 'g', titulo: 'Proteína' })}
+          <div class="tarjeta p-3">
+            <h2 class="h6 mb-2">Proteína</h2>
+            ${graficoBarras({ valores: dias.map(d => d.totales.proteina), meta: objetivo.proteina, nombres, indiceHoy, clase: 'macro-p', unidad: 'g', titulo: 'Proteína' })}
+          </div>
         </div>
       </div>
-      <h3 class="h6 mt-4">Día a día</h3>
-      <ul class="list-unstyled mb-0 dias-semana">
-        ${dias.map((d, i) => `
-          <li>
-            <button type="button" class="dia-semana${d.fecha === hoy ? ' hoy' : ''}" data-fecha="${d.fecha}"${d.futuro ? ' disabled' : ''}>
-              <span>${mayusculaInicial(nombres[i])}</span>
-              <span class="text-body-secondary">${d.futuro || d.totales.kcal === 0 ? '—' : `${formatoNumero(d.totales.kcal)} kcal · P ${formatoNumero(d.totales.proteina)} g`}</span>
-            </button>
-          </li>`).join('')}
-      </ul>`;
+      <div class="tarjeta px-3 py-2 mt-3">
+        <h2 class="h6 mt-2">Día a día</h2>
+        <ul class="dias-semana">
+          ${dias.map((d, i) => `
+            <li>
+              <button type="button" class="dia-semana${d.fecha === hoy ? ' hoy' : ''}" data-fecha="${d.fecha}"${d.futuro ? ' disabled' : ''}>
+                <span>${mayusculaInicial(nombres[i])}</span>
+                <span class="text-body-secondary">${d.futuro || d.totales.kcal === 0 ? '—' : `${formatoNumero(d.totales.kcal)} kcal · P ${formatoNumero(d.totales.proteina)} g`}</span>
+              </button>
+            </li>`).join('')}
+        </ul>
+      </div>`;
 }
 
 // Dibuja un gráfico de 7 barras en SVG con una línea discontinua en el objetivo
@@ -420,7 +507,7 @@ function graficoBarras({ valores, meta, nombres, indiceHoy, clase, unidad, titul
     const zona = alto - arriba - abajo;                    // la altura para las barras
     const maximo = Math.max(meta * 1.15, ...valores);      // el valor más alto: el objetivo + 15 %, o un día que lo pase
     const hueco = ancho / valores.length;                  // el espacio de cada día
-    const anchoBarra = hueco * 0.56;                       // la barra ocupa algo más de la mitad de su hueco
+    const anchoBarra = hueco * 0.5;                        // la barra ocupa la mitad de su hueco
 
     const y = v => arriba + zona - (v / maximo) * zona;    // valor -> altura del dibujo (en SVG, la y crece hacia ABAJO)
 
@@ -428,8 +515,8 @@ function graficoBarras({ valores, meta, nombres, indiceHoy, clase, unidad, titul
         const x = i * hueco + (hueco - anchoBarra) / 2;    // la barra, centrada en su hueco
         const centro = i * hueco + hueco / 2;              // el centro (para la letra)
         return `
-        <rect x="${x}" y="${arriba}" width="${anchoBarra}" height="${zona}" rx="4" class="fondo-barra" />
-        <rect x="${x}" y="${y(v)}" width="${anchoBarra}" height="${(v / maximo) * zona}" rx="4" class="barra ${clase}"><title>${mayusculaInicial(nombres[i])}: ${formatoNumero(v)} ${unidad}</title></rect>
+        <rect x="${x}" y="${arriba}" width="${anchoBarra}" height="${zona}" rx="5" class="fondo-barra" />
+        <rect x="${x}" y="${y(v)}" width="${anchoBarra}" height="${(v / maximo) * zona}" rx="5" class="barra ${clase}"><title>${mayusculaInicial(nombres[i])}: ${formatoNumero(v)} ${unidad}</title></rect>
         <text x="${centro}" y="${alto - 6}" class="etiqueta-barra${i === indiceHoy ? ' hoy' : ''}">${INICIALES[i]}</text>`;
     }).join('');
 
@@ -453,12 +540,10 @@ function rellenarFormularioObjetivo() {
     f.grasas.value = objetivo.grasas;
 }
 
-// Mueve la fecha: "pasos" días (o semanas en la vista de semana) hacia delante (+) o hacia atrás (-)
-function moverFecha(pasos) {
-    const dias = vista === 'semana' ? pasos * 7 : pasos;
-    let nueva = sumarDias(fechaActual(), dias);
-    if (nueva >= fechaHoy()) nueva = null;                 // si llega a hoy (o se pasa), volvemos a "hoy"
-    fechaVista = nueva;
+// Va a un día (null = hoy) y repinta
+function irAFecha(fecha) {
+    fechaVista = !fecha || fecha >= fechaHoy() ? null : fecha; // hoy o el futuro = "hoy"
+    lineaEditando = null;                                  // al cambiar de día se cierra lo que estuviera abierto
     pintarDia();
 }
 
@@ -470,6 +555,11 @@ function recargar() {
     pintarDia();
 }
 
+// Después de repintar, devuelve el foco al mismo sitio (si no, quien usa teclado lo pierde al redibujarse la lista)
+function enfocar(id, selector) {
+    document.querySelector(`.fila-alimento[data-id="${id}"] ${selector}`)?.focus(); // "?." = si no existe, no hace nada
+}
+
 /* ---------- ARRANQUE: oyentes de la sección ---------- */
 
 export function iniciarDia() {
@@ -478,50 +568,87 @@ export function iniciarDia() {
     alCambiarDatos(recargar);                              // si llegan datos de la nube, se recarga
 
     // Día / Semana
-    document.querySelector('#btnVistaDia').addEventListener('click', () => { vista = 'dia'; pintarDia(); });
-    document.querySelector('#btnVistaSemana').addEventListener('click', () => { vista = 'semana'; pintarDia(); });
+    document.querySelector('#btnVistaDia').addEventListener('click', () => cambiarVista('dia'));
+    document.querySelector('#btnVistaSemana').addEventListener('click', () => cambiarVista('semana'));
 
-    // flechas ← → y "Volver a hoy"
-    document.querySelector('#btnFechaAnterior').addEventListener('click', () => moverFecha(-1));
-    document.querySelector('#btnFechaSiguiente').addEventListener('click', () => moverFecha(1));
-    document.querySelector('#btnIrHoy').addEventListener('click', () => { fechaVista = null; pintarDia(); });
+    // flechas: una semana antes o después. "Volver a hoy"
+    document.querySelector('#btnFechaAnterior').addEventListener('click', () => irAFecha(sumarDias(fechaActual(), -7)));
+    document.querySelector('#btnFechaSiguiente').addEventListener('click', () => irAFecha(sumarDias(fechaActual(), 7)));
+    document.querySelector('#btnIrHoy').addEventListener('click', () => irAFecha(null));
+
+    // un día de la tira: se ve ese día (en la vista de día)
+    document.querySelector('#diasTira').addEventListener('click', (e) => {
+        const boton = e.target.closest('.dia-tira');
+        if (!boton) return;
+        vista = 'dia';
+        irAFecha(boton.dataset.fecha);
+        document.querySelector(`.dia-tira[data-fecha="${boton.dataset.fecha}"]`)?.focus(); // el foco sigue en el día pulsado (se ha redibujado)
+    });
 
     // en la lista de la semana, al pulsar un día se abre ese día
     document.querySelector('#resumenSemana').addEventListener('click', (e) => {
         const boton = e.target.closest('.dia-semana');
         if (!boton) return;
-        fechaVista = boton.dataset.fecha === fechaHoy() ? null : boton.dataset.fecha; // null si es hoy
         vista = 'dia';
-        pintarDia();
+        irAFecha(boton.dataset.fecha);
         document.querySelector('#btnVistaDia').focus();    // el botón pulsado ha desaparecido: llevamos el foco arriba (para quien usa teclado)
     });
 
     const comidas = document.querySelector('#comidasDia'); // el hueco de las cuatro comidas
 
-    // clics: Añadir, − + y quitar
+    // clics: Añadir alimento, abrir/cerrar una fila, − +, Eliminar y Listo
     comidas.addEventListener('click', (e) => {
-        const anadir = e.target.closest('.btn-anadir');    // ¿"Añadir"?
+        const anadir = e.target.closest('.btn-anadir');    // ¿"Añadir alimento"?
         if (anadir) { abrirAnadir({ comida: anadir.dataset.comida }); return; }
 
-        const fila = e.target.closest('.linea-diario');    // ¿algo dentro de una línea?
+        const fila = e.target.closest('.fila-alimento');   // ¿algo dentro de una fila?
         if (!fila) return;
         const { comida, id } = fila.dataset;               // sacamos data-comida y data-id de golpe
         const linea = buscarLinea(comida, id);
         if (!linea) return;
 
-        if (e.target.closest('.linea-mas')) cambiarCantidad(comida, id, linea.cantidad + 0.5);       // media ración más
-        else if (e.target.closest('.linea-menos')) cambiarCantidad(comida, id, linea.cantidad - 0.5); // media ración menos
-        else if (e.target.closest('.linea-quitar')) quitarLinea(comida, id);                         // quitar
+        if (e.target.closest('.fila-alimento-boton')) {    // pulsar la fila: se abre (o se cierra si ya estaba abierta)
+            lineaEditando = lineaEditando === id ? null : id;
+            pintarDia();
+            if (lineaEditando) enfocar(id, linea.unidad === 'g' ? '.linea-gramos' : '.linea-mas'); // el cursor a la cantidad
+            else enfocar(id, '.fila-alimento-boton');
+            return;
+        }
+
+        if (e.target.closest('.linea-mas')) { cambiarCantidad(comida, id, linea.cantidad + 0.5); enfocar(id, '.linea-mas'); }        // media ración más
+        else if (e.target.closest('.linea-menos')) { cambiarCantidad(comida, id, linea.cantidad - 0.5); enfocar(id, '.linea-menos'); } // media ración menos
+        else if (e.target.closest('.linea-quitar')) { quitarLinea(comida, id); mostrarAviso(`${linea.nombre} eliminado`); }          // eliminar
+        else if (e.target.closest('.linea-listo')) {                                                                                // listo: se cierra
+            const casilla = fila.querySelector('.linea-gramos');
+            if (casilla && Number(casilla.value) > 0) linea.cantidad = Number(casilla.value); // por si no se había "cambiado" aún
+            lineaEditando = null;
+            guardarHistorial();
+            pintarDia();
+            enfocar(id, '.fila-alimento-boton');
+        }
     });
 
-    // al terminar de escribir los gramos ("change"), se guardan
+    // al terminar de escribir los gramos ("change") o pulsar Enter, se guardan
     comidas.addEventListener('change', (e) => {
         const casilla = e.target.closest('.linea-gramos');
         if (!casilla) return;
-        const fila = casilla.closest('.linea-diario');
+        const fila = casilla.closest('.fila-alimento');
         const gramos = Number(casilla.value);              // los gramos nuevos
         if (gramos > 0) cambiarCantidad(fila.dataset.comida, fila.dataset.id, gramos);
         else pintarDia();                                  // si no valen, vuelve el valor anterior
+    });
+
+    comidas.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && e.target.closest('.linea-gramos')) {     // Enter en los gramos = Listo
+            e.preventDefault();
+            e.target.closest('.fila-alimento').querySelector('.linea-listo').click();
+        }
+        if (e.key === 'Escape' && lineaEditando) {                        // Escape = cerrar sin más
+            const id = lineaEditando;
+            lineaEditando = null;
+            pintarDia();
+            enfocar(id, '.fila-alimento-boton');
+        }
     });
 
     // botón "Vaciar día"
@@ -544,7 +671,7 @@ export function iniciarDia() {
         objetivo = nuevo;
         guardar('objetivo', objetivo);
         pintarDia();
-        mostrarAviso('Objetivo guardado ✓');
+        mostrarAviso('Objetivo guardado');
     });
 
     document.querySelector('#btnObjetivoDefecto').addEventListener('click', () => { // "Restaurar"

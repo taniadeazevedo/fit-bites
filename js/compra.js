@@ -2,7 +2,7 @@
    FIT BITES · compra.js
    La lista de la compra: lo que apuntas A MANO ("leche", "1 kg de
    patatas") y los ingredientes de las recetas que marcas con el
-   carrito 🛒 (sumando las cantidades). Todo se puede ir tachando.
+   carrito (sumando las cantidades). Todo se puede ir tachando.
    ===================================================================== */
 
 import { buscarReceta } from './estado.js';             // para encontrar cada receta por su id
@@ -117,7 +117,11 @@ function agruparIngredientes(lista) {
 export function pintarCompra() {
     // las recetas elegidas (buscándolas por id; si alguna ya no existe, filter(Boolean) la descarta)
     const elegidas = compra.map(id => buscarReceta(id)).filter(Boolean);
-    document.querySelector('#contadorCompra').textContent = elegidas.length + manuales.filter(m => !m.hecho).length; // el numerito del menú: recetas + lo apuntado a mano que falta por comprar
+    const cuantos = elegidas.length + manuales.filter(m => !m.hecho).length; // recetas + lo apuntado a mano que falta por comprar
+    document.querySelectorAll('.contador-compra').forEach(c => {           // el numerito sale en dos sitios: arriba y en la barra del móvil
+        c.textContent = cuantos;
+        c.toggleAttribute('data-cero', cuantos === 0);     // con 0, el CSS lo oculta (toggleAttribute pone o quita el atributo)
+    });
 
     // las etiquetas de las recetas, cada una con su × para quitarla
     document.querySelector('#compraRecetas').innerHTML = elegidas.map(r => `
@@ -128,7 +132,7 @@ export function pintarCompra() {
     const lista = document.querySelector('#compraLista');  // el hueco de la lista
 
     if (elegidas.length === 0 && manuales.length === 0) {  // si no hay nada...
-        lista.innerHTML = '<p class="text-body-secondary">Aún no hay nada. Escribe arriba lo que necesitas o pulsa el carrito 🛒 de una receta.</p>';
+        lista.innerHTML = '<p class="text-body-secondary">Tu lista está vacía. Escribe arriba lo que necesitas o pulsa el carrito de una receta.</p>';
         return;
     }
 
@@ -274,7 +278,7 @@ export function iniciarCompra() {
     document.querySelector('#btnCompraCopiar').addEventListener('click', async () => { // "Copiar lista"
         try {                                              // el portapapeles puede fallar (permisos)
             await navigator.clipboard.writeText(textoListaCompra()); // copia el texto
-            mostrarAviso('Lista copiada ✓');               // avisamos
+            mostrarAviso('Lista copiada');               // avisamos
         } catch {
             mostrarAviso('No se pudo copiar la lista');    // si falla, también avisamos
         }

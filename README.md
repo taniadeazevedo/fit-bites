@@ -13,7 +13,8 @@ Una web app para apuntar lo que comes por gramos, comida a comida, y ver al mome
 
 | | |
 |---|---|
-| 📝 **Diario por comidas** | Desayuno, comida, merienda y cena. Buscas un alimento (sin importar las tildes), pones los gramos y ves al momento cuánto suma; los gramos se pueden cambiar después. Barras de progreso frente a tu objetivo diario (editable). Puedes volver a días anteriores y apuntar lo que se te olvidó. |
+| 📝 **Diario por comidas** | Desayuno, comida, merienda y cena. Un anillo con las calorías que te quedan (Objetivo − Comido = Restantes) y barras de proteína, carbohidratos y grasas. Una tira con los días de la semana para cambiar de día. Al pulsar un alimento apuntado puedes cambiar la cantidad o eliminarlo. |
+| ➕ **Añadir rápido** | Buscador sin tildes, tus alimentos **recientes** con la última cantidad que usaste y botones de gramos rápidos (1 ración, 50, 100, 150, 200 g). En el móvil la ventana ocupa toda la pantalla y hay una barra de pestañas abajo, como en una app. |
 | 🥑 **Tabla de alimentos** | Unos 60 alimentos con sus valores por 100 g **en crudo** (proteínas, lácteos, cereales, verduras, frutas, frutos secos…), cada uno con una ración típica. Puedes **crear los tuyos** copiando la etiqueta (las kcal se calculan solas). |
 | 🔐 **Cuentas** | Con Google o con email (Firebase). Tus datos se guardan en la nube y se sincronizan entre dispositivos. Sin cuenta, todo funciona igual y se guarda en el navegador. |
 | 🍽️ **Recetas con macros** | Calorías, proteína, carbohidratos y grasas de cada receta, con una barra de reparto, foto, tipo de plato, tiempo e ingredientes. |
@@ -42,13 +43,13 @@ Una web app para apuntar lo que comes por gramos, comida a comida, y ver al mome
 
 ## 🛠️ Tecnologías
 
-- **HTML5** semántico y **CSS3** (variables, flexbox, grid, animaciones, tema oscuro, diseño responsive)
+- **HTML5** semántico y **CSS3** (variables de diseño, flexbox, grid, tema oscuro, diseño responsive con barra de pestañas en móvil). Diseño inspirado en los diarios de comida más usados (MyFitnessPal, Cronometer, MacroFactor, Yazio)
 - **JavaScript** moderno, sin frameworks, dividido en **módulos** (`import` / `export`): `fetch` con `async/await`, `localStorage`, `IntersectionObserver`, canvas para reducir las fotos, gráficos en SVG, service worker
 - **Bootstrap 5.3** y **Bootstrap Icons**
 - **Firebase** (Authentication + Firestore) para las cuentas y guardar los datos en la nube
 - **json-server** como API REST de pruebas
 - **GitHub Pages** para publicarla
-- Fuentes de Google Fonts: Syne, Outfit e Inter
+- Fuente Inter (Google Fonts)
 
 ## 🚀 Cómo ejecutarlo en local
 
@@ -68,7 +69,7 @@ Una web app para apuntar lo que comes por gramos, comida a comida, y ver al mome
 ```
 fit-bites/
 ├── index.html              # la página (con comentarios que explican cada parte)
-├── css/estilos.css         # estilos: paleta, diario, tarjetas, tema oscuro...
+├── css/estilos.css         # el sistema de diseño: colores, botones, diario, tema oscuro, móvil...
 ├── js/                     # la lógica, en módulos y comentada línea a línea
 │   ├── app.js              # punto de entrada: arranca cada parte
 │   ├── config.js           # ajustes (comidas, categorías, objetivo por defecto...)
@@ -83,7 +84,8 @@ fit-bites/
 │   ├── detalle.js          # ventana de la receta con selector de raciones
 │   ├── formulario.js       # crear y editar recetas (json-server)
 │   ├── compra.js           # lista de la compra
-│   ├── estado.js, utilidades.js, datos.js, fotos.js, interfaz.js   # herramientas compartidas
+│   ├── interfaz.js         # tema claro/oscuro y barra de pestañas del móvil
+│   ├── estado.js, utilidades.js, datos.js, fotos.js   # herramientas compartidas
 ├── json/
 │   ├── alimentos.json      # tabla de alimentos (por 100 g en crudo)
 │   └── recetas.json        # las recetas (la "base de datos" de json-server)

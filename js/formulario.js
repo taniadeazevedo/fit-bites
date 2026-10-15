@@ -152,7 +152,7 @@ async function enviarFormulario(e) {                       // "e" es el evento "
             await guardarReceta(datos);                                     // POST: crear
         }
 
-        const mensaje = recetaEditando ? 'Cambios guardados ✓' : 'Receta guardada ✓'; // el mensaje según el caso
+        const mensaje = recetaEditando ? 'Cambios guardados' : 'Receta guardada'; // el mensaje según el caso
 
         estado.recetas = await cargarRecetas();            // volvemos a pedir la lista al servidor (ya con el cambio)
         mostrarRecetas();                                  // y la volvemos a dibujar

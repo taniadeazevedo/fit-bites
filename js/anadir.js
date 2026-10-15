@@ -5,12 +5,14 @@
      cuánto suma. Aquí también puedes crear tus propios alimentos.
    - Recetas: las recetas de la web, por raciones.
    La ventana se queda abierta para añadir varias cosas seguidas.
+   Como en las apps más usadas: arriba salen tus "Recientes" (con la última
+   cantidad que usaste) y hay botones de gramos rápidos (ración, 50, 100...).
    ===================================================================== */
 
 import { COMIDAS, CATEGORIAS_ALIMENTO } from './config.js'; // comidas y categorías
 import { estado, buscarReceta } from './estado.js';     // las recetas
 import { filtrarAlimentos, buscarAlimento, crearAlimentoPropio, borrarAlimentoPropio } from './alimentos.js'; // alimentos
-import { anadirLinea, totalesLinea, comidaSugerida } from './dia.js'; // el diario
+import { anadirLinea, totalesLinea, comidaSugerida, alimentosRecientes } from './dia.js'; // el diario
 import { escaparHtml, formatoNumero, numeroConMedio, normalizarTexto, mostrarAviso } from './utilidades.js'; // herramientas pequeñas
 
 // ---------- ESTADO DE ESTE ARCHIVO ----------
@@ -61,43 +63,68 @@ function pintarCategorias() {
     ).join('');
 }
 
+// El HTML de una opción de la lista
+function htmlOpcion(o) {
+    const elegida = seleccion && seleccion.origen === o.origen && seleccion.ref === o.ref; // ¿es la seleccionada?
+    return `
+      <div class="opcion-fila">
+        <button type="button" class="opcion${elegida ? ' elegida' : ''}" data-origen="${o.origen}" data-ref="${escaparHtml(o.ref)}"${o.cantidad ? ` data-cantidad="${o.cantidad}"` : ''} aria-pressed="${elegida}">
+          <span class="opcion-texto">
+            <span class="opcion-nombre">${escaparHtml(o.nombre)}${o.propio ? '<span class="etiqueta-propio">Tuyo</span>' : ''}</span>
+            <span class="opcion-detalle">${escaparHtml(o.detalle)}</span>
+          </span>
+          <span class="opcion-kcal">${formatoNumero(o.kcal)} <small>kcal</small></span>
+        </button>
+        ${o.propio ? `<button type="button" class="btn btn-link btn-sm text-danger opcion-borrar" data-origen="${o.origen}" data-ref="${escaparHtml(o.ref)}" aria-label="Borrar ${escaparHtml(o.nombre)}">
+          <i class="bi bi-trash" aria-hidden="true"></i>
+        </button>` : ''}
+      </div>`;
+}
+
+// Un alimento convertido en opción de la lista. Con "cantidad", el detalle y las kcal son de esa cantidad (para los recientes)
+function opcionDeAlimento(a, cantidad) {
+    const macrosTexto = `P ${formatoNumero(a.proteina, 1)} · C ${formatoNumero(a.carbohidratos, 1)} · G ${formatoNumero(a.grasas, 1)}`;
+    if (cantidad) {                                        // reciente: "125 g · última vez"
+        return { origen: 'alimento', ref: a.id, nombre: a.nombre, propio: a.propio, cantidad,
+                 detalle: `${formatoNumero(cantidad)} g · última vez`, kcal: a.kcal * cantidad / 100 };
+    }
+    return { origen: 'alimento', ref: a.id, nombre: a.nombre, propio: a.propio,
+             detalle: `100 g · ${macrosTexto}${a.nota ? ' · ' + a.nota : ''}`, kcal: a.kcal };
+}
+
 // La lista de opciones de la pestaña abierta
 function pintarLista() {
-    let opciones = [];                                     // cada opción: { origen, ref, nombre, detalle, borrable, etiqueta }
     const busqueda = normalizarTexto(texto.trim());
+    let html = '';                                         // el HTML que vamos a meter en la lista
+    let cuantas = 0;                                       // cuántas opciones hay (para el lector de pantalla)
 
     if (pestana === 'alimentos') {
-        opciones = filtrarAlimentos(texto, categoria).map(a => ({
-            origen: 'alimento', ref: a.id, nombre: a.nombre,
-            detalle: `${macros(a)} por 100 g${a.nota ? ' · ' + a.nota : ''}`,
-            borrable: a.propio, etiqueta: a.propio ? 'Tuyo' : ''
-        }));
+        // sin buscar nada ni categoría: primero tus recientes
+        if (busqueda === '' && categoria === '') {
+            const recientes = alimentosRecientes()
+                .map(r => ({ alimento: buscarAlimento(r.ref), cantidad: r.cantidad }))
+                .filter(r => r.alimento);                  // por si alguno ya no existe
+            if (recientes.length > 0) {
+                html += '<h3 class="titulo-lista">Recientes</h3>';
+                html += recientes.map(r => htmlOpcion(opcionDeAlimento(r.alimento, r.cantidad))).join('');
+                html += '<h3 class="titulo-lista">Todos los alimentos</h3>';
+            }
+        }
+        const lista = filtrarAlimentos(texto, categoria).map(a => opcionDeAlimento(a));
+        cuantas = lista.length;
+        html += lista.map(htmlOpcion).join('');
+        if (cuantas === 0) html += '<p class="text-body-secondary small mt-2 mb-0">No hay nada que coincida. Puedes crearlo abajo, en «Crear un alimento».</p>';
     } else {
-        opciones = estado.recetas
+        const lista = estado.recetas
             .filter(r => busqueda === '' || normalizarTexto(r.nombre).includes(busqueda))
-            .map(r => ({ origen: 'receta', ref: String(r.id), nombre: r.nombre, detalle: `${macros(valoresDe(r), 0)} por ración` }));
+            .map(r => ({ origen: 'receta', ref: String(r.id), nombre: r.nombre, kcal: r.kcal,
+                         detalle: `1 ración · P ${formatoNumero(r.proteina)} · C ${formatoNumero(r.carbohidratos)} · G ${formatoNumero(r.grasas)}` }));
+        cuantas = lista.length;
+        html = cuantas ? lista.map(htmlOpcion).join('') : '<p class="text-body-secondary small mt-2 mb-0">No hay ninguna receta que coincida.</p>';
     }
 
-    // mensaje si no hay nada
-    const vacio = 'No hay nada que coincida. ' + (pestana === 'alimentos' ? 'Puedes crearlo abajo, en «Crear un alimento».' : '');
-
-    q('#anadirLista').innerHTML = opciones.length === 0
-        ? `<p class="text-body-secondary small mb-0">${vacio}</p>`
-        : opciones.map(o => {
-            const elegida = seleccion && seleccion.origen === o.origen && seleccion.ref === o.ref; // ¿es la seleccionada?
-            return `
-          <div class="opcion-fila">
-            <button type="button" class="opcion${elegida ? ' elegida' : ''}" data-origen="${o.origen}" data-ref="${escaparHtml(o.ref)}" aria-pressed="${elegida}">
-              <span class="opcion-nombre">${escaparHtml(o.nombre)}${o.etiqueta ? ` <span class="recipe-tag">${o.etiqueta}</span>` : ''}</span>
-              <small class="text-body-secondary">${escaparHtml(o.detalle)}</small>
-            </button>
-            ${o.borrable ? `<button type="button" class="btn btn-link btn-sm text-danger opcion-borrar" data-origen="${o.origen}" data-ref="${escaparHtml(o.ref)}" aria-label="Borrar ${escaparHtml(o.nombre)}">
-              <i class="bi bi-trash" aria-hidden="true"></i>
-            </button>` : ''}
-          </div>`;
-        }).join('');
-
-    q('#anadirContador').textContent = `${opciones.length} ${opciones.length === 1 ? 'resultado' : 'resultados'}`; // lo lee el lector de pantalla
+    q('#anadirLista').innerHTML = html;
+    q('#anadirContador').textContent = `${cuantas} ${cuantas === 1 ? 'resultado' : 'resultados'}`; // lo lee el lector de pantalla
     q('#bloqueCrearAlimento').classList.toggle('d-none', pestana !== 'alimentos'); // "Crear un alimento" solo en Alimentos
 }
 
@@ -112,24 +139,38 @@ function pintarSeleccion() {
 
     // la cantidad: gramos (casilla) o raciones (− +)
     q('#selCantidad').innerHTML = s.unidad === 'g'
-        ? `<div class="input-group input-group-sm cantidad-gramos">
+        ? `<div class="input-group cantidad-gramos">
              <input id="selCantidadInput" type="number" min="1" step="1" inputmode="decimal" value="${s.cantidad}" class="form-control" aria-label="Gramos">
              <span class="input-group-text">g</span>
            </div>`
-        : `<div class="btn-group btn-group-sm" role="group" aria-label="Raciones">
+        : `<div class="btn-group" role="group" aria-label="Raciones">
              <button type="button" class="btn btn-outline-dark" data-cambio="-0.5" aria-label="Media ración menos">−</button>
-             <span class="btn btn-outline-dark disabled contador-raciones">× ${numeroConMedio(s.cantidad)}</span>
+             <span class="btn btn-outline-dark disabled contador-raciones">${numeroConMedio(s.cantidad)}</span>
              <button type="button" class="btn btn-outline-dark" data-cambio="0.5" aria-label="Media ración más">+</button>
            </div>`;
 
+    pintarChips();
+
     pintarTotalSeleccion();
+}
+
+// Los botones de gramos rápidos: la ración típica del alimento (si la tiene) y 50, 100, 150 y 200 g
+function pintarChips() {
+    const caja = q('#selChips');
+    if (seleccion.unidad !== 'g') { caja.innerHTML = ''; return; } // con raciones no hacen falta
+    const racion = buscarAlimento(seleccion.ref)?.racion;  // la ración típica (o undefined)
+    const valores = [...new Set([racion, 50, 100, 150, 200].filter(Boolean))].sort((a, b) => a - b); // sin repetidos y de menor a mayor
+    caja.innerHTML = valores.map(g =>
+        `<button type="button" class="chip-gramos" data-gramos="${g}" aria-pressed="${g === seleccion.cantidad}">${g === racion ? `1 ración · ${g} g` : `${g} g`}</button>`
+    ).join('');
 }
 
 // Solo el total (para no redibujar la casilla mientras se escribe y no perder el cursor)
 function pintarTotalSeleccion() {
     const s = seleccion;
     const valido = s.cantidad > 0;
-    q('#selMacros').textContent = valido ? '= ' + macros(totalesLinea(s)) : 'Escribe una cantidad';
+    q('#selMacros').textContent = valido ? macros(totalesLinea(s)) : 'Escribe una cantidad';
+    document.querySelectorAll('#selChips .chip-gramos').forEach(c => c.setAttribute('aria-pressed', Number(c.dataset.gramos) === s.cantidad)); // marca el botón rápido que coincide
     q('#btnAnadirSeleccion').disabled = !valido;           // sin cantidad válida, no se puede añadir
 }
 
@@ -218,7 +259,7 @@ export function iniciarAnadir() {
         const borrar = e.target.closest('.opcion-borrar');
         if (borrar) {
             const { origen, ref } = borrar.dataset;
-            const nombre = borrar.closest('.opcion-fila').querySelector('.opcion-nombre').textContent.replace('Tuyo', '').trim();
+            const nombre = borrar.closest('.opcion-fila').querySelector('.opcion-nombre').firstChild.textContent.trim(); // el texto del nombre (sin la etiqueta "Tuyo")
             if (!confirm(`¿Borrar «${nombre}»? Lo que ya apuntaste en el diario no cambia.`)) return;
             if (origen === 'alimento') borrarAlimentoPropio(ref);  // (solo se pueden borrar tus alimentos propios)
             if (seleccion?.ref === ref) seleccion = null;  // si era lo elegido, se quita
@@ -229,7 +270,7 @@ export function iniciarAnadir() {
         }
 
         const opcion = e.target.closest('.opcion');
-        if (opcion) elegir(opcion.dataset.origen, opcion.dataset.ref);
+        if (opcion) elegir(opcion.dataset.origen, opcion.dataset.ref, opcion.dataset.cantidad ? Number(opcion.dataset.cantidad) : undefined); // los recientes traen su cantidad
     });
 
     // cantidad: gramos escritos o − +
@@ -244,6 +285,15 @@ export function iniciarAnadir() {
         if (!boton) return;
         seleccion.cantidad = Math.max(0.5, seleccion.cantidad + Number(boton.dataset.cambio)); // nunca menos de media ración
         pintarSeleccion();
+    });
+
+    // botones de gramos rápidos
+    q('#selChips').addEventListener('click', (e) => {
+        const chip = e.target.closest('[data-gramos]');
+        if (!chip) return;
+        seleccion.cantidad = Number(chip.dataset.gramos);
+        q('#selCantidadInput').value = seleccion.cantidad;  // la casilla también cambia
+        pintarTotalSeleccion();
     });
 
     // Enter en la casilla de gramos = añadir
@@ -293,7 +343,7 @@ export function iniciarAnadir() {
         form.classList.remove('was-validated');
         kcalManual = false;
         bootstrap.Collapse.getOrCreateInstance(q('#cajaCrearAlimento')).hide();
-        mostrarAviso(`«${alimento.nombre}» creado ✓`);
+        mostrarAviso(`«${alimento.nombre}» creado`);
 
         pestana = 'alimentos';                             // lo dejamos elegido, listo para añadir
         texto = '';

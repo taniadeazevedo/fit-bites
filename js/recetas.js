@@ -1,6 +1,6 @@
 /* =====================================================================
    FIT BITES · recetas.js
-   La lista de recetas: filtros (tipo, buscador, 🔥, ❤️), orden,
+   La lista de recetas: filtros (tipo, buscador, proteína, favoritas), orden,
    favoritas, las tarjetas y lo que pasa al pulsarlas.
    (Ahora la web gira en torno al diario; las recetas son un extra:
    se pueden apuntar en el diario por raciones.)
@@ -16,7 +16,6 @@ import { abrirAnadir } from './anadir.js';            // apuntar una receta en e
 import { pintarCompra, estaEnCompra, alternarCompra } from './compra.js'; // la lista de la compra
 import { abrirDetalle } from './detalle.js';            // la ventana con el detalle de la receta
 import { abrirFormulario } from './formulario.js';      // la ventana para editar
-import { observarReveal } from './interfaz.js';         // animaciones al hacer scroll
 
 // ---------- ESTADO DE ESTE ARCHIVO (solo lo usa recetas.js) ----------
 let tipoFiltro = '';           // el tipo de plato elegido en las píldoras ('' = todos)
@@ -47,12 +46,12 @@ function rellenarTipos() {
         formulario.add(new Option(tipo, tipo));                 // ...añade una opción al formulario (new Option(texto, valor))
     }
 
-    // las píldoras: "Todos" (valor vacío) y una por cada tipo; al final, ❤️ Favoritas y 🔥 Alta en proteína
+    // las píldoras: "Todos" (valor vacío) y una por cada tipo; al final, Favoritas y Alta en proteína (con icono)
     // aria-pressed dice a los lectores de pantalla si la píldora está pulsada (true) o no (false)
     pills.innerHTML = ['', ...TIPOS_PLATO]
         .map(tipo => `<button type="button" class="pill-tipo${tipo === tipoFiltro ? ' activa' : ''}" data-tipo="${escaparHtml(tipo)}" aria-pressed="${tipo === tipoFiltro}">${tipo === '' ? 'Todos' : escaparHtml(tipo)}</button>`)
-        .join('') + `<button type="button" class="pill-tipo pill-fav${soloFavoritas ? ' activa' : ''}" id="pillFavoritas" aria-pressed="${soloFavoritas}">❤️ Favoritas</button>`
-        + `<button type="button" class="pill-tipo pill-proteina${soloProteina ? ' activa' : ''}" id="pillProteina" aria-pressed="${soloProteina}">🔥 Alta en proteína</button>`;
+        .join('') + `<button type="button" class="pill-tipo pill-fav${soloFavoritas ? ' activa' : ''}" id="pillFavoritas" aria-pressed="${soloFavoritas}"><i class="bi bi-heart" aria-hidden="true"></i> Favoritas</button>`
+        + `<button type="button" class="pill-tipo pill-proteina${soloProteina ? ' activa' : ''}" id="pillProteina" aria-pressed="${soloProteina}"><i class="bi bi-lightning-charge" aria-hidden="true"></i> Alta en proteína</button>`;
 }
 
 // Marca como "activa" la píldora del filtro elegido (sin volver a dibujarlas, para no perder el desplazamiento lateral)
@@ -63,16 +62,16 @@ function actualizarPills() {
         p.setAttribute('aria-pressed', activa);                         // ...y lo avisamos a los lectores de pantalla
     });
 
-    const proteina = document.querySelector('#pillProteina');           // la píldora de 🔥
+    const proteina = document.querySelector('#pillProteina');           // la píldora de proteína
     proteina.classList.toggle('activa', soloProteina);                  // activa si el filtro está puesto
     proteina.setAttribute('aria-pressed', soloProteina);                // y lo avisamos a los lectores de pantalla
 
-    const favoritasPill = document.querySelector('#pillFavoritas');     // la píldora de ❤️
+    const favoritasPill = document.querySelector('#pillFavoritas');     // la píldora de favoritas
     favoritasPill.classList.toggle('activa', soloFavoritas);            // activa si el filtro está puesto
     favoritasPill.setAttribute('aria-pressed', soloFavoritas);          // y lo avisamos a los lectores de pantalla
 }
 
-// Devuelve las recetas que cumplen el tipo elegido, lo escrito en el buscador Y las píldoras de 🔥 y ❤️
+// Devuelve las recetas que cumplen el tipo elegido, lo escrito en el buscador Y las píldoras de proteína y favoritas
 function recetasFiltradas() {
     const busqueda = normalizarTexto(textoBusqueda.trim());    // lo escrito, sin espacios sobrantes y sin tildes
 
@@ -158,8 +157,7 @@ function pintarRecetas(lista) {
         const enCompra = estaEnCompra(receta.id);          // ¿está en la lista de la compra?
 
         const col = document.createElement('div');         // crea un <div> nuevo (todavía fuera de la página)
-        col.className = 'col reveal';                      // le pone la clase "col" de Bootstrap (una columna de la rejilla) y "reveal" (aparece con animación al hacer scroll)
-        col.style.setProperty('--i', indice % 3);          // su turno dentro de la fila (0, 1 o 2): así entran una tras otra
+        col.className = 'col';                      // le pone la clase "col" de Bootstrap (una columna de la rejilla) y "reveal" (aparece con animación al hacer scroll)
 
         // Dentro de las comillas inversas va el HTML de la tarjeta; ${...} inserta valores de la receta.
         // - La foto: si es válida se pinta la imagen; si no, un icono de huevo frito
@@ -176,7 +174,7 @@ function pintarRecetas(lista) {
               ? `<img src="${escaparHtml(receta.foto)}" class="receta-foto" alt="Foto de ${nombre}" loading="lazy">`
               : `<div class="d-flex align-items-center justify-content-center"><i class="bi bi-egg-fried fs-1" aria-hidden="true"></i></div>`}
           </div>
-          ${receta.proteina >= PROTEINA_ALTA ? `<span class="recipe-tag recipe-tag--protein receta-fuego">🔥 Alta en proteína</span>` : ''}
+          ${receta.proteina >= PROTEINA_ALTA ? `<span class="recipe-tag receta-fuego"><i class="bi bi-lightning-charge-fill" aria-hidden="true"></i> Alta en proteína</span>` : ''}
           <button type="button" class="btn-fav${fav ? ' activa' : ''}" data-id="${receta.id}" aria-pressed="${fav}" aria-label="Favorita: ${nombre}">
             <i class="bi ${fav ? 'bi-heart-fill' : 'bi-heart'}" aria-hidden="true"></i>
           </button>
@@ -231,7 +229,6 @@ function pintarRecetas(lista) {
     }
 
     pintarCompra();   // las recetas han cambiado: refresca la lista de la compra (por si se ha editado o borrado alguna receta)
-    observarReveal(); // las tarjetas nuevas se animan cuando entran en pantalla
 }
 
 /* ---------- ARRANQUE: oyentes de la lista de recetas ---------- */
@@ -244,14 +241,14 @@ export function iniciarRecetas() {
     });
     rellenarTipos();                                       // llena las píldoras y el desplegable de tipo de plato
 
-    // píldoras de filtro: un solo oyente para todas (delegación). Una elige el tipo de plato; las de ❤️ y 🔥 se encienden o se apagan
+    // píldoras de filtro: un solo oyente para todas (delegación). Una elige el tipo de plato; las de favoritas y proteína se encienden o se apagan
     document.querySelector('#pillsTipo').addEventListener('click', (e) => {
         const pill = e.target.closest('.pill-tipo');       // ¿se pulsó una píldora?
         if (!pill) return;                                 // si no, nada
 
-        if (pill.id === 'pillProteina') {                  // si es la de 🔥...
+        if (pill.id === 'pillProteina') {                  // si es la de proteína...
             soloProteina = !soloProteina;                  // ...cambiamos su estado (true pasa a false y al revés)
-        } else if (pill.id === 'pillFavoritas') {          // si es la de ❤️...
+        } else if (pill.id === 'pillFavoritas') {          // si es la de favoritas...
             soloFavoritas = !soloFavoritas;                // ...igual
         } else {                                           // si es una de tipo...
             tipoFiltro = pill.dataset.tipo;                // ...apuntamos el tipo ('' si es "Todos")
@@ -298,7 +295,7 @@ export function iniciarRecetas() {
             botonCompra.setAttribute('aria-pressed', dentro);
             botonCompra.querySelector('i').className = 'bi ' + (dentro ? 'bi-cart-check-fill' : 'bi-cart-plus');
             pintarCompra();                                // ...refrescamos el panel y el numerito
-            mostrarAviso(dentro ? 'Añadida a la lista de la compra ✓' : 'Quitada de la lista de la compra');
+            mostrarAviso(dentro ? 'Añadida a la lista de la compra' : 'Quitada de la lista de la compra');
             return;                                        // ...y no abrimos el detalle
         }
 

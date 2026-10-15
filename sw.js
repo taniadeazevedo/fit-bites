@@ -8,7 +8,7 @@
    la copia); si no hay, se usa la copia guardada. Así nunca te quedas con una versión vieja.
    ===================================================================== */
 
-const CACHE = 'fitbites-v4';                       // nombre de la "caja" donde guardamos las copias (v4: sin «Mis platos» y compra a mano; si vuelves a cambiar la estructura, súbelo a v5)
+const CACHE = 'fitbites-v5';                       // nombre de la "caja" donde guardamos las copias (v5: rediseño; si vuelves a cambiar la estructura, súbelo a v6)
 
 // Lo mínimo para que la web arranque sin internet (rutas relativas a esta carpeta)
 const ARCHIVOS = [

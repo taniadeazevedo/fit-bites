@@ -33,7 +33,8 @@ export function mayusculaInicial(texto) {
 
 // Da formato a un número según el español: 1.234,5
 export function formatoNumero(n, decimales = 0) {         // si no indicas decimales, vale 0
-    return n.toLocaleString('es-ES', { maximumFractionDigits: decimales }); // toLocaleString escribe el número a la española
+    // toLocaleString escribe el número a la española. useGrouping: 'always' = punto de miles también con 4 cifras ("2.100"; en español, por defecto, solo desde 5)
+    return n.toLocaleString('es-ES', { maximumFractionDigits: decimales, useGrouping: 'always' });
 }
 
 // Escribe un número con "½" cuando acaba en medio: 0,5 -> "½", 1,5 -> "1½"

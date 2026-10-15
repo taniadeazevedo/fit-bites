@@ -12,7 +12,7 @@
        detalle.js     -> la ventana de una receta (con raciones)
        formulario.js  -> crear y editar recetas (con json-server)
        compra.js      -> la lista de la compra
-       interfaz.js    -> tema, menú y animaciones
+       interfaz.js    -> tema y barra de pestañas del móvil
        config.js, estado.js, utilidades.js, datos.js, fotos.js -> herramientas compartidas
    - este archivo = el jefe de sala: abre el restaurante y pone a
      cada camarero en su sitio (llama a sus funciones iniciar...)
@@ -24,10 +24,10 @@
 import { EN_LOCAL } from './config.js';                 // ¿estamos en tu ordenador?
 import { estado } from './estado.js';                   // donde se guardan las recetas cargadas
 import { cargarRecetas } from './datos.js';             // pedir las recetas
-import { iniciarInterfaz, observarReveal } from './interfaz.js'; // tema, menú y animaciones
+import { iniciarInterfaz, iniciarPestanas, marcarPestana } from './interfaz.js'; // tema y barra de pestañas del móvil
 import { iniciarAlimentos } from './alimentos.js';      // la tabla de alimentos
-import { iniciarDia } from './dia.js';                  // el diario
-import { iniciarAnadir } from './anadir.js';            // la ventana de añadir
+import { iniciarDia, cambiarVista } from './dia.js';   // el diario
+import { iniciarAnadir, abrirAnadir } from './anadir.js'; // la ventana de añadir
 import { iniciarRecetas, mostrarRecetas, aplicarModo } from './recetas.js'; // la lista de recetas
 import { iniciarDetalle } from './detalle.js';          // la ventana de detalle
 import { iniciarFormulario } from './formulario.js';    // el formulario de recetas
@@ -59,7 +59,7 @@ async function iniciar() {
         navigator.serviceWorker.register('sw.js').catch(error => console.error('No se pudo registrar el service worker:', error));
     }
 
-    iniciarInterfaz();                                     // tema claro/oscuro y menú de móvil
+    iniciarInterfaz();                                     // tema claro/oscuro
 
     // las recetas y la tabla de alimentos se piden A LA VEZ (Promise.all espera a las dos)
     try {
@@ -78,7 +78,16 @@ async function iniciar() {
 
     mostrarRecetas();                                      // dibuja las tarjetas
     aplicarModo();                                         // muestra u oculta los botones de editar según haya json-server
-    observarReveal();                                      // animaciones al hacer scroll
+
+    // la barra de pestañas del móvil: qué hace cada botón
+    iniciarPestanas({
+        verDia: () => cambiarVista('dia'),
+        verSemana: () => cambiarVista('semana'),
+        anadir: () => abrirAnadir()                        // sin comida: propone la que toca por la hora
+    });
+    // los botones Día / Semana de arriba también encienden su pestaña de abajo
+    document.querySelector('#btnVistaDia').addEventListener('click', () => marcarPestana('tabDiario'));
+    document.querySelector('#btnVistaSemana').addEventListener('click', () => marcarPestana('tabSemana'));
 
     iniciarCuenta();                                       // por último, las cuentas (si llegan datos de la nube, todo se repinta solo)
 }

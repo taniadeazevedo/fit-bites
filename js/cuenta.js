@@ -67,7 +67,7 @@ export function iniciarCuenta() {
         pintarCuenta();
         if (acabaDeEntrar && q('#modalCuenta').classList.contains('show')) { // si entra desde la ventana...
             cerrarVentana();                               // ...la cerramos
-            mostrarAviso('¡Hola! Tus datos se guardan en tu cuenta ✓');
+            mostrarAviso('Sesión iniciada. Tus datos se guardan en tu cuenta');
         }
     }).catch(error => {                                    // si no se pudo cargar Firebase (sin internet, por ejemplo)
         console.error('No se pudo cargar Firebase:', error);
@@ -105,7 +105,7 @@ export function iniciarCuenta() {
         try {
             await recuperarContrasena(email);
             mostrarError('');
-            mostrarAviso('Te hemos enviado un correo para cambiar la contraseña ✓');
+            mostrarAviso('Te hemos enviado un correo para cambiar la contraseña');
         } catch (error) {
             mostrarError(mensajeDeError(error));
         }

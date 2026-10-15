@@ -7,7 +7,8 @@
      - HTML (este archivo) = el comedor: las mesas, las ventanas y los letreros
      - css/estilos.css = la decoración
      - js/ = los camareros (módulos): app.js arranca y cada archivo atiende una zona
-     Las ventanas emergentes (modales) y el panel de la compra están al final del
+     Las ventanas emergentes (modales), el panel de la compra y la barra de
+     pestañas del móvil están al final del
      <body>, escondidos, hasta que el JavaScript los abre.
      =================================================================== -->
 
@@ -19,7 +20,7 @@
 
     <!-- APP INSTALABLE (PWA): estas líneas permiten "Añadir a la pantalla de inicio" y que se abra como una app -->
     <link rel="manifest" href="manifest.webmanifest"> <!-- la "ficha" de la app: nombre, colores e iconos (archivo manifest.webmanifest) -->
-    <meta name="theme-color" content="#245C45"> <!-- color de la barra del móvil cuando la web está abierta -->
+    <meta name="theme-color" content="#1E6B4E"> <!-- color de la barra del móvil cuando la web está abierta -->
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png"> <!-- el icono que usa el iPhone en la pantalla de inicio -->
     <meta name="apple-mobile-web-app-capable" content="yes"> <!-- el iPhone la abre a pantalla completa, como una app -->
     <meta name="apple-mobile-web-app-title" content="Fit Bites"> <!-- el nombre bajo el icono en el iPhone -->
@@ -40,11 +41,10 @@
     <!-- Bootstrap Icons: los iconitos (bi bi-leaf-fill, bi bi-clock...) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
 
-    <!-- Google Fonts: las fuentes de la marca (Syne para el título grande, Outfit para el logo y el resto de títulos, Inter para el texto). Los "preconnect" avisan al navegador para que se conecte antes y cargue más rápido -->
+    <!-- Google Fonts: una sola fuente, Inter (la de muchas apps profesionales). Los "preconnect" avisan al navegador para que se conecte antes y cargue más rápido -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Outfit:wght@500;700&family=Inter:wght@400;600&display=swap"
-        rel="stylesheet"> <!-- Syne para el título principal (pesos 700 y 800), Outfit para el logo y el resto de títulos (500 y 700) e Inter para el texto (400 y 600) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"> <!-- Inter en 4 grosores: normal (400), medio (500), semi-negrita (600) y negrita (700) -->
 
     <!-- Nuestro CSS, DESPUÉS de Bootstrap para poder pisarlo -->
     <link rel="stylesheet" href="css/estilos.css">
@@ -52,163 +52,148 @@
 
 <body> <!-- el cuerpo: todo lo que se ve en la página -->
 
-    <!-- ENLACE "SALTAR AL CONTENIDO": invisible hasta que se llega con la tecla Tab. Quien navega con teclado se ahorra pasar por todo el menú -->
-    <a class="saltar-contenido" href="#hoy">Saltar al contenido</a>
+    <!-- ENLACE "SALTAR AL CONTENIDO": invisible hasta que se llega con la tecla Tab. Quien navega con teclado se ahorra pasar por el menú -->
+    <a class="saltar-contenido" href="#diario">Saltar al contenido</a>
 
-    <!-- NAVBAR: la barra de menú de arriba -->
-    <nav class="navbar navbar-expand-lg"> <!-- barra de navegación; "expand-lg" = en pantallas grandes se ve desplegada y en móvil se recoge -->
-        <div class="container"> <!-- centra el contenido y le da márgenes laterales -->
-            <a class="navbar-brand d-flex align-items-center gap-2" href="#"> <!-- la marca: un logo dibujado + el nombre -->
-                <!-- el logo en SVG (dibujo vectorial): un cuenco y dos hojitas. Cada <path> es una forma; las clases les ponen el color desde el CSS -->
-                <svg class="logo-marca" viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
+    <!-- BARRA SUPERIOR: logo, enlaces (solo en pantallas medianas y grandes), tema y cuenta. Se queda fija arriba al bajar -->
+    <header class="barra-app">
+        <div class="container barra-app-contenido">
+            <a class="marca" href="#diario"> <!-- el logo y el nombre: llevan al diario -->
+                <svg class="logo-marca" viewBox="0 0 32 32" width="26" height="26" aria-hidden="true">
                     <path class="logo-cuenco" d="M3 16h26c0 7.2-5.8 13-13 13S3 23.2 3 16z" /> <!-- el cuenco: una media luna -->
                     <path class="logo-hoja-1" d="M16 14C16 7 20 3 27 3c0 6.500-4 11-11 11z" /> <!-- la hoja grande -->
                     <path class="logo-hoja-2" d="M15 14C15 9 12 6 6 6c0 5 3 8 9 8z" /> <!-- la hoja pequeña -->
                 </svg>
                 Fit Bites
             </a>
-            <!-- botón de tema claro/oscuro: un iconito suelto, al lado de la hamburguesa. "ms-auto" lo empuja a la derecha; "order-lg-last" en pantallas grandes lo manda al final de la barra, tras los enlaces. JavaScript le cambia el icono -->
-            <button id="btnTema" type="button" class="btn-tema ms-auto me-2 ms-lg-2 me-lg-0 order-lg-last" aria-label="Cambiar entre tema claro y oscuro">
-                <i class="bi bi-moon-stars" aria-hidden="true"></i>
-            </button>
-            <!-- el botón de las tres rayitas (solo se ve en móvil). data-bs-toggle="collapse" + data-bs-target="#menu" = "al pulsar, despliega lo que tenga id=menu" -->
-            <button class="navbar-toggler hamburguesa" type="button" data-bs-toggle="collapse" data-bs-target="#menu"
-                aria-controls="menu" aria-expanded="false" aria-label="Abrir menú"> <!-- "hamburguesa" es una clase nuestra: le da el estilo y la animación -->
-                <span class="barra"></span> <!-- las tres rayitas, dibujadas con CSS: al abrir el menú se convierten en una X -->
-                <span class="barra"></span>
-                <span class="barra"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="menu"> <!-- lo que se esconde en móvil; su id coincide con el data-bs-target del botón -->
-                <ul class="navbar-nav ms-auto"> <!-- lista de enlaces; "ms-auto" los empuja a la derecha -->
-                    <li class="nav-item"><a class="nav-link" href="#hoy"><i class="bi bi-journal-check" aria-hidden="true"></i> Mi diario</a></li> <!-- enlace que baja a la sección con id="hoy" -->
-                    <li class="nav-item"><a class="nav-link" href="#recetas"><i class="bi bi-grid" aria-hidden="true"></i> Recetas</a></li> <!-- enlace que baja a la sección con id="recetas" -->
-                    <li class="nav-item">
-                        <!-- abre el panel lateral "Lista de la compra" (otro offcanvas de Bootstrap) -->
-                        <a class="nav-link" href="#" role="button" data-bs-toggle="offcanvas" data-bs-target="#panelCompra"
-                            aria-controls="panelCompra">
-                            <i class="bi bi-cart3" aria-hidden="true"></i> Compra
-                            <span id="contadorCompra" class="badge rounded-pill text-bg-dark">0</span> <!-- cuántas recetas hay en la lista: JavaScript lo actualiza -->
-                        </a>
-                    </li>
-                    <!-- la cuenta: oculta ("d-none") hasta que JavaScript comprueba que Firebase está configurado -->
-                    <li class="nav-item d-none" id="itemCuenta">
-                        <button id="btnCuenta" type="button" class="nav-link btn-cuenta" data-bs-toggle="modal" data-bs-target="#modalCuenta">
-                            <i class="bi bi-person" aria-hidden="true"></i> Entrar
-                        </button>
-                    </li>
-                </ul>
+            <!-- los enlaces: "d-none d-md-flex" = ocultos en móvil (allí está la barra de abajo) y visibles desde tablet -->
+            <nav class="nav-principal d-none d-md-flex" aria-label="Principal">
+                <a class="nav-enlace" href="#diario"><i class="bi bi-journal-text" aria-hidden="true"></i> Diario</a>
+                <a class="nav-enlace" href="#recetas"><i class="bi bi-book" aria-hidden="true"></i> Recetas</a>
+                <!-- abre el panel lateral de la compra (offcanvas de Bootstrap) -->
+                <button class="nav-enlace" type="button" data-bs-toggle="offcanvas" data-bs-target="#panelCompra" aria-controls="panelCompra">
+                    <i class="bi bi-cart3" aria-hidden="true"></i> Compra
+                    <span class="contador contador-compra" data-cero>0</span> <!-- cuántas cosas hay en la lista: lo actualiza JavaScript -->
+                </button>
+            </nav>
+            <div class="barra-acciones">
+                <!-- botón de tema claro/oscuro: JavaScript le cambia el icono -->
+                <button id="btnTema" type="button" class="boton-icono" aria-label="Cambiar entre tema claro y oscuro">
+                    <i class="bi bi-moon" aria-hidden="true"></i>
+                </button>
+                <!-- la cuenta: oculta ("d-none") hasta que JavaScript comprueba que Firebase está configurado -->
+                <span id="itemCuenta" class="d-none">
+                    <button id="btnCuenta" type="button" class="boton-cuenta" data-bs-toggle="modal" data-bs-target="#modalCuenta">
+                        <i class="bi bi-person" aria-hidden="true"></i> Entrar
+                    </button>
+                </span>
             </div>
         </div>
-    </nav>
+    </header>
 
     <!-- <main> = el contenido principal de la página (los lectores de pantalla pueden saltar directamente aquí) -->
     <main>
 
-    <!-- PORTADA: lo primero que se ve al entrar -->
-    <header class="pt-5 pb-3"> <!-- "py-5" = espacio vertical grande por arriba y por abajo -->
+    <!-- EL DIARIO: lo primero que se ve. Resumen del día (anillo + macros) y las cuatro comidas. Con "Semana", medias y gráficos. Lo pinta dia.js -->
+    <section id="diario" class="seccion" tabindex="-1"> <!-- tabindex="-1" = el enlace "Saltar al contenido" puede llevar el foco aquí -->
         <div class="container">
-            <p class="text-uppercase small fw-bold mb-2 etiqueta">Tu diario de comidas</p> <!-- frase pequeña en MAYÚSCULAS y negrita; "etiqueta" es una clase nuestra -->
-            <h1 class="display-4 mb-3">Apunta lo que comes, <span class="resalte">se suma solo.</span></h1> <!-- el título principal (h1: solo debe haber uno por página). El <span> es una "etiqueta sin significado" que nos sirve para dar estilo a un trozo del texto: "resalte" = subrayado de rotulador lima -->
-            <p class="lead mb-0">Añade alimentos por gramos y ve al momento tus calorías, proteína, carbohidratos y grasas.</p> <!-- párrafo destacado -->
-        </div>
-    </header>
-
-    <!-- MI DIARIO: lo que comes hoy por comidas, frente a tu objetivo. Con "Semana" se ven las medias y los gráficos. Lo pinta todo dia.js -->
-    <section id="hoy" class="py-4" tabindex="-1"> <!-- tabindex="-1" = el enlace "Saltar al contenido" puede llevar el foco aquí -->
-        <div class="container">
-            <div class="diario-tarjeta reveal">
-                <div class="diario-cabecera">
-                    <h2 class="h3 mb-0">Mi diario</h2>
-                    <!-- Día / Semana: dos botones pegados (btn-group). JavaScript marca el elegido con "active" y aria-pressed -->
-                    <div class="btn-group btn-group-sm selector-vista" role="group" aria-label="Ver por">
-                        <button id="btnVistaDia" type="button" class="btn btn-outline-dark active" aria-pressed="true">Día</button>
-                        <button id="btnVistaSemana" type="button" class="btn btn-outline-dark" aria-pressed="false">Semana</button>
-                    </div>
+            <div class="diario-cabecera">
+                <div>
+                    <h1 class="titulo-pagina">Diario</h1> <!-- el título de la página (h1: solo uno por página) -->
+                    <p class="subtitulo">
+                        <span id="fechaDia" aria-live="polite"></span> <!-- la fecha: la escribe JavaScript; aria-live la lee en voz alta al cambiar -->
+                        <button id="btnIrHoy" type="button" class="btn btn-link btn-sm p-0 ms-2 align-baseline d-none">Volver a hoy</button> <!-- solo si estás viendo otro día -->
+                    </p>
                 </div>
-
-                <!-- la fecha con flechas para ir hacia atrás y hacia delante -->
-                <div class="navegar-fecha my-3">
-                    <button id="btnFechaAnterior" type="button" class="btn btn-sm btn-flecha" aria-label="Día anterior">
-                        <i class="bi bi-chevron-left" aria-hidden="true"></i>
-                    </button>
-                    <div class="text-center flex-grow-1">
-                        <strong id="fechaDia" class="d-block" aria-live="polite"></strong> <!-- la fecha: la escribe JavaScript; aria-live la lee en voz alta al cambiar -->
-                        <button id="btnIrHoy" type="button" class="btn btn-link btn-sm p-0 d-none">Volver a hoy</button> <!-- solo sale si estás viendo otro día -->
-                    </div>
-                    <button id="btnFechaSiguiente" type="button" class="btn btn-sm btn-flecha" aria-label="Día siguiente">
-                        <i class="bi bi-chevron-right" aria-hidden="true"></i>
-                    </button>
+                <!-- Día / Semana: "control segmentado" (como en iOS). JavaScript marca el elegido con "active" y aria-pressed -->
+                <div class="control-segmentado" role="group" aria-label="Ver por">
+                    <button id="btnVistaDia" type="button" class="btn active" aria-pressed="true">Día</button>
+                    <button id="btnVistaSemana" type="button" class="btn" aria-pressed="false">Semana</button>
                 </div>
+            </div>
 
-                <p id="avisoOtroDia" class="alert alert-info py-2 small d-none">Estás viendo otro día: lo que añadas se apunta en este día.</p>
-                <div id="avisoAlimentos" class="alert alert-warning d-none">No se pudo cargar la tabla de alimentos (<code>json/alimentos.json</code>).</div>
+            <!-- TIRA DE LA SEMANA: L M X J V S D. Al pulsar un día, se ve ese día; las flechas cambian de semana -->
+            <div class="tira-semana">
+                <button id="btnFechaAnterior" type="button" class="boton-icono" aria-label="Semana anterior">
+                    <i class="bi bi-chevron-left" aria-hidden="true"></i>
+                </button>
+                <div id="diasTira" class="dias-tira" role="group" aria-label="Días de la semana"></div> <!-- los 7 botones: los pinta JavaScript -->
+                <button id="btnFechaSiguiente" type="button" class="boton-icono" aria-label="Semana siguiente">
+                    <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                </button>
+            </div>
 
-                <!-- VISTA DÍA: a la izquierda las barras y el objetivo; a la derecha, las cuatro comidas -->
-                <div id="bloqueDia">
-                    <div class="row g-4">
-                        <div class="col-lg-4">
-                            <div id="progresoDia"></div> <!-- las 4 barras: kcal, proteína, carbohidratos y grasas -->
-                            <div class="d-flex flex-wrap gap-2 mt-3"> <!-- botones -->
-                                <!-- despliega la caja del objetivo (collapse de Bootstrap) -->
-                                <button type="button" class="btn btn-outline-dark btn-sm" data-bs-toggle="collapse"
-                                    data-bs-target="#cajaObjetivo" aria-expanded="false" aria-controls="cajaObjetivo">
-                                    <i class="bi bi-bullseye" aria-hidden="true"></i> Mi objetivo
-                                </button>
-                                <button id="btnVaciarDia" type="button" class="btn btn-outline-danger btn-sm">
-                                    <i class="bi bi-trash" aria-hidden="true"></i> Vaciar día
-                                </button>
-                            </div>
-                            <div id="cajaObjetivo" class="collapse mt-3"> <!-- la caja escondida con el formulario del objetivo -->
-                                <form id="formObjetivo" class="row g-2"> <!-- formulario con rejilla de 12 columnas y huecos pequeños -->
-                                    <div class="col-6"> <!-- ocupa 6 de 12 columnas = la mitad del ancho -->
-                                        <label for="objKcal" class="form-label small mb-1">Kcal</label> <!-- la etiqueta; for="objKcal" la une con el campo que tiene ese id -->
-                                        <input id="objKcal" name="kcal" type="number" min="1" class="form-control form-control-sm" required> <!-- campo numérico; name="kcal" es como JavaScript lo lee (f.kcal); min=1 y required = obligatorio -->
-                                    </div>
-                                    <div class="col-6">
-                                        <label for="objProteina" class="form-label small mb-1">Proteína (g)</label>
-                                        <input id="objProteina" name="proteina" type="number" min="1" class="form-control form-control-sm" required>
-                                    </div>
-                                    <div class="col-6">
-                                        <label for="objCarbos" class="form-label small mb-1">Carbohidratos (g)</label>
-                                        <input id="objCarbos" name="carbohidratos" type="number" min="1" class="form-control form-control-sm" required>
-                                    </div>
-                                    <div class="col-6">
-                                        <label for="objGrasas" class="form-label small mb-1">Grasas (g)</label>
-                                        <input id="objGrasas" name="grasas" type="number" min="1" class="form-control form-control-sm" required>
-                                    </div>
-                                    <div class="col-12 d-flex gap-2 align-items-center"> <!-- fila entera con los dos botones -->
-                                        <button type="submit" class="btn btn-verde btn-sm">Guardar objetivo</button> <!-- type="submit" = envía el formulario -->
-                                        <button id="btnObjetivoDefecto" type="button" class="btn btn-link btn-sm px-0">Restaurar</button> <!-- type="button" = NO envía el formulario -->
-                                    </div>
-                                </form>
-                                <p class="small text-body-secondary mt-2 mb-0">
-                                    Valores orientativos para ganar masa muscular entrenando 4-5 días por semana.
-                                    Ajústalos a tu caso; no sustituyen el consejo de un profesional.
-                                </p>
-                            </div>
+            <p id="avisoOtroDia" class="aviso-suave d-none">Estás viendo otro día: lo que añadas se apunta en este día.</p>
+            <div id="avisoAlimentos" class="alert alert-warning d-none">No se pudo cargar la tabla de alimentos (<code>json/alimentos.json</code>).</div>
+
+            <!-- VISTA DÍA: a la izquierda el resumen (en ordenador se queda fijo al bajar); a la derecha, las comidas -->
+            <div id="bloqueDia" class="row g-4">
+                <div class="col-lg-4">
+                    <aside class="tarjeta resumen-dia" aria-label="Resumen del día">
+                        <div id="anilloDia"></div> <!-- el anillo de calorías y "Objetivo − Comido = Restantes" -->
+                        <div id="progresoDia"></div> <!-- proteína, carbohidratos y grasas -->
+                        <div class="d-flex flex-wrap gap-2 mt-3"> <!-- botones -->
+                            <!-- despliega la caja del objetivo (collapse de Bootstrap) -->
+                            <button type="button" class="btn btn-outline-dark btn-sm" data-bs-toggle="collapse"
+                                data-bs-target="#cajaObjetivo" aria-expanded="false" aria-controls="cajaObjetivo">
+                                <i class="bi bi-sliders" aria-hidden="true"></i> Objetivo
+                            </button>
+                            <button id="btnVaciarDia" type="button" class="btn btn-outline-danger btn-sm">
+                                <i class="bi bi-trash" aria-hidden="true"></i> Vaciar día
+                            </button>
                         </div>
-                        <div class="col-lg-8">
-                            <div id="comidasDia" class="comidas-grid"></div> <!-- las tarjetas de desayuno, comida, merienda y cena (las pinta dia.js) -->
+                        <div id="cajaObjetivo" class="collapse mt-3"> <!-- la caja escondida con el formulario del objetivo -->
+                        <form id="formObjetivo" class="row g-2"> <!-- formulario con rejilla de 12 columnas y huecos pequeños -->
+                        <div class="col-6"> <!-- ocupa 6 de 12 columnas = la mitad del ancho -->
+                        <label for="objKcal" class="form-label small mb-1">Kcal</label> <!-- la etiqueta; for="objKcal" la une con el campo que tiene ese id -->
+                        <input id="objKcal" name="kcal" type="number" min="1" class="form-control form-control-sm" required> <!-- campo numérico; name="kcal" es como JavaScript lo lee (f.kcal); min=1 y required = obligatorio -->
                         </div>
-                    </div>
-                    <p class="small text-body-secondary mt-3 mb-0">Pesa los alimentos en crudo, tal como los compras. Valores aproximados de tablas generales.</p>
+                        <div class="col-6">
+                        <label for="objProteina" class="form-label small mb-1">Proteína (g)</label>
+                        <input id="objProteina" name="proteina" type="number" min="1" class="form-control form-control-sm" required>
+                        </div>
+                        <div class="col-6">
+                        <label for="objCarbos" class="form-label small mb-1">Carbohidratos (g)</label>
+                        <input id="objCarbos" name="carbohidratos" type="number" min="1" class="form-control form-control-sm" required>
+                        </div>
+                        <div class="col-6">
+                        <label for="objGrasas" class="form-label small mb-1">Grasas (g)</label>
+                        <input id="objGrasas" name="grasas" type="number" min="1" class="form-control form-control-sm" required>
+                        </div>
+                        <div class="col-12 d-flex gap-2 align-items-center"> <!-- fila entera con los dos botones -->
+                        <button type="submit" class="btn btn-verde btn-sm">Guardar objetivo</button> <!-- type="submit" = envía el formulario -->
+                        <button id="btnObjetivoDefecto" type="button" class="btn btn-link btn-sm px-0">Restaurar</button> <!-- type="button" = NO envía el formulario -->
+                        </div>
+                        </form>
+                        <p class="small text-body-secondary mt-2 mb-0">
+                        Valores orientativos para ganar masa muscular entrenando 4-5 días por semana.
+                        Ajústalos a tu caso; no sustituyen el consejo de un profesional.
+                        </p>
+                        </div>
+                    </aside>
                 </div>
+                <div class="col-lg-8">
+                    <div id="comidasDia" class="comidas-lista"></div> <!-- desayuno, comida, merienda y cena (las pinta dia.js) -->
+                    <p class="small text-body-secondary mt-3 mb-0">Pesa los alimentos en crudo. Valores aproximados de tablas generales.</p>
+                </div>
+            </div>
 
-                <!-- VISTA SEMANA: resumen, gráficos y lista de días (lo dibuja todo dia.js) -->
-                <div id="bloqueSemana" class="d-none">
-                    <div id="resumenSemana"></div>
-                </div>
+            <!-- VISTA SEMANA: resumen, gráficos y lista de días (lo dibuja todo dia.js) -->
+            <div id="bloqueSemana" class="d-none">
+                <div id="resumenSemana"></div>
             </div>
         </div>
     </section>
 
     <!-- RECETAS: un extra. Se pueden apuntar en el diario por raciones -->
-    <section id="recetas" class="py-5" tabindex="-1"> <!-- una sección con id="recetas": el enlace del menú baja hasta aquí -->
+    <section id="recetas" class="seccion" tabindex="-1"> <!-- una sección con id="recetas": el enlace del menú baja hasta aquí -->
         <div class="container">
-            <h2 class="h3 mb-1">Recetas</h2>
-            <p class="text-body-secondary mb-4">Nuestras recetas fit. Pulsa «Apuntar» para añadirlas al diario por raciones.</p>
+            <div class="mb-3">
+                <h2 class="titulo-seccion">Recetas</h2>
+                <p class="subtitulo">Pulsa «Apuntar» para añadirlas a tu diario por raciones.</p>
+            </div>
             <!-- FILTROS: arriba el buscador a todo el ancho con el botón de nueva receta; debajo, los tipos de plato como píldoras -->
-            <div class="reveal mb-4"> <!-- "reveal" = aparece con una animación al llegar a la pantalla -->
+            <div class="mb-4"> <!-- buscador y filtros -->
                 <div class="d-flex flex-wrap gap-2 mb-3"> <!-- fila: buscador y botón -->
                     <!-- buscador: un "input-group" une el icono de la lupa y la casilla en una sola pieza; "flex-grow-1" = ocupa todo el espacio libre -->
                     <div class="input-group buscador-grande flex-grow-1">
@@ -220,7 +205,7 @@
                         <i class="bi bi-plus-lg" aria-hidden="true"></i> Nueva receta
                     </button>
                 </div>
-                <!-- las píldoras de filtro (Todos, Bowl, Pasta..., 🔥 Alta en proteína): las crea JavaScript desde la lista TIPOS_PLATO. En móvil se desplazan hacia los lados -->
+                <!-- las píldoras de filtro (Todos, Bowl, Pasta..., Alta en proteína): las crea JavaScript desde la lista TIPOS_PLATO. En móvil se desplazan hacia los lados -->
                 <div class="barra-filtros"> <!-- las píldoras a la izquierda y el desplegable de orden a la derecha (en móvil, uno debajo del otro) -->
                     <div id="pillsTipo" class="pills-scroll" role="group" aria-label="Filtrar por tipo de plato"></div>
                     <!-- desplegable para ordenar: value="" = el orden original. JavaScript lo escucha por su id (#ordenar) -->
@@ -252,45 +237,27 @@
 
     </main> <!-- fin del contenido principal -->
 
-    <!-- PIE DE PÁGINA: la marca, enlaces rápidos y el aviso sobre los valores -->
-    <footer class="pie py-5">
-        <div class="container">
-            <div class="row g-4"> <!-- rejilla: en móvil, una columna debajo de otra -->
-                <div class="col-md-5"> <!-- la marca y una frase -->
-                    <div class="pie-marca d-flex align-items-center gap-2 mb-2">
-                        <svg class="logo-marca" viewBox="0 0 32 32" width="28" height="28" aria-hidden="true">
-                            <path class="logo-cuenco" d="M3 16h26c0 7.2-5.8 13-13 13S3 23.2 3 16z" />
-                            <path class="logo-hoja-1" d="M16 14C16 7 20 3 27 3c0 6.500-4 11-11 11z" />
-                            <path class="logo-hoja-2" d="M15 14C15 9 12 6 6 6c0 5 3 8 9 8z" />
-                        </svg>
-                        <strong>Fit Bites</strong>
-                    </div>
-                    <p class="text-body-secondary mb-0">Tu diario de comidas: apunta lo que comes y ve tus calorías y proteínas al momento.</p>
-                </div>
-                <div class="col-6 col-md-3"> <!-- enlaces dentro de la página -->
-                    <h2 class="h6">Explora</h2>
-                    <ul class="list-unstyled mb-0">
-                        <li><a href="#hoy">Mi diario</a></li>
-                        <li><a href="#recetas">Recetas</a></li>
-                        <li><a href="#" role="button" data-bs-toggle="offcanvas" data-bs-target="#panelCompra">Lista de la compra</a></li>
-                    </ul>
-                </div>
-                <div class="col-6 col-md-4"> <!-- el proyecto -->
-                    <h2 class="h6">Proyecto</h2>
-                    <ul class="list-unstyled mb-0">
-                        <li><a href="https://github.com/taniadeazevedo/fit-bites" target="_blank" rel="noopener"><i class="bi bi-github" aria-hidden="true"></i> Código en GitHub</a></li> <!-- target="_blank" = en pestaña nueva; rel="noopener" = por seguridad -->
-                        <li><a href="#">Volver arriba <i class="bi bi-arrow-up" aria-hidden="true"></i></a></li>
-                    </ul>
-                </div>
-            </div>
-            <hr class="my-4"> <!-- línea separadora -->
-            <p class="small text-body-secondary mb-0">
-                Valores nutricionales aproximados, introducidos por Tania y Cris. No sustituyen el consejo de un profesional.
-            </p>
+    <!-- PIE DE PÁGINA: discreto, como en las apps -->
+    <footer class="pie">
+        <div class="container d-flex flex-wrap justify-content-between gap-2">
+            <span>Fit Bites · Valores nutricionales aproximados. No sustituyen el consejo de un profesional.</span>
+            <a href="https://github.com/taniadeazevedo/fit-bites" target="_blank" rel="noopener"><i class="bi bi-github" aria-hidden="true"></i> Código en GitHub</a> <!-- target="_blank" = en pestaña nueva; rel="noopener" = por seguridad -->
         </div>
     </footer>
 
-    <!-- LISTA DE LA COMPRA (panel lateral): lo que apuntes a mano + los ingredientes de las recetas que marques con el carrito 🛒 -->
+    <!-- BARRA DE PESTAÑAS (solo en móvil: "d-md-none" = se oculta desde tablet). Como en las apps: Diario, Semana, + , Recetas, Compra -->
+    <nav class="barra-inferior d-md-none" aria-label="Navegación">
+        <a class="tab activa" href="#diario" id="tabDiario"><i class="bi bi-journal-text" aria-hidden="true"></i><span>Diario</span></a>
+        <button class="tab" type="button" id="tabSemana"><i class="bi bi-bar-chart" aria-hidden="true"></i><span>Semana</span></button>
+        <button class="tab tab-anadir" type="button" id="tabAnadir" aria-label="Añadir alimento"><i class="bi bi-plus-lg" aria-hidden="true"></i></button> <!-- el botón grande del centro -->
+        <a class="tab" href="#recetas" id="tabRecetas"><i class="bi bi-book" aria-hidden="true"></i><span>Recetas</span></a>
+        <button class="tab" type="button" data-bs-toggle="offcanvas" data-bs-target="#panelCompra" aria-controls="panelCompra">
+            <i class="bi bi-cart3" aria-hidden="true"></i><span>Compra</span>
+            <span class="contador contador-compra" data-cero>0</span>
+        </button>
+    </nav>
+
+    <!-- LISTA DE LA COMPRA (panel lateral): lo que apuntes a mano + los ingredientes de las recetas que marques con el carrito -->
     <div class="offcanvas offcanvas-end" tabindex="-1" id="panelCompra" aria-labelledby="tituloCompra">
         <div class="offcanvas-header">
             <div>
@@ -488,7 +455,7 @@
 
     <!-- AÑADIR AL DIARIO (modal): buscar un alimento, poner los gramos y añadir. Lo maneja anadir.js -->
     <div class="modal fade" id="modalAnadir" tabindex="-1" aria-labelledby="tituloAnadir" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg modal-fullscreen-sm-down"> <!-- modal-fullscreen-sm-down = en el móvil ocupa toda la pantalla -->
             <div class="modal-content border-0">
                 <div class="modal-header gap-2">
                     <h2 class="modal-title h5 mb-0" id="tituloAnadir">Añadir a</h2>
@@ -497,9 +464,9 @@
                 </div>
                 <div class="modal-body">
                     <!-- pestañas: qué quieres añadir -->
-                    <div class="btn-group btn-group-sm w-100 mb-3 pestanas-anadir" role="group" aria-label="Qué añadir">
-                        <button type="button" class="btn btn-outline-dark active" data-pestana="alimentos" aria-pressed="true">Alimentos</button>
-                        <button type="button" class="btn btn-outline-dark" data-pestana="recetas" aria-pressed="false">Recetas</button>
+                    <div class="control-segmentado w-100 mb-3 pestanas-anadir" role="group" aria-label="Qué añadir">
+                        <button type="button" class="btn active" data-pestana="alimentos" aria-pressed="true">Alimentos</button>
+                        <button type="button" class="btn" data-pestana="recetas" aria-pressed="false">Recetas</button>
                     </div>
                     <div class="input-group buscador-grande mb-2">
                         <span class="input-group-text"><i class="bi bi-search" aria-hidden="true"></i></span>
@@ -557,10 +524,11 @@
                 <div id="anadirSeleccion" class="modal-footer seleccion-anadir d-none">
                     <div class="flex-grow-1 min-w-0">
                         <strong id="selNombre" class="d-block text-truncate"></strong>
-                        <small id="selMacros" class="text-body-secondary" aria-live="polite"></small> <!-- "= 240 kcal · P 30..." -->
+                        <small id="selMacros" class="text-body-secondary" aria-live="polite"></small> <!-- "240 kcal · P 30..." -->
                     </div>
                     <div id="selCantidad"></div> <!-- gramos o raciones -->
                     <button id="btnAnadirSeleccion" type="button" class="btn btn-verde">Añadir</button>
+                    <div id="selChips" class="chips-gramos" role="group" aria-label="Cantidades rápidas"></div> <!-- 1 ración, 50 g, 100 g... (los pinta JavaScript) -->
                 </div>
             </div>
         </div>
@@ -617,12 +585,12 @@
         </div>
     </div>
 
-    <!-- AVISO (toast): el mensajito que aparece abajo a la derecha y se va solo ("Receta guardada ✓", etc.) -->
+    <!-- AVISO (toast): el mensajito que aparece abajo a la derecha y se va solo ("Receta guardada", etc.) -->
     <div class="toast-container position-fixed bottom-0 end-0 p-3"> <!-- contenedor fijo en la esquina inferior derecha -->
-        <div id="toastAviso" class="toast text-bg-dark border-0" role="status" aria-live="polite" aria-atomic="true"> <!-- aria-live = los lectores de pantalla lo anuncian -->
+        <div id="toastAviso" class="toast border-0" role="status" aria-live="polite" aria-atomic="true"> <!-- aria-live = los lectores de pantalla lo anuncian -->
             <div class="d-flex">
                 <div class="toast-body"></div> <!-- aquí JavaScript escribe el mensaje -->
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"
                     aria-label="Cerrar"></button> <!-- la X blanca para cerrar el aviso -->
             </div>
         </div>
