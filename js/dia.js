@@ -5,7 +5,7 @@
    con medias y gráficos.
    Diseño inspirado en los diarios más usados (MyFitnessPal, Yazio...):
    - arriba, una tira con los 7 días de la semana para cambiar de día
-   - un anillo con las calorías que te quedan: Objetivo − Comido = Restantes
+   - una tarjeta destacada con las calorías que te quedan y un anillo con el % del objetivo
    - cada comida es una lista: nombre y cantidad a la izquierda, kcal a la derecha;
      al pulsar una fila se abre para cambiar la cantidad o eliminarla
 
@@ -25,6 +25,8 @@ import { estado, buscarReceta } from './estado.js';     // las recetas (para pas
 import { leer, guardar, alCambiarDatos } from './almacen.js'; // guardar y leer los datos de la persona
 import { escaparHtml, formatoNumero, numeroConMedio, mayusculaInicial, fechaHoy, sumarDias, lunesDe, fechaLegible, textoAFecha, mostrarAviso } from './utilidades.js'; // herramientas pequeñas
 import { abrirAnadir } from './anadir.js';              // la ventana para añadir alimentos
+import { buscarAlimento } from './alimentos.js';        // la categoría de cada alimento (para su icono)
+import { fotoValida } from './fotos.js';                // la foto de las recetas (para su miniatura)
 
 // ---------- ESTADO DE ESTE ARCHIVO ----------
 let historial = {};                        // lo comido cada día (ver arriba)
@@ -298,17 +300,24 @@ function pintarCabecera() {
     }
 
     document.querySelector('#fechaDia').textContent = texto; // aria-live la lee en voz alta al cambiar
+
+    // el saludo según la hora: antes de las 6 y desde las 21, "Buenas noches"; antes de las 13, "Buenos días"; si no, "Buenas tardes"
+    const hora = new Date().getHours();
+    document.querySelector('#saludo').textContent = hora < 6 || hora >= 21 ? 'Buenas noches' : hora < 13 ? 'Buenos días' : 'Buenas tardes';
     document.querySelector('#btnIrHoy').classList.toggle('d-none', estamosEnHoy); // "Volver a hoy" solo si estás en otro día
 
     // si estás viendo otro día, un aviso: lo que añadas irá a ese día
     document.querySelector('#avisoOtroDia').classList.toggle('d-none', enSemana || estamosEnHoy);
 }
 
-// La tira de los 7 días (de lunes a domingo) de la semana que se está viendo
+// La tira de los 7 días (de lunes a domingo) de la semana que se está viendo, con el mes encima
 function pintarTira() {
     const hoy = fechaHoy();
     const elegida = fechaActual();
     const lunes = lunesDe(elegida);
+
+    // el mes de la semana: "Noviembre 2026" (si la semana cruza dos meses, el del jueves, que es el que más días tiene)
+    document.querySelector('#mesTira').textContent = mayusculaInicial(fechaLegible(sumarDias(lunes, 3), { month: 'long', year: 'numeric' }).replace(' de ', ' '));
 
     document.querySelector('#diasTira').innerHTML = INICIALES.map((letra, i) => {
         const fecha = sumarDias(lunes, i);                 // lunes + i días
@@ -326,57 +335,88 @@ function pintarTira() {
     document.querySelector('#btnFechaSiguiente').disabled = lunes === lunesDe(hoy); // no se puede ir a semanas futuras
 }
 
-// El resumen: anillo de calorías, "Objetivo − Comido = Restantes" y las barras de los macros
-function pintarResumen() {
-    const t = totalesDe(fechaActual());
-    const restantes = Math.round(objetivo.kcal - t.kcal);  // lo que queda (si es negativo, te has pasado)
-    const pasado = restantes < 0;
-
-    // el anillo: un círculo cuyo trazo se "llena" según el % del objetivo
-    // stroke-dasharray = lo largo de la línea; stroke-dashoffset = cuánto se esconde. Escondiendo menos, se ve más anillo
+// El anillo en SVG: un círculo cuyo trazo se "llena" según la proporción (de 0 a 1)
+// stroke-dasharray = lo largo de la línea; stroke-dashoffset = cuánto se esconde. Escondiendo menos, se ve más anillo
+function anilloSvg(proporcion, pasado) {
     const radio = 52;
     const circunferencia = 2 * Math.PI * radio;            // la longitud del círculo: 2·π·r
-    const proporcion = Math.min(1, t.kcal / objetivo.kcal); // de 0 a 1 (con tope en 1)
-    const esconder = circunferencia * (1 - proporcion);
+    const esconder = circunferencia * (1 - Math.min(1, proporcion)); // con tope en 1 (anillo completo)
+    return `
+      <svg viewBox="0 0 120 120" aria-hidden="true">
+        <circle class="anillo-carril" cx="60" cy="60" r="${radio}" />
+        <circle class="anillo-progreso${pasado ? ' pasado' : ''}" cx="60" cy="60" r="${radio}"
+          stroke-dasharray="${circunferencia}" stroke-dashoffset="${esconder}" />
+      </svg>`;
+}
+
+// El resumen: la tarjeta destacada (kcal restantes + anillo) y las 3 tarjetas de macros
+function pintarResumen() {
+    const fecha = fechaActual();
+    const t = totalesDe(fecha);
+    const restantes = Math.round(objetivo.kcal - t.kcal);  // lo que queda (si es negativo, te has pasado)
+    const pasado = restantes < 0;
+    const porcentaje = Math.round(t.kcal / objetivo.kcal * 100); // % del objetivo
+    const etiqueta = fecha === fechaHoy() ? 'Ingesta de hoy' : 'Ingesta del día'; // el texto de la etiqueta de arriba
 
     document.querySelector('#anilloDia').innerHTML = `
-      <div class="anillo-caja">
-        <svg viewBox="0 0 120 120" aria-hidden="true">
-          <circle class="anillo-carril" cx="60" cy="60" r="${radio}" />
-          <circle class="anillo-progreso${pasado ? ' pasado' : ''}" cx="60" cy="60" r="${radio}"
-            stroke-dasharray="${circunferencia}" stroke-dashoffset="${esconder}" />
-        </svg>
-        <div class="anillo-centro${pasado ? ' pasado' : ''}">
-          <span class="anillo-numero">${formatoNumero(Math.abs(restantes))}</span>
-          <span class="anillo-etiqueta">${pasado ? 'kcal de más' : 'kcal restantes'}</span>
+      <div class="destacada-texto">
+        <span class="chip-etiqueta"><i class="bi bi-fire" aria-hidden="true"></i> ${etiqueta}</span>
+        <p class="destacada-numero${pasado ? ' pasado' : ''}">${formatoNumero(Math.abs(restantes))}<span> kcal</span></p>
+        <p class="destacada-sub">${pasado ? 'de más sobre tu objetivo' : fecha === fechaHoy() ? 'te quedan para hoy' : 'te quedaban ese día'}</p>
+        <div class="destacada-cifras">
+          <span><strong>${formatoNumero(t.kcal)}</strong> comido</span>
+          <span><strong>${formatoNumero(objetivo.kcal)}</strong> objetivo</span>
         </div>
       </div>
-      <div class="ecuacion" role="group" aria-label="Calorías">
-        <div><strong>${formatoNumero(objetivo.kcal)}</strong><span>Objetivo</span></div>
-        <div><strong>${formatoNumero(t.kcal)}</strong><span>Comido</span></div>
-        <div><strong class="${pasado ? 'excedido' : ''}">${formatoNumero(restantes)}</strong><span>Restantes</span></div>
+      <div class="anillo-caja">
+        ${anilloSvg(t.kcal / objetivo.kcal, pasado)}
+        <div class="anillo-centro">
+          <span class="anillo-numero">${porcentaje}<small>%</small></span>
+          <span class="anillo-etiqueta">del objetivo</span>
+        </div>
       </div>`;
 
-    // las 3 barras de macros: "Proteína  82 / 100 g"
+    // las 3 tarjetas: icono con la inicial, nombre, "82 / 100 g" y una barra fina
     document.querySelector('#progresoDia').innerHTML = MACROS.map(n => {
         const valor = t[n.clave];
         const meta = objetivo[n.clave];
-        const porcentaje = Math.min(100, Math.round(valor / meta * 100)); // con tope en 100 para que no se salga
+        const porcentajeMacro = Math.min(100, Math.round(valor / meta * 100)); // con tope en 100 para que no se salga
         const pasadoMacro = valor > meta * 1.05;           // más de un 5 % por encima: lo marcamos
         return `
-      <div class="macro-fila">
-        <div class="macro-fila-texto">
-          <span><i class="punto ${n.clase}" aria-hidden="true"></i>${n.nombre}</span>
-          <span class="valor"><strong class="${pasadoMacro ? 'excedido' : ''}">${formatoNumero(valor)}</strong> / ${formatoNumero(meta)} g</span>
-        </div>
-        <div class="macro-barra" role="progressbar" aria-label="${n.nombre}" aria-valuenow="${porcentaje}" aria-valuemin="0" aria-valuemax="100" aria-valuetext="${formatoNumero(valor)} de ${formatoNumero(meta)} gramos">
-          <span class="${n.clase}" style="width: ${porcentaje}%"></span>
+      <div class="macro-tarjeta">
+        <span class="macro-icono ${n.clase}-suave" aria-hidden="true">${n.nombre.charAt(0)}</span>
+        <span class="macro-nombre">${n.nombre}</span>
+        <span class="macro-valor"><strong class="${pasadoMacro ? 'excedido' : ''}">${formatoNumero(valor)}</strong> / ${formatoNumero(meta)} g</span>
+        <div class="macro-barra" role="progressbar" aria-label="${n.nombre}" aria-valuenow="${porcentajeMacro}" aria-valuemin="0" aria-valuemax="100" aria-valuetext="${formatoNumero(valor)} de ${formatoNumero(meta)} gramos">
+          <span class="${n.clase}" style="width: ${porcentajeMacro}%"></span>
         </div>
       </div>`;
     }).join('');
 }
 
-// Las cuatro comidas: título con su total, las filas y "+ Añadir alimento"
+// Un icono para cada categoría de alimento (para la miniatura de las filas)
+const ICONOS_CATEGORIA = {
+    'Proteínas': 'bi-egg-fried',
+    'Lácteos': 'bi-cup-straw',
+    'Cereales y legumbres': 'bi-basket2',
+    'Verduras': 'bi-flower2',
+    'Frutas': 'bi-apple',
+    'Frutos secos y grasas': 'bi-droplet-half',
+    'Salsas y otros': 'bi-cup-hot'
+};
+
+// La miniatura de una fila: la foto si es una receta con foto; si no, el icono de su categoría
+function miniatura(l) {
+    if (l.origen === 'receta') {
+        const receta = buscarReceta(l.ref);
+        if (receta && fotoValida(receta.foto)) return `<img class="fila-miniatura" src="${escaparHtml(receta.foto)}" alt="" loading="lazy">`; // alt="" = es decoración (el nombre ya va al lado)
+        return '<span class="fila-miniatura" aria-hidden="true"><i class="bi bi-journal-richtext"></i></span>';
+    }
+    const categoria = buscarAlimento(l.ref)?.categoria;    // la categoría del alimento (si aún existe)
+    return `<span class="fila-miniatura" aria-hidden="true"><i class="bi ${ICONOS_CATEGORIA[categoria] ?? 'bi-circle'}"></i></span>`;
+}
+
+// Las cuatro comidas: icono, título con su total, botón + redondo y las filas
 function pintarComidas() {
     const fecha = fechaActual();
 
@@ -405,6 +445,7 @@ function pintarComidas() {
             return `
           <li class="fila-alimento${abierta ? ' editando' : ''}" data-id="${escaparHtml(l.id)}" data-comida="${c.id}">
             <button type="button" class="fila-alimento-boton" aria-expanded="${abierta}" aria-controls="${idEditor}">
+              ${miniatura(l)}
               <span class="fila-texto">
                 <span class="fila-nombre">${nombre}</span>
                 <span class="fila-detalle">${textoCantidad(l)} · P ${formatoNumero(lt.proteina, 1)} · C ${formatoNumero(lt.carbohidratos, 1)} · G ${formatoNumero(lt.grasas, 1)}</span>
@@ -420,25 +461,27 @@ function pintarComidas() {
           </li>`;
         }).join('');
 
-        // la tarjeta de la comida
+        // la tarjeta de la comida: cabecera (icono, nombre, kcal y +) y la lista
         return `
       <section class="tarjeta comida-tarjeta" aria-labelledby="titulo-${c.id}">
         <div class="comida-cabecera">
-          <div>
+          <span class="comida-icono" aria-hidden="true"><i class="bi ${c.icono}"></i></span>
+          <div class="flex-grow-1 min-w-0">
             <h2 id="titulo-${c.id}" class="comida-titulo">${c.nombre}</h2>
-            ${lineas.length ? `<span class="comida-macros">P ${formatoNumero(t.proteina)} · C ${formatoNumero(t.carbohidratos)} · G ${formatoNumero(t.grasas)}</span>` : ''}
+            <span class="comida-macros">${lineas.length
+                ? `<i class="bi bi-fire" aria-hidden="true"></i> <strong>${formatoNumero(t.kcal)} kcal</strong> · P ${formatoNumero(t.proteina)} · C ${formatoNumero(t.carbohidratos)} · G ${formatoNumero(t.grasas)}`
+                : 'Sin alimentos todavía'}</span>
           </div>
-          <span class="comida-kcal">${lineas.length ? `${formatoNumero(t.kcal)} kcal` : ''}</span>
+          <button type="button" class="btn-mas btn-anadir" data-comida="${c.id}" aria-label="Añadir alimento a ${c.nombre.toLowerCase()}">
+            <i class="bi bi-plus-lg" aria-hidden="true"></i>
+          </button>
         </div>
         ${lineas.length ? `<ul class="lista-filas">${filas}</ul>` : ''}
-        <button type="button" class="btn-anadir-comida btn-anadir" data-comida="${c.id}">
-          <i class="bi bi-plus-lg" aria-hidden="true"></i> Añadir alimento<span class="visually-hidden"> a ${c.nombre.toLowerCase()}</span>
-        </button>
       </section>`;
     }).join('');
 }
 
-// La vista de la semana (de lunes a domingo): resumen, dos gráficos y la lista de días
+// La vista de la semana (de lunes a domingo): la media en grande, los gráficos, cifras y la lista de días
 function pintarVistaSemana() {
     const hoy = fechaHoy();
     const lunes = lunesDe(fechaActual());
@@ -455,69 +498,93 @@ function pintarVistaSemana() {
     const media = clave => conDatos.length === 0 ? 0 : conDatos.reduce((suma, d) => suma + d.totales[clave], 0) / conDatos.length;
     const diasProteina = conDatos.filter(d => d.totales.proteina >= objetivo.proteina).length; // días que llegaste a tu proteína
 
-    const resumen = conDatos.length === 0
-        ? '<p class="text-body-secondary">Esta semana todavía no hay nada apuntado.</p>'
-        : `
-      <div class="macros">
-        <div class="macro"><strong>${formatoNumero(media('kcal'))}</strong>kcal/día de media</div>
-        <div class="macro"><strong>${formatoNumero(media('proteina'))} g</strong>proteína/día</div>
-        <div class="macro"><strong>${diasProteina}/${conDatos.length}</strong>días con tu proteína</div>
-      </div>
-      <p class="small text-body-secondary mt-2 mb-0">Medias de los ${conDatos.length} ${conDatos.length === 1 ? 'día' : 'días'} con algo apuntado.</p>`;
-
     const nombres = dias.map(d => fechaLegible(d.fecha, { weekday: 'long', day: 'numeric' })); // "lunes, 13"
     const indiceHoy = dias.findIndex(d => d.fecha === hoy); // en qué posición está hoy (-1 si es otra semana)
 
+    // una tarjeta pequeña de cifra (como las de la referencia): icono, nombre y número
+    const cifra = (icono, clase, nombre, valor) => `
+      <div class="tarjeta cifra-tarjeta">
+        <span class="macro-icono ${clase}" aria-hidden="true"><i class="bi ${icono}"></i></span>
+        <div>
+          <span class="cifra-nombre">${nombre}</span>
+          <strong class="cifra-valor">${valor}</strong>
+        </div>
+      </div>`;
+
     document.querySelector('#resumenSemana').innerHTML = `
-      ${resumen}
-      <div class="row g-3 mt-1">
-        <div class="col-md-6">
-          <div class="tarjeta p-3">
-            <h2 class="h6 mb-2">Calorías</h2>
-            ${graficoBarras({ valores: dias.map(d => d.totales.kcal), meta: objetivo.kcal, nombres, indiceHoy, clase: 'barra-kcal', unidad: 'kcal', titulo: 'Calorías' })}
+      <div class="cifras-grid">
+        ${cifra('bi-lightning-charge-fill', 'macro-p-suave', 'Proteína al día', `${formatoNumero(media('proteina'))} g`)}
+        ${cifra('bi-trophy-fill', 'lima-suave', 'Días con tu proteína', `${diasProteina}/${conDatos.length}`)}
+        ${cifra('bi-calendar-check-fill', 'macro-g-suave', 'Días apuntados', `${conDatos.length}/7`)}
+        ${cifra('bi-basket2-fill', 'macro-c-suave', 'Carbohidratos al día', `${formatoNumero(media('carbohidratos'))} g`)}
+      </div>
+      <div class="row g-3 mt-0">
+        <div class="col-lg-6">
+          <div class="tarjeta grafico-tarjeta">
+            <div class="grafico-cabecera">
+              <div>
+                <span class="etiqueta-suave">Calorías · media diaria</span>
+                <p class="numero-grande">${formatoNumero(media('kcal'))}<span> kcal</span></p>
+              </div>
+              <span class="etiqueta-suave">Objetivo ${formatoNumero(objetivo.kcal)} kcal</span>
+            </div>
+            ${graficoBarras({ valores: dias.map(d => d.totales.kcal), meta: objetivo.kcal, nombres, indiceHoy, unidad: 'kcal', titulo: 'Calorías' })}
           </div>
         </div>
-        <div class="col-md-6">
-          <div class="tarjeta p-3">
-            <h2 class="h6 mb-2">Proteína</h2>
-            ${graficoBarras({ valores: dias.map(d => d.totales.proteina), meta: objetivo.proteina, nombres, indiceHoy, clase: 'macro-p', unidad: 'g', titulo: 'Proteína' })}
+        <div class="col-lg-6">
+          <div class="tarjeta grafico-tarjeta">
+            <div class="grafico-cabecera">
+              <div>
+                <span class="etiqueta-suave">Proteína · media diaria</span>
+                <p class="numero-grande">${formatoNumero(media('proteina'))}<span> g</span></p>
+              </div>
+              <span class="etiqueta-suave">Objetivo ${formatoNumero(objetivo.proteina)} g</span>
+            </div>
+            ${graficoBarras({ valores: dias.map(d => d.totales.proteina), meta: objetivo.proteina, nombres, indiceHoy, unidad: 'g', titulo: 'Proteína' })}
+          </div>
+        </div>
+        <div class="col-12">
+          <div class="tarjeta grafico-tarjeta">
+            <h2 class="etiqueta-suave mb-2">Día a día</h2>
+            <ul class="dias-semana">
+              ${dias.map((d, i) => `
+                <li>
+                  <button type="button" class="dia-semana${d.fecha === hoy ? ' hoy' : ''}" data-fecha="${d.fecha}"${d.futuro ? ' disabled' : ''}>
+                    <span>${mayusculaInicial(nombres[i])}</span>
+                    <span class="text-body-secondary">${d.futuro || d.totales.kcal === 0 ? '—' : `${formatoNumero(d.totales.kcal)} kcal · P ${formatoNumero(d.totales.proteina)} g`}</span>
+                  </button>
+                </li>`).join('')}
+            </ul>
           </div>
         </div>
       </div>
-      <div class="tarjeta px-3 py-2 mt-3">
-        <h2 class="h6 mt-2">Día a día</h2>
-        <ul class="dias-semana">
-          ${dias.map((d, i) => `
-            <li>
-              <button type="button" class="dia-semana${d.fecha === hoy ? ' hoy' : ''}" data-fecha="${d.fecha}"${d.futuro ? ' disabled' : ''}>
-                <span>${mayusculaInicial(nombres[i])}</span>
-                <span class="text-body-secondary">${d.futuro || d.totales.kcal === 0 ? '—' : `${formatoNumero(d.totales.kcal)} kcal · P ${formatoNumero(d.totales.proteina)} g`}</span>
-              </button>
-            </li>`).join('')}
-        </ul>
-      </div>`;
+      ${conDatos.length === 0 ? '<p class="text-body-secondary mt-3 mb-0">Esta semana todavía no hay nada apuntado.</p>' : ''}`;
 }
 
-// Dibuja un gráfico de 7 barras en SVG con una línea discontinua en el objetivo
-function graficoBarras({ valores, meta, nombres, indiceHoy, clase, unidad, titulo }) {
-    const ancho = 320;                                     // medidas del dibujo (luego se estira al ancho disponible)
-    const alto = 140;
-    const arriba = 16;                                     // margen de arriba (texto del objetivo)
-    const abajo = 22;                                      // margen de abajo (letras de los días)
+// Dibuja un gráfico de 7 barras en SVG, como el de la referencia: barras lima redondeadas, la de hoy en verde oscuro,
+// y encima de cada barra el % del objetivo. Una línea discontinua marca el objetivo
+function graficoBarras({ valores, meta, nombres, indiceHoy, unidad, titulo }) {
+    const ancho = 560;                                     // medidas del dibujo (luego se estira al ancho disponible)
+    const alto = 210;
+    const arriba = 26;                                     // margen de arriba (para los % de encima)
+    const abajo = 24;                                      // margen de abajo (letras de los días)
     const zona = alto - arriba - abajo;                    // la altura para las barras
-    const maximo = Math.max(meta * 1.15, ...valores);      // el valor más alto: el objetivo + 15 %, o un día que lo pase
+    const maximo = Math.max(meta * 1.2, ...valores);       // el valor más alto: el objetivo + 20 %, o un día que lo pase
     const hueco = ancho / valores.length;                  // el espacio de cada día
-    const anchoBarra = hueco * 0.5;                        // la barra ocupa la mitad de su hueco
+    const anchoBarra = Math.min(38, hueco * 0.5);          // la barra: la mitad del hueco (como mucho 38)
 
     const y = v => arriba + zona - (v / maximo) * zona;    // valor -> altura del dibujo (en SVG, la y crece hacia ABAJO)
 
     const barras = valores.map((v, i) => {
         const x = i * hueco + (hueco - anchoBarra) / 2;    // la barra, centrada en su hueco
-        const centro = i * hueco + hueco / 2;              // el centro (para la letra)
+        const centro = i * hueco + hueco / 2;              // el centro (para los textos)
+        const altoBarra = Math.max(0, (v / maximo) * zona);
+        const esHoy = i === indiceHoy;
         return `
-        <rect x="${x}" y="${arriba}" width="${anchoBarra}" height="${zona}" rx="5" class="fondo-barra" />
-        <rect x="${x}" y="${y(v)}" width="${anchoBarra}" height="${(v / maximo) * zona}" rx="5" class="barra ${clase}"><title>${mayusculaInicial(nombres[i])}: ${formatoNumero(v)} ${unidad}</title></rect>
-        <text x="${centro}" y="${alto - 6}" class="etiqueta-barra${i === indiceHoy ? ' hoy' : ''}">${INICIALES[i]}</text>`;
+        <rect x="${x}" y="${arriba}" width="${anchoBarra}" height="${zona}" rx="${anchoBarra / 2}" class="fondo-barra" />
+        ${v > 0 ? `<rect x="${x}" y="${y(v)}" width="${anchoBarra}" height="${altoBarra}" rx="${Math.min(anchoBarra / 2, altoBarra / 2)}" class="barra${esHoy ? ' barra-hoy' : ''}"><title>${mayusculaInicial(nombres[i])}: ${formatoNumero(v)} ${unidad}</title></rect>
+        <text x="${centro}" y="${y(v) - 7}" class="porcentaje-barra${esHoy ? ' hoy' : ''}">${Math.round(v / meta * 100)}%</text>` : ''}
+        <text x="${centro}" y="${alto - 5}" class="etiqueta-barra${esHoy ? ' hoy' : ''}">${INICIALES[i]}</text>`;
     }).join('');
 
     // la descripción para lectores de pantalla
@@ -525,9 +592,8 @@ function graficoBarras({ valores, meta, nombres, indiceHoy, clase, unidad, titul
 
     return `
       <svg class="grafico-semana" viewBox="0 0 ${ancho} ${alto}" role="img" aria-label="${escaparHtml(descripcion)}">
-        ${barras}
         <line x1="0" x2="${ancho}" y1="${y(meta)}" y2="${y(meta)}" class="linea-meta" />
-        <text x="${ancho}" y="${y(meta) - 4}" class="texto-meta">objetivo ${formatoNumero(meta)} ${unidad}</text>
+        ${barras}
       </svg>`;
 }
 

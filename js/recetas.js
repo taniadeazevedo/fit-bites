@@ -6,7 +6,7 @@
    se pueden apuntar en el diario por raciones.)
    ===================================================================== */
 
-import { TIPOS_PLATO, PROTEINA_ALTA, EN_LOCAL } from './config.js'; // ajustes que usamos aquí
+import { TIPOS_PLATO, PROTEINA_ALTA } from './config.js'; // ajustes que usamos aquí
 import { estado, buscarReceta } from './estado.js';     // las recetas cargadas y el modo
 import { escaparHtml, normalizarTexto, porcentajesMacros, mostrarAviso } from './utilidades.js'; // herramientas pequeñas
 import { leer, guardar, alCambiarDatos } from './almacen.js'; // guardar las favoritas
@@ -30,9 +30,6 @@ let idParaBorrar = null;       // el id de la receta que se va a borrar (lo apun
 export function aplicarModo() {
     // classList.toggle(clase, condición): pone la clase si la condición es true y la quita si es false
     document.querySelector('#btnNueva').classList.toggle('d-none', estado.modoLectura); // en modo lectura se oculta "Nueva receta"
-
-    // el aviso solo sale en tu ordenador (en la web publicada no hace falta)
-    document.querySelector('#avisoLectura').classList.toggle('d-none', !(estado.modoLectura && EN_LOCAL)); // visible solo si: modo lectura Y en local
 }
 
 /* ---------- FILTRO POR TIPO DE PLATO ---------- */

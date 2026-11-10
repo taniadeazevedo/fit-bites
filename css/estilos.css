@@ -1,11 +1,13 @@
 /* =====================================================================
    FIT BITES · estilos.css
-   Diseño de "app de verdad", inspirado en los diarios de comida más
-   usados (MyFitnessPal, Cronometer, MacroFactor, Yazio):
-   - fondo neutro, tarjetas blancas con borde fino (casi sin sombras)
-   - una sola tipografía (Inter) y números que no "bailan" (tabular-nums)
-   - un solo color de marca (verde) y un color fijo por macro
-   - en el móvil, barra de pestañas abajo, como en una app
+   Lenguaje visual inspirado en el concepto "Food Calorie App" de Dribbble
+   y en los diarios de comida más usados (MyFitnessPal, Yazio...):
+   - fondo gris claro y tarjetas blancas muy redondeadas, sin bordes duros
+   - un acento LIMA para lo importante (botones, día elegido, barras),
+     siempre con texto oscuro encima para que se lea bien
+   - una tarjeta destacada en lima suave con el dato principal (kcal)
+   - números grandes y rotundos (Plus Jakarta Sans, extra-negrita)
+   - en el móvil, barra de pestañas abajo con el "+" central
    Cómo se lee un CSS:  selector { propiedad: valor; }
    Va DESPUÉS de Bootstrap: lo que pongamos aquí pisa lo suyo.
    ===================================================================== */
@@ -13,58 +15,64 @@
 /* ---------- 1. COLORES Y MEDIDAS (variables) ----------
    Todo el diseño usa estas variables: para cambiar un color, se cambia aquí */
 :root {
-  --fondo: #F5F6F5;           /* fondo de la página: gris casi blanco */
+  --fondo: #EDEFEC;           /* fondo de la página: gris claro con un toque verde */
   --superficie: #FFFFFF;      /* tarjetas, ventanas y casillas */
-  --superficie-2: #F0F2F1;    /* fondos suaves (al pasar el ratón, carriles de barras) */
-  --borde: #E3E6E4;           /* líneas finas */
-  --texto: #121715;           /* texto principal (casi negro) */
-  --texto-suave: #5C6661;     /* texto secundario (gris; contraste 5,6:1 sobre blanco) */
+  --superficie-2: #F3F5F1;    /* fondos suaves (al pasar el ratón, carriles de las barras) */
+  --borde: #E4E7E1;           /* líneas finas (separadores dentro de las tarjetas) */
+  --texto: #151A12;           /* texto principal (casi negro, verdoso) */
+  --texto-suave: #5E665A;     /* texto secundario (contraste 5,6:1 sobre blanco) */
 
-  --marca: #1E6B4E;           /* verde de la marca (texto y detalles) */
-  --marca-boton: #1E6B4E;     /* verde de los botones rellenos */
-  --marca-hover: #17573F;     /* verde al pasar el ratón */
-  --marca-suave: #E7F1EC;     /* verde muy suave (fondos de lo elegido) */
+  --lima: #C6E35B;            /* EL ACENTO: botones, día elegido, barras del gráfico */
+  --lima-hover: #B5D446;      /* lima al pasar el ratón */
+  --lima-suave: #EEF6D2;      /* lima muy suave: la tarjeta destacada y los iconos */
+  --sobre-lima: #1A230D;      /* el texto que va ENCIMA de la lima (casi negro: contraste 12:1) */
+  --verde: #4A7012;           /* verde oliva oscuro: textos y detalles en color (5,9:1 sobre blanco) */
+  --verde-oscuro: #2E4A0A;    /* la barra de "hoy" en el gráfico y el anillo */
+
+  --marca: var(--verde);      /* (nombre que usan los textos de color de la marca) */
 
   --aviso: #B4471F;           /* "te has pasado": naranja quemado (5:1 sobre blanco) */
   --peligro: #C0392B;         /* borrar */
 
-  --macro-p: #D6456A;         /* proteína: frambuesa */
-  --macro-c: #DE9426;         /* carbohidratos: ámbar */
-  --macro-g: #3D72D3;         /* grasas: azul */
+  --macro-p: #E05578;         /* proteína: frambuesa */
+  --macro-c: #E9A23B;         /* carbohidratos: ámbar */
+  --macro-g: #4C82E0;         /* grasas: azul */
+  --macro-p-suave: #FCE8EE;   /* los mismos, muy suaves (fondos de iconos) */
+  --macro-c-suave: #FDF1DF;
+  --macro-g-suave: #E5EEFC;
 
-  --radio: 14px;              /* esquinas de las tarjetas */
-  --radio-sm: 10px;           /* esquinas de botones y casillas */
-  --sombra: 0 1px 2px rgba(16, 24, 20, .05);   /* sombra mínima: solo da un poco de relieve */
-  --sombra-flotante: 0 8px 28px rgba(16, 24, 20, .12);  /* para lo que flota (barra de abajo, ventanas) */
+  --radio: 22px;              /* esquinas de las tarjetas: muy redondeadas, como en la referencia */
+  --radio-sm: 14px;           /* esquinas de botones y casillas */
+  --sombra: 0 1px 2px rgba(21, 26, 18, .04), 0 4px 16px rgba(21, 26, 18, .04);  /* sombra muy suave: separa la tarjeta del fondo */
+  --sombra-flotante: 0 12px 40px rgba(21, 26, 18, .14);  /* para lo que flota (barra de abajo, ventanas) */
 
   /* Bootstrap lee sus propias variables: las apuntamos a las nuestras */
   --bs-body-bg: var(--fondo);
   --bs-body-color: var(--texto);
-  --bs-body-font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; /* Inter; si no carga, la del sistema */
+  --bs-body-font-family: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif; /* si no carga, la del sistema */
   --bs-body-font-size: .95rem;
   --bs-border-color: var(--borde);
   --bs-secondary-color: var(--texto-suave);          /* .text-body-secondary */
   --bs-emphasis-color: var(--texto);
-  --bs-link-color: var(--marca);
-  --bs-link-color-rgb: 30, 107, 78;                  /* el mismo verde en formato r, g, b (Bootstrap lo necesita así) */
-  --bs-link-hover-color: var(--marca-hover);
-  --bs-link-hover-color-rgb: 23, 87, 63;
-  --bs-focus-ring-color: rgba(30, 107, 78, .25);
+  --bs-link-color: var(--verde);
+  --bs-link-color-rgb: 74, 112, 18;                  /* el mismo verde en formato r, g, b (Bootstrap lo necesita así) */
+  --bs-link-hover-color: var(--verde-oscuro);
+  --bs-link-hover-color-rgb: 46, 74, 10;
+  --bs-focus-ring-color: rgba(122, 166, 30, .35);
 }
 
 /* TEMA OSCURO: Bootstrap pone data-bs-theme="dark" en <html>; aquí cambiamos los valores */
 [data-bs-theme="dark"] {
-  --fondo: #0D1110;
-  --superficie: #151A18;
-  --superficie-2: #1C2320;
-  --borde: #28312D;
-  --texto: #E7ECE9;
-  --texto-suave: #9AA6A0;
+  --fondo: #0F120E;
+  --superficie: #181C16;
+  --superficie-2: #20251D;
+  --borde: #2A3026;
+  --texto: #EEF2EA;
+  --texto-suave: #A3AD9C;
 
-  --marca: #4CB386;           /* verde más claro: se lee sobre fondo oscuro */
-  --marca-boton: #23704F;     /* los botones, más oscuros: el texto blanco encima se lee bien (6:1) */
-  --marca-hover: #1C5C41;
-  --marca-suave: #17261F;
+  --lima-suave: #232C15;      /* la tarjeta destacada, en lima muy oscuro */
+  --verde: #B9D85E;           /* en oscuro, los textos de color van en lima claro */
+  --verde-oscuro: #E3F59C;    /* la barra de "hoy", en lima muy claro */
 
   --aviso: #F08A6C;
   --peligro: #F07F6A;
@@ -72,40 +80,37 @@
   --macro-p: #F06A8B;
   --macro-c: #F0B04D;
   --macro-g: #6E9BEF;
+  --macro-p-suave: #34202A;
+  --macro-c-suave: #33291A;
+  --macro-g-suave: #1D2840;
 
   --sombra: none;
-  --sombra-flotante: 0 8px 28px rgba(0, 0, 0, .5);
+  --sombra-flotante: 0 12px 40px rgba(0, 0, 0, .55);
 
   --bs-body-bg: var(--fondo);
   --bs-body-color: var(--texto);
   --bs-border-color: var(--borde);
   --bs-secondary-color: var(--texto-suave);
   --bs-emphasis-color: var(--texto);
-  --bs-link-color: var(--marca);
-  --bs-link-color-rgb: 76, 179, 134;
-  --bs-link-hover-color: #7FD0AB;
-  --bs-link-hover-color-rgb: 127, 208, 171;
-  --bs-focus-ring-color: rgba(76, 179, 134, .3);
+  --bs-link-color: var(--verde);
+  --bs-link-color-rgb: 185, 216, 94;
+  --bs-link-hover-color: #D6EC8F;
+  --bs-link-hover-color-rgb: 214, 236, 143;
 }
 
 /* ---------- 2. BASE ---------- */
-body {
-  -webkit-font-smoothing: antialiased;     /* letras más finas y nítidas en Mac */
-  font-feature-settings: "cv11";           /* variante de Inter con la "a" de un piso, más limpia */
-}
+body { -webkit-font-smoothing: antialiased; }  /* letras más finas y nítidas en Mac */
 
 h1, h2, h3, .h1, .h2, .h3, .h4, .h5, .h6 {
-  font-weight: 650;                        /* títulos firmes pero no gruesos */
-  letter-spacing: -.015em;                 /* letras un poco más juntas: aspecto más cuidado */
+  font-weight: 700;                        /* títulos rotundos */
+  letter-spacing: -.02em;                  /* letras un poco más juntas: aspecto más cuidado */
 }
-
-.num { font-variant-numeric: tabular-nums; }  /* números: todas las cifras miden lo mismo (no "bailan" al cambiar) */
 
 .min-w-0 { min-width: 0; }                 /* deja que un texto largo se recorte con "…" en vez de empujar */
 
 /* Contorno de foco para quien usa el teclado (:focus-visible = solo con teclado, no con el ratón) */
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
-  outline: 2px solid var(--marca);
+  outline: 2px solid var(--verde);
   outline-offset: 2px;
 }
 
@@ -117,9 +122,9 @@ h1, h2, h3, .h1, .h2, .h3, .h4, .h5, .h6 {
   z-index: 2000;
   padding: .55rem 1rem;
   border-radius: var(--radio-sm);
-  background: var(--marca-boton);
-  color: #fff;
-  font-weight: 600;
+  background: var(--lima);
+  color: var(--sobre-lima);
+  font-weight: 700;
   text-decoration: none;
 }
 
@@ -129,25 +134,25 @@ h1, h2, h3, .h1, .h2, .h3, .h4, .h5, .h6 {
 
 /* ---------- 3. BOTONES ---------- */
 .btn {
-  --bs-btn-font-weight: 500;
-  --bs-btn-border-radius: var(--radio-sm);
+  --bs-btn-font-weight: 600;
+  --bs-btn-border-radius: 999px;           /* botones en forma de píldora, como en la referencia */
   --bs-btn-focus-box-shadow: 0 0 0 3px var(--bs-focus-ring-color);
 }
 
-/* Botón principal: verde relleno */
+/* Botón principal: LIMA con texto oscuro */
 .btn-verde {
-  --bs-btn-color: #fff;
-  --bs-btn-bg: var(--marca-boton);
-  --bs-btn-border-color: var(--marca-boton);
-  --bs-btn-hover-color: #fff;
-  --bs-btn-hover-bg: var(--marca-hover);
-  --bs-btn-hover-border-color: var(--marca-hover);
-  --bs-btn-active-color: #fff;
-  --bs-btn-active-bg: var(--marca-hover);
-  --bs-btn-active-border-color: var(--marca-hover);
-  --bs-btn-disabled-color: #fff;
-  --bs-btn-disabled-bg: var(--marca-boton);
-  --bs-btn-disabled-border-color: var(--marca-boton);
+  --bs-btn-color: var(--sobre-lima);
+  --bs-btn-bg: var(--lima);
+  --bs-btn-border-color: var(--lima);
+  --bs-btn-hover-color: var(--sobre-lima);
+  --bs-btn-hover-bg: var(--lima-hover);
+  --bs-btn-hover-border-color: var(--lima-hover);
+  --bs-btn-active-color: var(--sobre-lima);
+  --bs-btn-active-bg: var(--lima-hover);
+  --bs-btn-active-border-color: var(--lima-hover);
+  --bs-btn-disabled-color: var(--sobre-lima);
+  --bs-btn-disabled-bg: var(--lima);
+  --bs-btn-disabled-border-color: var(--lima);
 }
 
 /* Botón secundario (usamos la clase de Bootstrap btn-outline-dark): blanco con borde fino */
@@ -185,38 +190,55 @@ h1, h2, h3, .h1, .h2, .h3, .h4, .h5, .h6 {
   border-radius: 50%;
   background: transparent;
   color: var(--texto);
-  font-size: 1.05rem;
+  font-size: 1rem;
 }
 
 .boton-icono:hover:not(:disabled) { background: var(--superficie-2); }
 .boton-icono:disabled { opacity: .3; }
+.boton-icono-borde { border-color: var(--borde); }  /* con borde (las flechas del calendario) */
 
-/* Control segmentado (Día | Semana, Alimentos | Recetas): dos botones pegados sobre un carril gris */
+/* Botón "+" redondo (en cada comida): lima suave, como en la referencia */
+.btn-mas {
+  flex: 0 0 auto;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 50%;
+  background: var(--lima-suave);
+  color: var(--texto);
+  font-size: 1.1rem;
+  transition: background .15s, transform .15s;
+}
+
+.btn-mas:hover { background: var(--lima); color: var(--sobre-lima); transform: scale(1.05); }
+
+/* Control segmentado (Día | Semana, Alimentos | Recetas): dos botones sobre un carril, como en iOS */
 .control-segmentado {
   display: inline-flex;
-  padding: 3px;
+  padding: 4px;
   gap: 2px;
-  border-radius: var(--radio-sm);
-  background: var(--superficie-2);
+  border-radius: 999px;
+  background: var(--superficie);
+  box-shadow: var(--sombra);
 }
 
 .control-segmentado .btn {
-  --bs-btn-padding-y: .3rem;
-  --bs-btn-padding-x: .9rem;
+  --bs-btn-padding-y: .35rem;
+  --bs-btn-padding-x: 1rem;
   --bs-btn-font-size: .85rem;
   border: 0;
-  border-radius: 8px !important;            /* Bootstrap junta las esquinas de los grupos: aquí cada uno redondeado */
+  border-radius: 999px !important;          /* Bootstrap junta las esquinas de los grupos: aquí cada uno redondeado */
   background: transparent;
   color: var(--texto-suave);
 }
 
-.control-segmentado .btn.active {          /* el elegido: blanco y con relieve, como en iOS */
-  background: var(--superficie);
-  color: var(--texto);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, .08);
-}
+.control-segmentado .btn.active { background: var(--lima); color: var(--sobre-lima); }  /* el elegido, en lima */
 
 .control-segmentado.w-100 .btn { flex: 1; }  /* si ocupa todo el ancho, los botones se reparten */
+.modal .control-segmentado { background: var(--superficie-2); box-shadow: none; }  /* dentro de una ventana, sobre gris */
 
 /* Número entre − y + (raciones): Bootstrap apaga los "disabled" al 65 %; aquí no, para que se lea */
 .contador-raciones.disabled {
@@ -237,54 +259,53 @@ h1, h2, h3, .h1, .h2, .h3, .h4, .h5, .h6 {
 
 .form-control:focus,
 .form-select:focus {
-  border-color: var(--marca);
-  box-shadow: 0 0 0 3px var(--bs-focus-ring-color);  /* un halo verde suave */
+  border-color: var(--verde);
+  box-shadow: 0 0 0 3px var(--bs-focus-ring-color);  /* un halo lima */
 }
 
-.input-group-text { background: var(--superficie-2); border-color: var(--borde); color: var(--texto-suave); }
+.input-group-text { background: var(--superficie-2); border-color: var(--borde); color: var(--texto-suave); border-radius: var(--radio-sm); }
 
-.form-check-input:checked { background-color: var(--marca-boton); border-color: var(--marca-boton); }  /* casillas marcadas en verde */
-.form-check-input:focus { box-shadow: 0 0 0 3px var(--bs-focus-ring-color); border-color: var(--marca); }
+.form-check-input:checked { background-color: var(--verde); border-color: var(--verde); }  /* casillas marcadas en verde */
+.form-check-input:focus { box-shadow: 0 0 0 3px var(--bs-focus-ring-color); border-color: var(--verde); }
 
-/* Buscador grande: lupa y casilla en una sola pieza redondeada */
-.buscador-grande .input-group-text { background: var(--superficie); border-right: 0; border-radius: var(--radio-sm) 0 0 var(--radio-sm); }
-.buscador-grande .form-control { border-left: 0; border-radius: 0 var(--radio-sm) var(--radio-sm) 0; }
+/* Buscador grande: lupa y casilla en una sola pieza en forma de píldora */
+.buscador-grande .input-group-text { background: var(--superficie); border-right: 0; border-radius: 999px 0 0 999px; padding-left: 1rem; }
+.buscador-grande .form-control { border-left: 0; border-radius: 0 999px 999px 0; }
 .buscador-grande .form-control:focus { box-shadow: none; }
-.buscador-grande:focus-within { border-radius: var(--radio-sm); box-shadow: 0 0 0 3px var(--bs-focus-ring-color); }  /* el halo, en toda la pieza */
+.buscador-grande:focus-within { border-radius: 999px; box-shadow: 0 0 0 3px var(--bs-focus-ring-color); }  /* el halo, en toda la pieza */
 .buscador-grande:focus-within .input-group-text,
-.buscador-grande:focus-within .form-control { border-color: var(--marca); }
+.buscador-grande:focus-within .form-control { border-color: var(--verde); }
 
 /* ---------- 5. BARRA SUPERIOR ---------- */
 .barra-app {
   position: sticky;                        /* se queda arriba al bajar */
   top: 0;
   z-index: 1020;
-  background: color-mix(in srgb, var(--superficie) 88%, transparent);  /* blanco un poco transparente... */
-  backdrop-filter: saturate(180%) blur(12px);  /* ...que difumina lo que pasa por debajo (como en iOS) */
-  border-bottom: 1px solid var(--borde);
+  background: color-mix(in srgb, var(--fondo) 85%, transparent);  /* el color del fondo, un poco transparente... */
+  backdrop-filter: saturate(180%) blur(14px);  /* ...que difumina lo que pasa por debajo (como en iOS) */
 }
 
 .barra-app-contenido {
   display: flex;
   align-items: center;
   gap: 1rem;
-  height: 3.5rem;
+  height: 3.75rem;
 }
 
 .marca {
   display: inline-flex;
   align-items: center;
   gap: .5rem;
-  font-weight: 700;
-  font-size: 1.05rem;
-  letter-spacing: -.02em;
+  font-weight: 800;
+  font-size: 1.1rem;
+  letter-spacing: -.03em;
   color: var(--texto);
   text-decoration: none;
 }
 
-.logo-cuenco { fill: var(--marca); }       /* el logo: cuenco verde... */
-.logo-hoja-1 { fill: #8CC63F; }            /* ...y dos hojas */
-.logo-hoja-2 { fill: #5FA83A; }
+.logo-cuenco { fill: var(--texto); }       /* el logo: cuenco oscuro... */
+.logo-hoja-1 { fill: var(--lima); }        /* ...y dos hojas lima */
+.logo-hoja-2 { fill: #9CC23A; }
 
 .nav-principal { display: flex; gap: .25rem; margin-left: 1rem; }
 
@@ -292,16 +313,16 @@ h1, h2, h3, .h1, .h2, .h3, .h4, .h5, .h6 {
   display: inline-flex;
   align-items: center;
   gap: .4rem;
-  padding: .4rem .75rem;
+  padding: .45rem .9rem;
   border: 0;
-  border-radius: var(--radio-sm);
+  border-radius: 999px;
   background: transparent;
   color: var(--texto-suave);
-  font-weight: 500;
+  font-weight: 600;
   text-decoration: none;
 }
 
-.nav-enlace:hover { background: var(--superficie-2); color: var(--texto); }
+.nav-enlace:hover { background: var(--superficie); color: var(--texto); }
 
 .contador {                                /* el numerito (lista de la compra) */
   min-width: 1.25rem;
@@ -311,79 +332,88 @@ h1, h2, h3, .h1, .h2, .h3, .h4, .h5, .h6 {
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  background: var(--marca-boton);
-  color: #fff;
+  background: var(--lima);
+  color: var(--sobre-lima);
   font-size: .7rem;
-  font-weight: 600;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
 .contador[data-cero] { display: none; }    /* si es 0, no se enseña (JavaScript pone data-cero) */
 
-.barra-acciones { margin-left: auto; display: flex; align-items: center; gap: .25rem; }
+.barra-acciones { margin-left: auto; display: flex; align-items: center; gap: .35rem; }
 
 .boton-cuenta {
   display: inline-flex;
   align-items: center;
   gap: .4rem;
-  padding: .35rem .8rem;
-  border: 1px solid var(--borde);
+  padding: .4rem .9rem;
+  border: 0;
   border-radius: 999px;
   background: var(--superficie);
   color: var(--texto);
-  font-weight: 500;
+  font-weight: 600;
   font-size: .9rem;
+  box-shadow: var(--sombra);
 }
 
 .boton-cuenta:hover { background: var(--superficie-2); }
 
 /* ---------- 6. SECCIONES Y TARJETAS ---------- */
-.seccion { padding: 1.5rem 0 2rem; }
+.seccion { padding: 1.25rem 0 2.5rem; }
 
-.titulo-pagina { font-size: 1.6rem; margin: 0; }
+.saludo { margin: 0; color: var(--texto-suave); font-weight: 500; font-size: .9rem; }  /* "Buenos días" */
 
-.titulo-seccion { font-size: 1.25rem; margin: 0; }
+.titulo-pagina { font-size: 2rem; font-weight: 800; letter-spacing: -.035em; margin: 0; line-height: 1.1; }
 
-.subtitulo { color: var(--texto-suave); margin: 0; font-size: .9rem; }
+.titulo-seccion { font-size: 1.5rem; font-weight: 800; letter-spacing: -.03em; margin: 0; }
+
+.subtitulo { color: var(--texto-suave); margin: .2rem 0 0; font-size: .9rem; }
 
 .tarjeta {
   background: var(--superficie);
-  border: 1px solid var(--borde);
   border-radius: var(--radio);
   box-shadow: var(--sombra);
 }
 
+.etiqueta-suave { font-size: .8rem; font-weight: 600; color: var(--texto-suave); }  /* textos pequeños de cabecera */
+
+.numero-grande { font-size: 2.25rem; font-weight: 800; letter-spacing: -.04em; line-height: 1.1; margin: .1rem 0 0; font-variant-numeric: tabular-nums; }
+.numero-grande span { font-size: 1rem; font-weight: 600; color: var(--texto-suave); letter-spacing: 0; }
+
 .aviso-suave {
-  padding: .6rem .9rem;
+  padding: .65rem 1rem;
   border-radius: var(--radio-sm);
-  background: var(--marca-suave);
+  background: var(--lima-suave);
   color: var(--texto);
   font-size: .875rem;
 }
 
-/* ---------- 7. DIARIO: cabecera y tira de la semana ---------- */
+/* ---------- 7. DIARIO: cabecera y calendario ---------- */
 .diario-cabecera {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
   justify-content: space-between;
-  gap: .75rem;
-  margin-bottom: 1rem;
-}
-
-.tira-semana {
-  display: flex;
-  align-items: center;
-  gap: .25rem;
-  max-width: 40rem;                        /* en pantallas anchas no se estira de más */
+  gap: 1rem;
   margin-bottom: 1.25rem;
 }
 
+.calendario { padding: 1rem 1.1rem 1.1rem; margin-bottom: 1.25rem; }
+
+.calendario-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: .75rem;
+}
+
+.calendario-mes { font-size: 1.05rem; margin: 0; }  /* "Noviembre 2026" */
+
 .dias-tira {
-  flex: 1;
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));  /* 7 columnas iguales */
-  gap: .25rem;
+  gap: .35rem;
 }
 
 .dia-tira {
@@ -391,60 +421,80 @@ h1, h2, h3, .h1, .h2, .h3, .h4, .h5, .h6 {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: .1rem;
-  padding: .45rem 0 .6rem;
-  border: 1px solid transparent;
-  border-radius: 12px;
+  gap: .2rem;
+  padding: .55rem 0 .8rem;
+  border: 0;
+  border-radius: 999px;                    /* píldora vertical, como en la referencia */
+  width: 100%;
+  max-width: 3.4rem;                       /* en pantallas anchas, la píldora no se estira */
+  justify-self: center;                    /* y queda centrada en su columna */
   background: transparent;
   color: var(--texto);
   font-variant-numeric: tabular-nums;
 }
 
-.dia-tira .letra { font-size: .7rem; font-weight: 600; color: var(--texto-suave); text-transform: uppercase; }  /* L, M, X... */
-.dia-tira .numero { font-size: 1rem; font-weight: 600; }  /* 13, 14... */
+.dia-tira .letra { font-size: .72rem; font-weight: 600; color: var(--texto-suave); }  /* L, M, X... */
+.dia-tira .numero { font-size: 1rem; font-weight: 700; }  /* 13, 14... */
 
-.dia-tira:hover:not(:disabled) { background: var(--superficie); border-color: var(--borde); }
+.dia-tira:hover:not(:disabled) { background: var(--superficie-2); }
 
-.dia-tira.hoy .numero { color: var(--marca); }  /* hoy, en verde */
+.dia-tira.hoy .numero { color: var(--verde); }  /* hoy, en verde */
 
-.dia-tira[aria-pressed="true"] {           /* el día elegido: relleno verde, como en Yazio */
-  background: var(--marca-boton);
-  border-color: var(--marca-boton);
-}
-
+.dia-tira[aria-pressed="true"] { background: var(--lima); }  /* el día elegido: píldora lima */
 .dia-tira[aria-pressed="true"] .letra,
-.dia-tira[aria-pressed="true"] .numero { color: #fff; }
+.dia-tira[aria-pressed="true"] .numero { color: var(--sobre-lima); }
 
 .dia-tira.con-datos::after {               /* un puntito debajo si ese día tiene algo apuntado */
   content: "";
   position: absolute;
-  bottom: .25rem;
+  bottom: .35rem;
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: var(--marca);
+  background: var(--verde);
 }
 
-.dia-tira[aria-pressed="true"].con-datos::after { background: #fff; }
+.dia-tira[aria-pressed="true"].con-datos::after { background: var(--sobre-lima); }
 .dia-tira:disabled { opacity: .35; }       /* los días que aún no han llegado */
 
-/* ---------- 8. DIARIO: resumen (anillo + macros) ---------- */
-.resumen-dia { padding: 1.25rem; }
-
-@media (min-width: 992px) {
-  .resumen-dia { position: sticky; top: 4.5rem; }  /* en ordenador, el resumen se queda a la vista al bajar */
+/* ---------- 8. DIARIO: tarjeta destacada y macros ---------- */
+.tarjeta-destacada {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.35rem 1.25rem 1.35rem 1.5rem;
+  border-radius: var(--radio);
+  background: var(--lima-suave);           /* lima suave: el dato más importante destaca */
 }
 
-.anillo-caja {
-  position: relative;                      /* para poner el número encima del anillo */
-  width: 168px;
-  height: 168px;
-  margin: 0 auto .75rem;
+.destacada-texto { min-width: 0; }
+
+.chip-etiqueta {                           /* "Ingesta de hoy" con su icono */
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  padding: .3rem .7rem;
+  border-radius: 999px;
+  background: var(--superficie);
+  font-size: .75rem;
+  font-weight: 600;
 }
 
+.chip-etiqueta .bi { color: var(--aviso); }  /* la llamita, en naranja */
+
+.destacada-numero { font-size: 2.6rem; font-weight: 800; letter-spacing: -.045em; line-height: 1; margin: .75rem 0 .15rem; font-variant-numeric: tabular-nums; }
+.destacada-numero span { font-size: 1rem; font-weight: 700; letter-spacing: 0; }
+.destacada-numero.pasado { color: var(--aviso); }
+.destacada-sub { margin: 0; color: var(--texto-suave); font-size: .85rem; font-weight: 500; }
+
+.destacada-cifras { display: flex; gap: 1rem; margin-top: .9rem; font-size: .8rem; color: var(--texto-suave); }
+.destacada-cifras strong { color: var(--texto); font-variant-numeric: tabular-nums; }
+
+.anillo-caja { position: relative; flex: 0 0 auto; width: 118px; height: 118px; }  /* el anillo, y el número encima */
 .anillo-caja svg { width: 100%; height: 100%; transform: rotate(-90deg); }  /* el anillo empieza arriba (por defecto empezaría a la derecha) */
-.anillo-carril { fill: none; stroke: var(--superficie-2); stroke-width: 12; }
-.anillo-progreso { fill: none; stroke: var(--marca); stroke-width: 12; stroke-linecap: round; transition: stroke-dashoffset .5s ease; }
+.anillo-carril { fill: none; stroke: var(--superficie); stroke-width: 11; }
+.anillo-progreso { fill: none; stroke: var(--verde-oscuro); stroke-width: 11; stroke-linecap: round; transition: stroke-dashoffset .6s ease; }
 .anillo-progreso.pasado { stroke: var(--aviso); }
 
 .anillo-centro {
@@ -456,89 +506,127 @@ h1, h2, h3, .h1, .h2, .h3, .h4, .h5, .h6 {
   justify-content: center;                 /* ...y centra el texto */
 }
 
-.anillo-numero { font-size: 2rem; font-weight: 700; letter-spacing: -.03em; line-height: 1; font-variant-numeric: tabular-nums; }
-.anillo-etiqueta { font-size: .8rem; color: var(--texto-suave); margin-top: .25rem; }
-.anillo-centro.pasado .anillo-numero { color: var(--aviso); }
+.anillo-numero { font-size: 1.5rem; font-weight: 800; letter-spacing: -.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+.anillo-numero small { font-size: .8rem; font-weight: 700; }
+.anillo-etiqueta { font-size: .68rem; color: var(--texto-suave); margin-top: .2rem; }
 
-.ecuacion {                                /* Objetivo − Comido = Restantes */
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  text-align: center;
-  padding: .75rem 0;
-  border-top: 1px solid var(--borde);
-  border-bottom: 1px solid var(--borde);
-  margin-bottom: 1rem;
-}
+/* las 3 tarjetas de macros */
+.macros-tarjetas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; margin-top: .75rem; }
 
-.ecuacion strong { display: block; font-size: 1rem; font-variant-numeric: tabular-nums; }
-.ecuacion span { font-size: .75rem; color: var(--texto-suave); }
-
-.macro-fila { margin-bottom: .75rem; }
-
-.macro-fila-texto {
+.macro-tarjeta {
   display: flex;
-  justify-content: space-between;
-  font-size: .85rem;
-  margin-bottom: .3rem;
+  flex-direction: column;
+  gap: .15rem;
+  padding: .9rem .9rem 1rem;
+  border-radius: var(--radio);
+  background: var(--superficie);
+  box-shadow: var(--sombra);
 }
 
-.macro-fila-texto .valor { font-variant-numeric: tabular-nums; color: var(--texto-suave); }
-.macro-fila-texto .valor strong { color: var(--texto); font-weight: 600; }
+.macro-icono {                             /* el circulito de color con la inicial (P, C, G) o un icono */
+  width: 2rem;
+  height: 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: .8rem;
+  font-weight: 800;
+  margin-bottom: .4rem;
+}
+
+/* en el tema claro, la letra va en un tono MÁS OSCURO que la barra, para que se lea sobre su fondo suave (4,5:1 o más) */
+.macro-p-suave { background: var(--macro-p-suave); color: #A8234A; }
+.macro-c-suave { background: var(--macro-c-suave); color: #855009; }
+.macro-g-suave { background: var(--macro-g-suave); color: #2A58AE; }
+.lima-suave { background: var(--lima-suave); color: var(--verde); }
+[data-bs-theme="dark"] .macro-p-suave { color: var(--macro-p); }  /* en oscuro, el color normal ya se lee bien */
+[data-bs-theme="dark"] .macro-c-suave { color: var(--macro-c); }
+[data-bs-theme="dark"] .macro-g-suave { color: var(--macro-g); }
+
+.macro-nombre { font-size: .75rem; font-weight: 600; color: var(--texto-suave); }
+.macro-valor { font-size: .8rem; color: var(--texto-suave); font-variant-numeric: tabular-nums; margin-bottom: .45rem; }
+.macro-valor strong { font-size: 1.15rem; font-weight: 800; color: var(--texto); letter-spacing: -.02em; }
 
 .macro-barra { height: 6px; border-radius: 999px; background: var(--superficie-2); overflow: hidden; }
-.macro-barra > span { display: block; height: 100%; border-radius: inherit; transition: width .4s ease; }
+.macro-barra > span { display: block; height: 100%; border-radius: inherit; transition: width .5s ease; }
 
-.excedido { color: var(--aviso); font-weight: 600; }
+.excedido { color: var(--aviso) !important; }
 
 .punto { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: .35rem; }  /* el puntito de color de cada macro */
 
-/* colores por macro (barras, puntos y gráficos) */
+/* colores por macro (barras y puntos) */
 .macro-p { background-color: var(--macro-p); }
 .macro-c { background-color: var(--macro-c); }
 .macro-g { background-color: var(--macro-g); }
-.barra-kcal { background-color: var(--marca); }
 
 /* ---------- 9. DIARIO: comidas ---------- */
-.comidas-lista { display: grid; gap: 1rem; }
+.comidas-lista { display: grid; gap: .9rem; }
 
 .comida-tarjeta { overflow: hidden; }      /* para que las filas respeten las esquinas redondeadas */
 
 .comida-cabecera {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: .75rem;
-  padding: .9rem 1.1rem .6rem;
+  align-items: center;
+  gap: .85rem;
+  padding: 1rem 1rem 1rem 1.1rem;
 }
 
-.comida-titulo { font-size: 1rem; margin: 0; }
-.comida-macros { font-size: .75rem; color: var(--texto-suave); font-variant-numeric: tabular-nums; }
-.comida-kcal { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.comida-icono {                            /* el icono de la comida en un cuadradito lima suave */
+  flex: 0 0 auto;
+  width: 2.75rem;
+  height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background: var(--lima-suave);
+  color: var(--verde);
+  font-size: 1.2rem;
+}
 
-.lista-filas { list-style: none; margin: 0; padding: 0; }
+.comida-titulo { font-size: 1.05rem; margin: 0; }
+.comida-macros { font-size: .78rem; color: var(--texto-suave); font-variant-numeric: tabular-nums; }
+.comida-macros strong { color: var(--texto); font-weight: 700; }
+.comida-macros .bi { color: var(--aviso); }
 
-.fila-alimento { border-top: 1px solid var(--borde); }
+.lista-filas { list-style: none; margin: 0; padding: 0 .5rem .5rem; }
+
+.fila-alimento { border-radius: 16px; }
 
 .fila-alimento-boton {                     /* toda la fila es un botón: al pulsarla se edita */
   width: 100%;
   display: flex;
   align-items: center;
   gap: .75rem;
-  padding: .65rem 1.1rem;
+  padding: .55rem .6rem;
   border: 0;
+  border-radius: 16px;
   background: transparent;
   color: inherit;
   text-align: left;
 }
 
 .fila-alimento-boton:hover { background: var(--superficie-2); }
-.fila-alimento-boton:focus-visible { outline-offset: -2px; }
+
+.fila-miniatura {                          /* la miniatura: foto de la receta o icono de la categoría */
+  flex: 0 0 auto;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--superficie-2);
+  color: var(--texto-suave);
+  object-fit: cover;                       /* si es una foto, la recorta en redondo sin deformarla */
+}
 
 .fila-texto { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.fila-nombre { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }  /* si no cabe: "…" */
-.fila-detalle { font-size: .78rem; color: var(--texto-suave); font-variant-numeric: tabular-nums; }
-.fila-kcal { font-weight: 600; font-variant-numeric: tabular-nums; }
-.fila-kcal small { font-weight: 400; color: var(--texto-suave); }
+.fila-nombre { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }  /* si no cabe: "…" */
+.fila-detalle { font-size: .76rem; color: var(--texto-suave); font-variant-numeric: tabular-nums; }
+.fila-kcal { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fila-kcal small { font-weight: 500; color: var(--texto-suave); }
 
 .fila-alimento.editando { background: var(--superficie-2); }
 
@@ -547,51 +635,38 @@ h1, h2, h3, .h1, .h2, .h3, .h4, .h5, .h6 {
   flex-wrap: wrap;
   align-items: center;
   gap: .5rem;
-  padding: 0 1.1rem .75rem;
+  padding: .1rem .6rem .7rem 3.85rem;      /* empieza alineado con el nombre (después de la miniatura) */
 }
 
-.cantidad-gramos { width: 7rem; flex: 0 0 auto; }  /* la casilla de gramos: estrecha */
-
-.btn-anadir-comida {                       /* "+ Añadir alimento" al final de cada comida */
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: .5rem;
-  padding: .7rem 1.1rem;
-  border: 0;
-  border-top: 1px solid var(--borde);
-  background: transparent;
-  color: var(--marca);
-  font-weight: 600;
-  font-size: .9rem;
-  text-align: left;
-}
-
-.btn-anadir-comida:hover { background: var(--marca-suave); }
-.btn-anadir-comida:focus-visible { outline-offset: -2px; }
+.cantidad-gramos { width: 7.5rem; flex: 0 0 auto; }  /* la casilla de gramos: estrecha */
+.cantidad-gramos .form-control { border-radius: 999px 0 0 999px; }
+.cantidad-gramos .input-group-text { border-radius: 0 999px 999px 0; }
 
 /* ---------- 10. SEMANA ---------- */
-.macros { display: grid; grid-template-columns: repeat(3, 1fr); gap: .75rem; }  /* las 3 cifras del resumen semanal */
+.grafico-tarjeta { padding: 1.25rem 1.25rem 1rem; height: 100%; }
 
-.macro {
-  padding: .9rem 1rem;
-  border: 1px solid var(--borde);
-  border-radius: var(--radio);
-  background: var(--superficie);
-  font-size: .8rem;
-  color: var(--texto-suave);
+.grafico-cabecera { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: .5rem; }
+
+.cifras-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; margin-bottom: .75rem; }  /* 2 columnas en móvil... */
+
+@media (min-width: 992px) {
+  .cifras-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }  /* ...y 4 en ordenador */
 }
 
-.macro strong { display: block; font-size: 1.35rem; color: var(--texto); font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.cifra-tarjeta { display: flex; align-items: center; gap: .75rem; padding: .9rem 1rem; }  /* icono a la izquierda, nombre y número a la derecha */
+.cifra-tarjeta .macro-icono { flex: 0 0 auto; width: 2.5rem; height: 2.5rem; margin: 0; font-size: 1rem; }
+.cifra-nombre { display: block; font-size: .75rem; font-weight: 600; color: var(--texto-suave); }
+.cifra-valor { display: block; font-size: 1.35rem; font-weight: 800; letter-spacing: -.03em; line-height: 1.15; font-variant-numeric: tabular-nums; }
 
 .grafico-semana { display: block; width: 100%; height: auto; overflow: visible; }
 .grafico-semana .fondo-barra { fill: var(--superficie-2); }
-.grafico-semana .barra-kcal { fill: var(--marca); }
-.grafico-semana .macro-p { fill: var(--macro-p); }
-.grafico-semana .linea-meta { stroke: var(--texto-suave); stroke-width: 1; stroke-dasharray: 4 4; }
-.grafico-semana .texto-meta { fill: var(--texto-suave); font-size: 10px; text-anchor: end; }
-.grafico-semana .etiqueta-barra { fill: var(--texto-suave); font-size: 11px; text-anchor: middle; }
-.grafico-semana .etiqueta-barra.hoy { fill: var(--texto); font-weight: 700; }
+.grafico-semana .barra { fill: var(--lima); }                 /* las barras, en lima... */
+.grafico-semana .barra-hoy { fill: var(--verde-oscuro); }     /* ...y la de hoy, en verde oscuro (como la del miércoles en la referencia) */
+.grafico-semana .linea-meta { stroke: var(--texto-suave); stroke-width: 1; stroke-dasharray: 4 5; opacity: .6; }
+.grafico-semana .porcentaje-barra { fill: var(--texto-suave); font-size: 11px; font-weight: 600; text-anchor: middle; }
+.grafico-semana .porcentaje-barra.hoy { fill: var(--texto); font-weight: 800; }
+.grafico-semana .etiqueta-barra { fill: var(--texto-suave); font-size: 12px; font-weight: 600; text-anchor: middle; }
+.grafico-semana .etiqueta-barra.hoy { fill: var(--texto); font-weight: 800; }
 
 .dias-semana { list-style: none; padding: 0; margin: 0; }
 
@@ -600,33 +675,33 @@ h1, h2, h3, .h1, .h2, .h3, .h4, .h5, .h6 {
   display: flex;
   justify-content: space-between;
   gap: .75rem;
-  padding: .7rem .25rem;
+  padding: .65rem .5rem;
   border: 0;
-  border-bottom: 1px solid var(--borde);
+  border-radius: 12px;
   background: transparent;
   color: inherit;
   text-align: left;
-  font-size: .9rem;
+  font-size: .88rem;
   font-variant-numeric: tabular-nums;
 }
 
 .dia-semana:hover:not(:disabled) { background: var(--superficie-2); }
-.dia-semana.hoy { font-weight: 600; }
+.dia-semana.hoy { font-weight: 700; }
 .dia-semana:disabled { opacity: .4; }
 
 /* ---------- 11. VENTANA DE AÑADIR ---------- */
 .titulo-lista {                            /* "Recientes", "Todos los alimentos" */
   font-size: .72rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: .05em;
+  letter-spacing: .06em;
   color: var(--texto-suave);
-  margin: .75rem 0 .35rem;
+  margin: 1rem 0 .4rem;
 }
 
-.lista-opciones { display: flex; flex-direction: column; }
+.lista-opciones { display: flex; flex-direction: column; gap: .15rem; }
 
-.opcion-fila { display: flex; align-items: center; border-bottom: 1px solid var(--borde); }
+.opcion-fila { display: flex; align-items: center; }
 
 .opcion {
   flex: 1;
@@ -634,30 +709,31 @@ h1, h2, h3, .h1, .h2, .h3, .h4, .h5, .h6 {
   display: flex;
   align-items: center;
   gap: .75rem;
-  padding: .65rem .75rem;
+  padding: .65rem .85rem;
   border: 0;
+  border-radius: 16px;
   background: transparent;
   color: inherit;
   text-align: left;
 }
 
 .opcion:hover { background: var(--superficie-2); }
-.opcion.elegida { background: var(--marca-suave); box-shadow: inset 3px 0 0 var(--marca); }  /* la elegida: fondo verde suave y una raya a la izquierda */
+.opcion.elegida { background: var(--lima-suave); box-shadow: inset 0 0 0 2px var(--lima); }  /* la elegida: lima suave con borde lima */
 
 .opcion-texto { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.opcion-nombre { font-weight: 500; }
-.opcion-detalle { font-size: .78rem; color: var(--texto-suave); }
-.opcion-kcal { font-size: .85rem; font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.opcion-kcal small { font-weight: 400; color: var(--texto-suave); }
+.opcion-nombre { font-weight: 600; }
+.opcion-detalle { font-size: .76rem; color: var(--texto-suave); }
+.opcion-kcal { font-size: .85rem; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.opcion-kcal small { font-weight: 500; color: var(--texto-suave); }
 
 .etiqueta-propio {                         /* "Tuyo" */
   margin-left: .35rem;
-  padding: .05rem .4rem;
-  border-radius: 6px;
-  background: var(--marca-suave);
-  color: var(--marca);
-  font-size: .7rem;
-  font-weight: 600;
+  padding: .05rem .45rem;
+  border-radius: 999px;
+  background: var(--lima);
+  color: var(--sobre-lima);
+  font-size: .68rem;
+  font-weight: 700;
   vertical-align: middle;
 }
 
@@ -672,25 +748,26 @@ h1, h2, h3, .h1, .h2, .h3, .h4, .h5, .h6 {
 
 .seleccion-anadir > .flex-grow-1 { flex-basis: 12rem; }
 
-.chips-gramos { display: flex; flex-wrap: wrap; gap: .35rem; flex-basis: 100%; }  /* los botones de gramos rápidos, en su propia línea */
+.chips-gramos { display: flex; flex-wrap: wrap; gap: .4rem; flex-basis: 100%; }  /* los botones de gramos rápidos, en su propia línea */
 
 .chip-gramos {
-  padding: .25rem .65rem;
-  border: 1px solid var(--borde);
+  padding: .3rem .75rem;
+  border: 0;
   border-radius: 999px;
-  background: var(--superficie);
+  background: var(--superficie-2);
   color: var(--texto);
   font-size: .8rem;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
-.chip-gramos:hover { background: var(--superficie-2); }
-.chip-gramos[aria-pressed="true"] { border-color: var(--marca); background: var(--marca-suave); color: var(--marca); font-weight: 600; }
+.chip-gramos:hover { background: var(--borde); }
+.chip-gramos[aria-pressed="true"] { background: var(--lima); color: var(--sobre-lima); }
 
 /* ---------- 12. PÍLDORAS (filtros) ---------- */
 .pills-scroll {
   display: flex;
-  gap: .4rem;
+  gap: .45rem;
   overflow-x: auto;                        /* si no caben, se deslizan hacia los lados */
   padding-bottom: .25rem;
   scrollbar-width: none;                   /* sin barra de desplazamiento (Firefox) */
@@ -703,17 +780,20 @@ h1, h2, h3, .h1, .h2, .h3, .h4, .h5, .h6 {
   display: inline-flex;
   align-items: center;
   gap: .35rem;
-  padding: .35rem .8rem;
-  border: 1px solid var(--borde);
+  padding: .45rem .95rem;
+  border: 0;
   border-radius: 999px;
   background: var(--superficie);
   color: var(--texto);
   font-size: .85rem;
+  font-weight: 600;
   white-space: nowrap;
+  box-shadow: var(--sombra);
 }
 
+.modal .pill-tipo { background: var(--superficie-2); box-shadow: none; }  /* dentro de una ventana, sobre gris */
 .pill-tipo:hover { background: var(--superficie-2); }
-.pill-tipo.activa { background: var(--texto); border-color: var(--texto); color: var(--fondo); }  /* la elegida: oscura (en oscuro, clara) */
+.pill-tipo.activa { background: var(--texto); color: var(--fondo); }  /* la elegida: oscura (en oscuro, clara) */
 
 .barra-filtros { display: flex; flex-direction: column; gap: .75rem; }
 
@@ -723,21 +803,23 @@ h1, h2, h3, .h1, .h2, .h3, .h4, .h5, .h6 {
 }
 
 .ordenar-caja { width: auto; flex: 0 0 auto; }
+.ordenar-caja .input-group-text { border-radius: 999px 0 0 999px; }
+.ordenar-caja .form-select { border-radius: 0 999px 999px 0; }
 
 /* ---------- 13. RECETAS ---------- */
 .receta {
-  border: 1px solid var(--borde) !important;  /* Bootstrap le pone border-0 desde el HTML: aquí manda el borde fino */
+  border: 0 !important;
   border-radius: var(--radio);
   overflow: hidden;
   background: var(--superficie);
   box-shadow: var(--sombra) !important;
   cursor: pointer;
-  transition: border-color .15s, box-shadow .15s;
+  transition: box-shadow .2s, transform .2s;
 }
 
-.receta:hover { border-color: color-mix(in srgb, var(--texto) 25%, var(--borde)) !important; box-shadow: var(--sombra-flotante) !important; }
+.receta:hover { box-shadow: var(--sombra-flotante) !important; transform: translateY(-2px); }  /* al pasar el ratón, se eleva un poco */
 
-.receta-img { background: var(--superficie-2); }
+.receta-img { background: var(--superficie-2); margin: .5rem .5rem 0; border-radius: 18px; overflow: hidden; }  /* la foto, con margen y esquinas propias */
 .receta-img.ratio { --bs-aspect-ratio: 66%; }  /* foto apaisada (3:2) */
 .receta-img > div { color: var(--texto-suave); }
 .receta-foto { width: 100%; height: 100%; object-fit: cover; }  /* la foto rellena el hueco sin deformarse */
@@ -748,43 +830,42 @@ h1, h2, h3, .h1, .h2, .h3, .h4, .h5, .h6 {
   border-radius: 4px;
 }
 
-.receta-titulo:focus-visible { outline: 2px solid var(--marca); outline-offset: 2px; }
-.receta:hover .receta-titulo { text-decoration: underline; text-underline-offset: 3px; }
+.receta-titulo:focus-visible { outline: 2px solid var(--verde); outline-offset: 2px; }
 
-.kcal-grande { font-size: 1.35rem; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.kcal-grande { font-size: 1.5rem; font-weight: 800; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
 
 .recipe-tag {                              /* el tipo de plato (Bowl, Pasta...) */
   display: inline-flex;
   align-items: center;
   gap: .25rem;
-  padding: .15rem .55rem;
-  border-radius: 6px;
-  background: var(--superficie-2);
-  color: var(--texto-suave);
+  padding: .2rem .6rem;
+  border-radius: 999px;
+  background: var(--lima-suave);
+  color: var(--verde);
   font-size: .72rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .receta-fuego {                            /* "Alta en proteína", encima de la foto */
   position: absolute;
-  top: .75rem;
-  right: .75rem;
-  background: rgba(255, 255, 255, .94);
-  color: #9B1C40;                          /* frambuesa oscuro: se lee bien sobre el blanco */
+  top: 1.15rem;
+  right: 1.15rem;
+  background: var(--lima);
+  color: var(--sobre-lima);
 }
 
 .btn-fav {                                 /* el corazón, encima de la foto */
   position: absolute;
-  top: .65rem;
-  left: .65rem;
-  width: 2.1rem;
-  height: 2.1rem;
+  top: 1.05rem;
+  left: 1.05rem;
+  width: 2.2rem;
+  height: 2.2rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border: 0;
   border-radius: 50%;
-  background: rgba(255, 255, 255, .94);
+  background: rgba(255, 255, 255, .95);
   color: #59615D;
 }
 
@@ -793,9 +874,9 @@ h1, h2, h3, .h1, .h2, .h3, .h4, .h5, .h6 {
 .progress-stacked { height: 6px; border-radius: 999px; background: var(--superficie-2); }  /* la barra del reparto de calorías */
 
 .btn-compra { --bs-btn-color: var(--texto); --bs-btn-border-color: var(--borde); --bs-btn-bg: var(--superficie); --bs-btn-hover-bg: var(--superficie-2); --bs-btn-hover-border-color: var(--borde); }
-.btn-compra.activa { --bs-btn-color: #fff; --bs-btn-bg: var(--marca-boton); --bs-btn-border-color: var(--marca-boton); --bs-btn-hover-color: #fff; --bs-btn-hover-bg: var(--marca-hover); }
+.btn-compra.activa { --bs-btn-color: var(--sobre-lima); --bs-btn-bg: var(--lima); --bs-btn-border-color: var(--lima); --bs-btn-hover-color: var(--sobre-lima); --bs-btn-hover-bg: var(--lima-hover); }
 
-#detalleFoto { display: block; width: 100%; height: 15rem; object-fit: cover; }  /* la foto del detalle */
+#detalleFoto { display: block; width: 100%; height: 15rem; object-fit: cover; border-radius: 18px; }  /* la foto del detalle */
 
 /* ---------- 14. FORMULARIO DE RECETA ---------- */
 #listaIngredientes { list-style: none; padding: 0; margin: .75rem 0 0; display: flex; flex-wrap: wrap; gap: .4rem; }
@@ -804,10 +885,9 @@ h1, h2, h3, .h1, .h2, .h3, .h4, .h5, .h6 {
   display: inline-flex;
   align-items: center;
   gap: .35rem;
-  padding: .25rem .4rem .25rem .7rem;
-  border: 1px solid var(--borde);
+  padding: .3rem .4rem .3rem .8rem;
   border-radius: 999px;
-  background: var(--superficie);
+  background: var(--superficie-2);
   font-size: .85rem;
 }
 
@@ -816,7 +896,7 @@ h1, h2, h3, .h1, .h2, .h3, .h4, .h5, .h6 {
   height: 1.4rem;
   border: 0;
   border-radius: 50%;
-  background: var(--superficie-2);
+  background: var(--superficie);
   color: var(--texto-suave);
   line-height: 1;
 }
@@ -830,7 +910,7 @@ h1, h2, h3, .h1, .h2, .h3, .h4, .h5, .h6 {
   display: flex;
   align-items: center;
   gap: .75rem;
-  padding: .6rem 0;
+  padding: .65rem 0;
   border-bottom: 1px solid var(--borde);
   margin: 0;
   cursor: pointer;
@@ -857,7 +937,7 @@ h1, h2, h3, .h1, .h2, .h3, .h4, .h5, .h6 {
 .compra-quitar:hover { color: var(--peligro); }
 
 /* ---------- 16. VENTANAS, PANELES Y AVISOS ---------- */
-.modal { --bs-modal-bg: var(--superficie); --bs-modal-border-radius: 18px; --bs-modal-header-border-color: var(--borde); --bs-modal-footer-border-color: var(--borde); }
+.modal { --bs-modal-bg: var(--superficie); --bs-modal-border-radius: 26px; --bs-modal-header-border-color: var(--borde); --bs-modal-footer-border-color: var(--borde); }
 .offcanvas { --bs-offcanvas-bg: var(--superficie); }
 .modal-content { box-shadow: var(--sombra-flotante); }
 .modal-dialog-scrollable .modal-content { overflow: hidden; }  /* que el contenido no se salga de las esquinas redondeadas */
@@ -866,13 +946,21 @@ h1, h2, h3, .h1, .h2, .h3, .h4, .h5, .h6 {
 .separador-o::before,
 .separador-o::after { content: ""; flex: 1; border-top: 1px solid var(--borde); }
 
-.toast { --bs-toast-bg: var(--texto); --bs-toast-color: var(--fondo); --bs-toast-border-radius: 12px; }  /* el aviso: oscuro en claro y claro en oscuro */
-.toast-body { font-weight: 500; }
+.toast { --bs-toast-bg: var(--texto); --bs-toast-color: var(--fondo); --bs-toast-border-radius: 16px; }  /* el aviso: oscuro en claro y claro en oscuro */
+.toast-body { font-weight: 600; }
+
+/* La X del aviso: el aviso es oscuro en el tema claro (X blanca) y claro en el oscuro (X negra) */
+.toast .btn-close { filter: invert(1) grayscale(1) brightness(2); }
+[data-bs-theme="dark"] .toast .btn-close { filter: none; }
+
+/* Los avisos de Bootstrap ("alert"), con los colores de la marca en vez del azul y amarillo de serie */
+.alert { --bs-alert-border-radius: var(--radio-sm); --bs-alert-border-color: transparent; font-size: .875rem; }
+.alert-info { --bs-alert-bg: var(--lima-suave); --bs-alert-color: var(--texto); }
+.alert-warning { --bs-alert-bg: color-mix(in srgb, var(--aviso) 12%, var(--superficie)); --bs-alert-color: var(--texto); }
 
 /* ---------- 17. PIE ---------- */
 .pie {
   padding: 2rem 0 2.5rem;
-  border-top: 1px solid var(--borde);
   color: var(--texto-suave);
   font-size: .85rem;
 }
@@ -883,17 +971,17 @@ h1, h2, h3, .h1, .h2, .h3, .h4, .h5, .h6 {
 /* ---------- 18. MÓVIL: barra de pestañas abajo ---------- */
 .barra-inferior {
   position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  left: .75rem;                            /* flota un poco separada de los bordes, como una píldora */
+  right: .75rem;
+  bottom: calc(.6rem + env(safe-area-inset-bottom));  /* respeta la "barra de inicio" del iPhone */
   z-index: 1030;
   display: grid;
   grid-template-columns: repeat(5, 1fr);   /* 5 huecos: Diario, Semana, +, Recetas, Compra */
   align-items: center;
-  padding: .35rem .5rem calc(.35rem + env(safe-area-inset-bottom));  /* respeta la "barra de inicio" del iPhone */
-  background: color-mix(in srgb, var(--superficie) 92%, transparent);
-  backdrop-filter: saturate(180%) blur(12px);
-  border-top: 1px solid var(--borde);
+  padding: .4rem .35rem;
+  border-radius: 26px;
+  background: var(--superficie);
+  box-shadow: var(--sombra-flotante);
 }
 
 .tab {
@@ -906,47 +994,42 @@ h1, h2, h3, .h1, .h2, .h3, .h4, .h5, .h6 {
   border: 0;
   background: transparent;
   color: var(--texto-suave);
-  font-size: .68rem;
-  font-weight: 500;
+  font-size: .66rem;
+  font-weight: 600;
   text-decoration: none;
 }
 
-.tab .bi { font-size: 1.25rem; }
-.tab.activa { color: var(--marca); }       /* la pestaña en la que estás */
+.tab .bi { font-size: 1.2rem; }
+.tab.activa { color: var(--texto); }       /* la pestaña en la que estás: oscura... */
+.tab.activa .bi { color: var(--verde); }   /* ...con el icono en verde */
 
 .tab .contador { position: absolute; top: 0; left: 55%; }  /* el numerito, encima del icono */
 
-.tab-anadir .bi {                          /* el botón central "+": redondo, verde y algo más grande */
-  width: 2.9rem;
-  height: 2.9rem;
+.tab-anadir .bi {                          /* el botón central "+": redondo, lima y más grande */
+  width: 3.1rem;
+  height: 3.1rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: var(--marca-boton);
-  color: #fff;
-  font-size: 1.4rem;
-  box-shadow: 0 4px 12px rgba(30, 107, 78, .35);
+  background: var(--lima);
+  color: var(--sobre-lima);
+  font-size: 1.45rem;
+  box-shadow: 0 6px 16px rgba(122, 166, 30, .45);
 }
 
 @media (max-width: 767.98px) {
-  body { padding-bottom: calc(4.5rem + env(safe-area-inset-bottom)); }  /* que la barra de abajo no tape el final de la página */
-  .toast-container { bottom: calc(4.5rem + env(safe-area-inset-bottom)) !important; }  /* los avisos, por encima de la barra */
-  .titulo-pagina { font-size: 1.35rem; }
-  .resumen-dia { padding: 1rem; }
-  .anillo-caja { width: 148px; height: 148px; }
+  body { padding-bottom: calc(5.5rem + env(safe-area-inset-bottom)); }  /* que la barra de abajo no tape el final de la página */
+  .toast-container { bottom: calc(5.5rem + env(safe-area-inset-bottom)) !important; }  /* los avisos, por encima de la barra */
+  .titulo-pagina { font-size: 1.6rem; }
+  .destacada-numero { font-size: 2.2rem; }
+  .anillo-caja { width: 104px; height: 104px; }
+  .macros-tarjetas { gap: .5rem; }
+  .macro-tarjeta { padding: .8rem .75rem .9rem; }
+  .fila-editor { padding-left: .6rem; }
 }
 
 /* ---------- 19. MENOS MOVIMIENTO ---------- */
 @media (prefers-reduced-motion: reduce) {  /* si la persona pidió "menos animaciones" en su sistema... */
   *, *::before, *::after { transition: none !important; animation: none !important; }  /* ...quitamos todas */
 }
-
-/* La X del aviso: el aviso es oscuro en el tema claro (X blanca) y claro en el oscuro (X negra) */
-.toast .btn-close { filter: invert(1) grayscale(1) brightness(2); }
-[data-bs-theme="dark"] .toast .btn-close { filter: none; }
-
-/* Los avisos de Bootstrap ("alert"), con los colores de la marca en vez del azul y amarillo de serie */
-.alert { --bs-alert-border-radius: var(--radio-sm); --bs-alert-border-color: transparent; font-size: .875rem; }
-.alert-info { --bs-alert-bg: var(--marca-suave); --bs-alert-color: var(--texto); }
-.alert-warning { --bs-alert-bg: color-mix(in srgb, var(--aviso) 12%, var(--superficie)); --bs-alert-color: var(--texto); }

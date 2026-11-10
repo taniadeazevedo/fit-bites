@@ -13,14 +13,14 @@ Una web app para apuntar lo que comes por gramos, comida a comida, y ver al mome
 
 | | |
 |---|---|
-| 📝 **Diario por comidas** | Desayuno, comida, merienda y cena. Un anillo con las calorías que te quedan (Objetivo − Comido = Restantes) y barras de proteína, carbohidratos y grasas. Una tira con los días de la semana para cambiar de día. Al pulsar un alimento apuntado puedes cambiar la cantidad o eliminarlo. |
+| 📝 **Diario por comidas** | Una tarjeta destacada con las kcal que te quedan y un anillo con el % del objetivo; tres tarjetas con proteína, carbohidratos y grasas; un calendario semanal para cambiar de día. Cada comida (desayuno, comida, merienda, cena) es una tarjeta con su botón «+»; al pulsar un alimento apuntado puedes cambiar la cantidad o eliminarlo. |
 | ➕ **Añadir rápido** | Buscador sin tildes, tus alimentos **recientes** con la última cantidad que usaste y botones de gramos rápidos (1 ración, 50, 100, 150, 200 g). En el móvil la ventana ocupa toda la pantalla y hay una barra de pestañas abajo, como en una app. |
 | 🥑 **Tabla de alimentos** | Unos 60 alimentos con sus valores por 100 g **en crudo** (proteínas, lácteos, cereales, verduras, frutas, frutos secos…), cada uno con una ración típica. Puedes **crear los tuyos** copiando la etiqueta (las kcal se calculan solas). |
 | 🔐 **Cuentas** | Con Google o con email (Firebase). Tus datos se guardan en la nube y se sincronizan entre dispositivos. Sin cuenta, todo funciona igual y se guarda en el navegador. |
 | 🍽️ **Recetas con macros** | Calorías, proteína, carbohidratos y grasas de cada receta, con una barra de reparto, foto, tipo de plato, tiempo e ingredientes. |
 | ✏️ **CRUD completo** | Crear, editar y borrar recetas contra una API REST (`json-server`), con foto subida desde el formulario. |
 | 🔎 **Filtros y orden** | Por tipo de plato, buscador (sin distinguir tildes) por nombre e ingredientes, 🔥 alta en proteína y ❤️ favoritas. Se puede ordenar por proteína, calorías, tiempo o nombre. |
-| 📊 **Mi semana** | Resumen de lunes a domingo: media de kcal y proteína, días en los que llegaste a tu proteína y dos gráficos de barras (SVG hecho a mano) con la línea de tu objetivo. |
+| 📊 **Mi semana** | Cifras de la semana (proteína media, días con tu proteína, días apuntados…) y dos gráficos de barras dibujados en SVG, con el % del objetivo encima de cada día y el de hoy resaltado. |
 | ⚖️ **Raciones** | En el detalle de cada receta eliges las raciones (− 1½ +) y se recalculan las kcal, los macros y las cantidades de los ingredientes. Se apuntan en el diario por raciones. |
 | 🛒 **Lista de la compra** | Apuntas a mano lo que necesites (con sugerencias de la tabla de alimentos) o marcas recetas con el carrito y junta sus ingredientes sumando las cantidades (`120 g + 100 g de salmón = 220 g`). Se puede ir tachando y copiar. |
 | 🌙 **Modo oscuro** | Recuerda tu elección o usa la del sistema. |
@@ -43,13 +43,13 @@ Una web app para apuntar lo que comes por gramos, comida a comida, y ver al mome
 
 ## 🛠️ Tecnologías
 
-- **HTML5** semántico y **CSS3** (variables de diseño, flexbox, grid, tema oscuro, diseño responsive con barra de pestañas en móvil). Diseño inspirado en los diarios de comida más usados (MyFitnessPal, Cronometer, MacroFactor, Yazio)
+- **HTML5** semántico y **CSS3** (sistema de diseño con variables, flexbox, grid, tema oscuro, responsive con barra de pestañas flotante en móvil). Diseño inspirado en el concepto [Food Calorie App](https://dribbble.com/shots/26430827-Food-Calorie-App-Design) de Dribbble y en los diarios de comida más usados (MyFitnessPal, Yazio)
 - **JavaScript** moderno, sin frameworks, dividido en **módulos** (`import` / `export`): `fetch` con `async/await`, `localStorage`, `IntersectionObserver`, canvas para reducir las fotos, gráficos en SVG, service worker
 - **Bootstrap 5.3** y **Bootstrap Icons**
 - **Firebase** (Authentication + Firestore) para las cuentas y guardar los datos en la nube
 - **json-server** como API REST de pruebas
 - **GitHub Pages** para publicarla
-- Fuente Inter (Google Fonts)
+- Fuente Plus Jakarta Sans (Google Fonts)
 
 ## 🚀 Cómo ejecutarlo en local
 
