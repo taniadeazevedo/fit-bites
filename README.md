@@ -17,7 +17,7 @@ Una web app para apuntar lo que comes por gramos, comida a comida, y ver al mome
 | ➕ **Añadir rápido** | Buscador sin tildes, tus alimentos **recientes** con la última cantidad que usaste y botones de gramos rápidos (1 ración, 50, 100, 150, 200 g). En el móvil la ventana ocupa toda la pantalla y hay una barra de pestañas abajo, como en una app. |
 | 🥑 **Tabla de alimentos** | Unos 60 alimentos con sus valores por 100 g **en crudo** (proteínas, lácteos, cereales, verduras, frutas, frutos secos…), cada uno con una ración típica. Puedes **crear los tuyos** copiando la etiqueta (las kcal se calculan solas). |
 | 🔐 **Cuentas** | Con Google o con email (Firebase). Tus datos se guardan en la nube y se sincronizan entre dispositivos. Sin cuenta, todo funciona igual y se guarda en el navegador. |
-| 🍽️ **Recetas con macros** | Calorías, proteína, carbohidratos y grasas de cada receta, con una barra de reparto, foto, tipo de plato, tiempo e ingredientes. |
+| 🍽️ **Recetas con macros** | 12 recetas fit de ejemplo (desayunos, comidas, cenas y meriendas) con calorías, proteína, carbohidratos y grasas, barra de reparto, foto, tipo de plato, tiempo e ingredientes. |
 | ✏️ **CRUD completo** | Crear, editar y borrar recetas contra una API REST (`json-server`), con foto subida desde el formulario. |
 | 🔎 **Filtros y orden** | Por tipo de plato, buscador (sin distinguir tildes) por nombre e ingredientes, 🔥 alta en proteína y ❤️ favoritas. Se puede ordenar por proteína, calorías, tiempo o nombre. |
 | 📊 **Mi semana** | Cifras de la semana (proteína media, días con tu proteína, días apuntados…) y dos gráficos de barras dibujados en SVG, con el % del objetivo encima de cada día y el de hoy resaltado. |
@@ -89,7 +89,7 @@ fit-bites/
 ├── json/
 │   ├── alimentos.json      # tabla de alimentos (por 100 g en crudo)
 │   └── recetas.json        # las recetas (la "base de datos" de json-server)
-├── imgs/recetas/           # fotos de las recetas
+├── imgs/recetas/           # fotos de las recetas propias (las de ejemplo nuevas son de Unsplash)
 ├── icons/ + manifest.webmanifest + sw.js   # app instalable (PWA)
 └── docs/                   # capturas de este README y la guía de Firebase
 ```

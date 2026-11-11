@@ -41,7 +41,7 @@ export const DIAS_GUARDADOS = 120;          // cuántos días como máximo se gu
 
 // ---------- Recetas ----------
 // Tipos de plato: salen en el formulario Y en el filtro. Para añadir uno nuevo, escríbelo aquí y listo
-export const TIPOS_PLATO = ['Bowl', 'Pasta', 'Ensalada', 'Hamburguesa', 'Fajita', 'Wrap', 'Sándwich', 'Arroz', 'Tortilla', 'Postre', 'Otro'];
+export const TIPOS_PLATO = ['Bowl', 'Pasta', 'Ensalada', 'Hamburguesa', 'Wrap', 'Tostada', 'Tortitas', 'Fajita', 'Sándwich', 'Arroz', 'Tortilla', 'Postre', 'Otro'];
 
 // Una receta se considera "alta en proteína" si tiene al menos estos gramos (cámbialo si quieres ser más o menos exigente)
 export const PROTEINA_ALTA = 35;

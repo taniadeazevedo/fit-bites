@@ -85,6 +85,9 @@ async function iniciar() {
         verSemana: () => cambiarVista('semana'),
         anadir: () => abrirAnadir()                        // sin comida: propone la que toca por la hora
     });
+    // el botón "Apuntar comida" de la portada abre la ventana de añadir
+    document.querySelector('#btnPortadaAnadir').addEventListener('click', () => abrirAnadir());
+
     // los botones Día / Semana de arriba también encienden su pestaña de abajo
     document.querySelector('#btnVistaDia').addEventListener('click', () => marcarPestana('tabDiario'));
     document.querySelector('#btnVistaSemana').addEventListener('click', () => marcarPestana('tabSemana'));

@@ -94,13 +94,39 @@
     <!-- <main> = el contenido principal de la página (los lectores de pantalla pueden saltar directamente aquí) -->
     <main>
 
-    <!-- EL DIARIO: lo primero que se ve. Resumen del día (anillo + macros) y las cuatro comidas. Con "Semana", medias y gráficos. Lo pinta dia.js -->
+    <!-- PORTADA: qué es Fit Bites, en una frase y con dos botones. La foto con etiquetas flotantes solo se ve desde tablet ("d-none d-md-block") -->
+    <section class="portada" aria-labelledby="tituloPortada">
+        <div class="container">
+            <div class="portada-tarjeta">
+                <div>
+                    <span class="chip-etiqueta"><i class="bi bi-stars" aria-hidden="true"></i> Diario de calorías y macros</span>
+                    <!-- el título de la página (h1: solo uno por página). El circulito lima con la llama es decoración (aria-hidden) -->
+                    <h1 id="tituloPortada" class="portada-titulo">Tu guía diaria para <span class="portada-icono" aria-hidden="true"><i class="bi bi-fire"></i></span> comer&nbsp;mejor.</h1> <!-- &nbsp; = espacio que no se parte: "comer mejor" siempre en la misma línea -->
+                    <p class="portada-sub">Apunta lo que comes en gramos y ve al momento tus calorías, proteína, carbohidratos y grasas. Con recetas fit, resumen semanal y lista de la compra.</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button id="btnPortadaAnadir" type="button" class="btn btn-verde"> <!-- abre la ventana de añadir (JavaScript) -->
+                            <i class="bi bi-plus-lg" aria-hidden="true"></i> Apuntar comida
+                        </button>
+                        <a class="btn btn-outline-dark" href="#recetas">Ver recetas</a>
+                    </div>
+                </div>
+                <div class="portada-visual d-none d-md-block" aria-hidden="true"> <!-- solo decoración: los lectores de pantalla se la saltan -->
+                    <img class="portada-foto" src="imgs/recetas/receta-3.jpg" alt="">
+                    <span class="chip-flotante chip-1"><i class="bi bi-fire"></i> 710 kcal</span>
+                    <span class="chip-flotante chip-2">P 46 g · C 72 g</span>
+                    <span class="chip-flotante chip-3"><i class="bi bi-lightning-charge-fill"></i> Alta en proteína</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- EL DIARIO: Resumen del día (anillo + macros) y las cuatro comidas. Con "Semana", medias y gráficos. Lo pinta dia.js -->
     <section id="diario" class="seccion" tabindex="-1"> <!-- tabindex="-1" = el enlace "Saltar al contenido" puede llevar el foco aquí -->
         <div class="container">
             <div class="diario-cabecera">
                 <div>
                     <p id="saludo" class="saludo"></p> <!-- "Buenos días", "Buenas tardes"... (lo escribe JavaScript según la hora) -->
-                    <h1 class="titulo-pagina">Tu diario</h1> <!-- el título de la página (h1: solo uno por página) -->
+                    <h2 class="titulo-pagina">Tu diario</h2> <!-- h2: el h1 es el título de la portada -->
                     <p class="subtitulo">
                         <span id="fechaDia" aria-live="polite"></span> <!-- la fecha: la escribe JavaScript; aria-live la lee en voz alta al cambiar -->
                         <button id="btnIrHoy" type="button" class="btn btn-link btn-sm p-0 ms-2 align-baseline d-none">Volver a hoy</button> <!-- solo si estás viendo otro día -->
@@ -241,7 +267,7 @@
     <!-- PIE DE PÁGINA: discreto, como en las apps -->
     <footer class="pie">
         <div class="container d-flex flex-wrap justify-content-between gap-2">
-            <span>Fit Bites · Valores nutricionales aproximados. No sustituyen el consejo de un profesional.</span>
+            <span>Fit Bites · Valores nutricionales aproximados. No sustituyen el consejo de un profesional. Algunas fotos de ejemplo: <a href="https://unsplash.com" target="_blank" rel="noopener">Unsplash</a>.</span>
             <a href="https://github.com/taniadeazevedo/fit-bites" target="_blank" rel="noopener"><i class="bi bi-github" aria-hidden="true"></i> Código en GitHub</a> <!-- target="_blank" = en pestaña nueva; rel="noopener" = por seguridad -->
         </div>
     </footer>

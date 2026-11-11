@@ -135,6 +135,9 @@ h1, h2, h3, .h1, .h2, .h3, .h4, .h5, .h6 {
 /* ---------- 3. BOTONES ---------- */
 .btn {
   --bs-btn-font-weight: 600;
+  --bs-btn-font-size: .9rem;               /* letra algo más pequeña que el texto: Plus Jakarta Sans es ancha y a 1rem los botones se ven enormes */
+  --bs-btn-padding-y: .5rem;
+  --bs-btn-padding-x: 1.1rem;
   --bs-btn-border-radius: 999px;           /* botones en forma de píldora, como en la referencia */
   --bs-btn-focus-box-shadow: 0 0 0 3px var(--bs-focus-ring-color);
 }
@@ -364,9 +367,9 @@ h1, h2, h3, .h1, .h2, .h3, .h4, .h5, .h6 {
 
 .saludo { margin: 0; color: var(--texto-suave); font-weight: 500; font-size: .9rem; }  /* "Buenos días" */
 
-.titulo-pagina { font-size: 2rem; font-weight: 800; letter-spacing: -.035em; margin: 0; line-height: 1.1; }
+.titulo-pagina { font-size: 1.65rem; font-weight: 800; letter-spacing: -.035em; margin: 0; line-height: 1.15; }
 
-.titulo-seccion { font-size: 1.5rem; font-weight: 800; letter-spacing: -.03em; margin: 0; }
+.titulo-seccion { font-size: 1.65rem; font-weight: 800; letter-spacing: -.035em; margin: 0; }  /* igual que "Tu diario": las dos secciones al mismo nivel */
 
 .subtitulo { color: var(--texto-suave); margin: .2rem 0 0; font-size: .9rem; }
 
@@ -378,7 +381,7 @@ h1, h2, h3, .h1, .h2, .h3, .h4, .h5, .h6 {
 
 .etiqueta-suave { font-size: .8rem; font-weight: 600; color: var(--texto-suave); }  /* textos pequeños de cabecera */
 
-.numero-grande { font-size: 2.25rem; font-weight: 800; letter-spacing: -.04em; line-height: 1.1; margin: .1rem 0 0; font-variant-numeric: tabular-nums; }
+.numero-grande { font-size: 1.9rem; font-weight: 800; letter-spacing: -.04em; line-height: 1.1; margin: .1rem 0 0; font-variant-numeric: tabular-nums; }
 .numero-grande span { font-size: 1rem; font-weight: 600; color: var(--texto-suave); letter-spacing: 0; }
 
 .aviso-suave {
@@ -387,6 +390,90 @@ h1, h2, h3, .h1, .h2, .h3, .h4, .h5, .h6 {
   background: var(--lima-suave);
   color: var(--texto);
   font-size: .875rem;
+}
+
+/* ---------- 6b. PORTADA: qué es la app, en una frase (como la primera pantalla de la referencia) ---------- */
+.portada { padding-top: 1.25rem; }
+
+.portada-tarjeta {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, .75fr);  /* texto a la izquierda (más ancho) y la foto a la derecha */
+  align-items: center;
+  gap: 2rem;
+  padding: clamp(1.5rem, 4vw, 3rem);       /* aire interior: se adapta a la pantalla */
+  border-radius: 28px;
+  background: var(--superficie);
+  box-shadow: var(--sombra);
+  overflow: hidden;                        /* que las etiquetas flotantes no se salgan */
+}
+
+.portada-titulo {
+  font-size: clamp(1.85rem, 4vw, 2.9rem);  /* entre 1,85rem (móvil) y 2,9rem (pantallas grandes) */
+  font-weight: 800;
+  letter-spacing: -.045em;
+  line-height: 1.04;
+  margin: .9rem 0 .9rem;
+}
+
+.portada-icono {                           /* el circulito lima dentro del título, como en la referencia */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: .9em;
+  height: .9em;
+  border-radius: 50%;
+  background: var(--lima);
+  color: var(--sobre-lima);
+  font-size: .62em;                        /* el icono, más pequeño que las letras */
+  vertical-align: .08em;                   /* lo sube un poco para que quede centrado con las letras */
+  margin: 0 .05em;
+}
+
+.portada-sub { color: var(--texto-suave); font-size: 1rem; line-height: 1.6; max-width: 32rem; margin-bottom: 1.4rem; }
+
+.portada-visual {
+  position: relative;                      /* para colocar las etiquetas flotantes encima */
+  isolation: isolate;                      /* el círculo de fondo (::before) se queda detrás de la foto, pero dentro de esta caja */
+  width: 100%;
+  max-width: 290px;
+  aspect-ratio: 1;                         /* cuadrado */
+  justify-self: center;
+}
+
+.portada-visual::before {                  /* un círculo lima suave detrás de la foto */
+  content: "";
+  position: absolute;
+  inset: -7%;
+  z-index: -1;
+  border-radius: 50%;
+  background: var(--lima-suave);
+}
+
+.portada-foto { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }  /* la foto, en redondo */
+
+.chip-flotante {                           /* las etiquetas que flotan alrededor de la foto ("710 kcal"...) */
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  padding: .45rem .85rem;
+  border-radius: 999px;
+  background: var(--superficie);
+  box-shadow: var(--sombra-flotante);
+  font-size: .82rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.chip-flotante .bi { color: var(--aviso); }
+.chip-1 { top: 6%; left: -4%; }
+.chip-2 { bottom: 10%; left: -2%; }
+.chip-3 { top: 48%; right: -4%; background: var(--lima); color: var(--sobre-lima); }
+.chip-3 .bi { color: var(--sobre-lima); }
+
+@media (max-width: 767.98px) {
+  .portada-tarjeta { grid-template-columns: 1fr; gap: 0; }  /* en móvil, una columna (la foto se oculta desde el HTML) */
+  .portada-sub { font-size: .92rem; margin-bottom: 1.15rem; }
 }
 
 /* ---------- 7. DIARIO: cabecera y calendario ---------- */
@@ -483,7 +570,7 @@ h1, h2, h3, .h1, .h2, .h3, .h4, .h5, .h6 {
 
 .chip-etiqueta .bi { color: var(--aviso); }  /* la llamita, en naranja */
 
-.destacada-numero { font-size: 2.6rem; font-weight: 800; letter-spacing: -.045em; line-height: 1; margin: .75rem 0 .15rem; font-variant-numeric: tabular-nums; }
+.destacada-numero { font-size: 2.35rem; font-weight: 800; letter-spacing: -.045em; line-height: 1; margin: .75rem 0 .15rem; font-variant-numeric: tabular-nums; }
 .destacada-numero span { font-size: 1rem; font-weight: 700; letter-spacing: 0; }
 .destacada-numero.pasado { color: var(--aviso); }
 .destacada-sub { margin: 0; color: var(--texto-suave); font-size: .85rem; font-weight: 500; }
@@ -819,7 +906,7 @@ h1, h2, h3, .h1, .h2, .h3, .h4, .h5, .h6 {
 
 .receta:hover { box-shadow: var(--sombra-flotante) !important; transform: translateY(-2px); }  /* al pasar el ratón, se eleva un poco */
 
-.receta-img { background: var(--superficie-2); margin: .5rem .5rem 0; border-radius: 18px; overflow: hidden; }  /* la foto, con margen y esquinas propias */
+.receta-img { width: auto; background: var(--superficie-2); margin: .5rem .5rem 0; border-radius: 18px; overflow: hidden; }  /* la foto, con margen y esquinas propias. width: auto = ancho del hueco MENOS el margen (con el 100 % de Bootstrap se salía por la derecha) */
 .receta-img.ratio { --bs-aspect-ratio: 66%; }  /* foto apaisada (3:2) */
 .receta-img > div { color: var(--texto-suave); }
 .receta-foto { width: 100%; height: 100%; object-fit: cover; }  /* la foto rellena el hueco sin deformarse */
@@ -832,7 +919,7 @@ h1, h2, h3, .h1, .h2, .h3, .h4, .h5, .h6 {
 
 .receta-titulo:focus-visible { outline: 2px solid var(--verde); outline-offset: 2px; }
 
-.kcal-grande { font-size: 1.5rem; font-weight: 800; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.kcal-grande { font-size: 1.35rem; font-weight: 800; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
 
 .recipe-tag {                              /* el tipo de plato (Bowl, Pasta...) */
   display: inline-flex;
@@ -1021,8 +1108,8 @@ h1, h2, h3, .h1, .h2, .h3, .h4, .h5, .h6 {
 @media (max-width: 767.98px) {
   body { padding-bottom: calc(5.5rem + env(safe-area-inset-bottom)); }  /* que la barra de abajo no tape el final de la página */
   .toast-container { bottom: calc(5.5rem + env(safe-area-inset-bottom)) !important; }  /* los avisos, por encima de la barra */
-  .titulo-pagina { font-size: 1.6rem; }
-  .destacada-numero { font-size: 2.2rem; }
+  .titulo-pagina, .titulo-seccion { font-size: 1.45rem; }
+  .destacada-numero { font-size: 2.1rem; }
   .anillo-caja { width: 104px; height: 104px; }
   .macros-tarjetas { gap: .5rem; }
   .macro-tarjeta { padding: .8rem .75rem .9rem; }

@@ -66,9 +66,10 @@ export async function reducirImagen(archivo) {
     return resultado;                                      // devolvemos la foto ya reducida, en texto
 }
 
-// Solo se pintan fotos que de verdad sean una imagen: o un texto Base64 (data:image/...) o la ruta de un archivo de la carpeta imgs/ (imgs/recetas/receta-1.jpg)
+// Solo se pintan fotos que de verdad sean una imagen: un texto Base64 (data:image/...), la ruta de un archivo de la carpeta imgs/ o una foto de Unsplash
 export function fotoValida(foto) {
     if (typeof foto !== 'string') return false;            // tiene que ser texto
     return foto.startsWith('data:image/')                  // ...y empezar por "data:image/" (foto subida desde el formulario)...
-        || /^imgs\/[\w\-./]+\.(jpe?g|png|webp)$/i.test(foto); // ...o ser una ruta como "imgs/recetas/receta-1.jpg" (foto guardada como archivo, más nítida)
+        || /^imgs\/[\w\-./]+\.(jpe?g|png|webp)$/i.test(foto)  // ...o ser una ruta como "imgs/recetas/receta-1.jpg" (foto guardada como archivo, más nítida)...
+        || /^https:\/\/images\.unsplash\.com\/photo-[\w-]+(\?[\w=&.%-]*)?$/.test(foto); // ...o una foto de Unsplash (las de las recetas de ejemplo; su licencia deja usarlas gratis)
 }

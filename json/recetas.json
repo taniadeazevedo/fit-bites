@@ -113,6 +113,155 @@
       ],
       "foto": "imgs/recetas/receta-5.jpg",
       "id": 5
+    },
+    {
+      "nombre": "Tostada de aguacate y huevo",
+      "categoria": "Desayuno",
+      "tipo": "Tostada",
+      "tiempo": 10,
+      "kcal": 440,
+      "proteina": 23,
+      "carbohidratos": 34,
+      "grasas": 24,
+      "ingredientes": [
+        "60 g de pan integral",
+        "70 g de aguacate",
+        "2 huevos",
+        "40 g de tomate cherry",
+        "5 g de semillas de sésamo",
+        "Sal y pimienta",
+        "Copos de chile (opcional)"
+      ],
+      "foto": "https://images.unsplash.com/photo-1687276287139-88f7333c8ca4?auto=format&fit=crop&w=900&q=75",
+      "id": 6
+    },
+    {
+      "nombre": "Porridge de avena con frutos rojos",
+      "categoria": "Desayuno",
+      "tipo": "Bowl",
+      "tiempo": 10,
+      "kcal": 438,
+      "proteina": 29,
+      "carbohidratos": 58,
+      "grasas": 11,
+      "ingredientes": [
+        "50 g de copos de avena",
+        "200 ml de leche desnatada",
+        "15 g de proteína whey (vainilla)",
+        "80 g de frutos rojos",
+        "10 g de nueces",
+        "5 g de miel",
+        "Canela"
+      ],
+      "foto": "https://images.unsplash.com/photo-1610441009633-b6ca9c6d4be2?auto=format&fit=crop&w=900&q=75",
+      "id": 7
+    },
+    {
+      "nombre": "Tortitas de avena y plátano",
+      "categoria": "Desayuno",
+      "tipo": "Tortitas",
+      "tiempo": 15,
+      "kcal": 424,
+      "proteina": 30,
+      "carbohidratos": 60,
+      "grasas": 8,
+      "ingredientes": [
+        "40 g de copos de avena",
+        "1 plátano maduro",
+        "1 huevo",
+        "2 claras de huevo",
+        "100 g de queso fresco batido 0 %",
+        "60 g de frutos rojos",
+        "Levadura y canela"
+      ],
+      "foto": "https://images.unsplash.com/photo-1612182062633-9ff3b3598e96?auto=format&fit=crop&w=900&q=75",
+      "id": 8
+    },
+    {
+      "nombre": "Wrap de pollo con aguacate",
+      "categoria": "Cena",
+      "tipo": "Wrap",
+      "tiempo": 20,
+      "kcal": 437,
+      "proteina": 37,
+      "carbohidratos": 39,
+      "grasas": 15,
+      "ingredientes": [
+        "1 tortilla de trigo (60 g)",
+        "120 g de pechuga de pollo",
+        "40 g de aguacate",
+        "Lechuga",
+        "50 g de tomate",
+        "30 g de yogur griego",
+        "Pimentón y comino"
+      ],
+      "foto": "https://images.unsplash.com/photo-1626700051175-6818013e1d4f?auto=format&fit=crop&w=900&q=75",
+      "id": 9
+    },
+    {
+      "nombre": "Poke de salmón y edamame",
+      "categoria": "Comida",
+      "tipo": "Bowl",
+      "tiempo": 25,
+      "kcal": 637,
+      "proteina": 38,
+      "carbohidratos": 61,
+      "grasas": 26,
+      "ingredientes": [
+        "60 g de arroz (en crudo)",
+        "120 g de salmón fresco",
+        "50 g de edamame",
+        "50 g de pepino",
+        "40 g de aguacate",
+        "30 g de zanahoria",
+        "15 g de salsa de soja",
+        "Alga wakame",
+        "3 g de sésamo"
+      ],
+      "foto": "https://images.unsplash.com/photo-1602881917445-0b1ba001addf?auto=format&fit=crop&w=900&q=75",
+      "id": 10
+    },
+    {
+      "nombre": "Hamburguesa de pollo crujiente",
+      "categoria": "Cena",
+      "tipo": "Hamburguesa",
+      "tiempo": 30,
+      "kcal": 460,
+      "proteina": 48,
+      "carbohidratos": 47,
+      "grasas": 8,
+      "ingredientes": [
+        "1 pan de hamburguesa",
+        "150 g de pechuga de pollo",
+        "20 g de panko",
+        "1 clara de huevo",
+        "Lechuga",
+        "40 g de tomate",
+        "20 g de salsa de yogur y mostaza",
+        "Pimentón y ajo en polvo"
+      ],
+      "foto": "https://images.unsplash.com/photo-1655895176036-bf1a11326e5c?auto=format&fit=crop&w=900&q=75",
+      "id": 11
+    },
+    {
+      "nombre": "Bol de yogur con fruta y granola",
+      "categoria": "Snack",
+      "tipo": "Bowl",
+      "tiempo": 5,
+      "kcal": 317,
+      "proteina": 20,
+      "carbohidratos": 43,
+      "grasas": 8,
+      "ingredientes": [
+        "150 g de queso fresco batido 0 %",
+        "50 g de yogur griego natural",
+        "30 g de granola",
+        "80 g de fresas",
+        "40 g de arándanos",
+        "5 g de miel"
+      ],
+      "foto": "https://images.unsplash.com/photo-1542691457-cbe4df041eb2?auto=format&fit=crop&w=900&q=75",
+      "id": 12
     }
   ]
 }
